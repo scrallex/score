@@ -19,6 +19,7 @@ dependencies = [
     "numpy>=1.23",
 ]
 
+
 [project.optional-dependencies]
 test = [
     "pytest>=7.0",
@@ -32,8 +33,14 @@ native = [
 index = [
     "hnswlib>=0.8.0",
 ]
+stream = [
+    "kafka-python>=2.0",
+]
+onsets = [
+    "cdflib>=1.0",
+]
 
 [project.scripts]
-stm = "sep_text_manifold.cli:main"
+stm = "stm_cli.__main__:main"
 stm-plots = "sep_text_manifold.cli_plots:main"
 stm-leadtime = "sep_text_manifold.cli_lead:main"

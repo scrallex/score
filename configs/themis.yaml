@@ -1,0 +1,10 @@
+adapter: nasa_themis
+channels: [thg_mag_x, thg_mag_y, thg_mag_z, thg_plasma_density]
+resample: 1S
+bit_mapping: [UP, ACCEL, RANGEEXP, ZPOS]
+router:
+  guardrail:
+    coverage_min: 0.05
+    coverage_max: 0.20
+onsets:
+  rules: [bz_sign_change, density_spike]
