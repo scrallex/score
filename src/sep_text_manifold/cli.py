@@ -23,6 +23,8 @@ from typing import Any, Dict, List, Mapping, Optional
 from .pipeline import analyse_directory, compute_summary
 from .propose import propose as run_proposer, propose_from_state, load_state as load_analysis_state
 from .index_builder import build_indices
+from .similar import cross_corpus_similarity
+from .filters import flatten_metrics, metric_matches, parse_metric_filter
 
 
 def _load_state(state_file: Path) -> Dict[str, Any]:
@@ -147,18 +149,31 @@ def cmd_strings(args: argparse.Namespace) -> None:
     if not scores:
         print("No string scores found.  Run 'stm ingest' first.")
         return
+    try:
+        constraints = parse_metric_filter(getattr(args, "filter", None))
+    except ValueError as exc:
+        print(f"Error: {exc}")
+        return
+    items: List[Tuple[str, Dict[str, Any], Dict[str, float]]] = []
+    for text, entry in scores.items():
+        metrics = flatten_metrics(entry)
+        if not metric_matches(metrics, constraints):
+            continue
+        items.append((text, entry, metrics))
+    if not items:
+        print("No strings matched the specified filters.")
+        return
     if args.sort == "connector":
-        key_func = lambda kv: kv[1].get("connector", 0.0)
+        items.sort(key=lambda item: item[1].get("connector", item[2].get("connector", 0.0)), reverse=True)
     else:
-        key_func = lambda kv: kv[1].get("patternability", 0.0)
-    sorted_items = sorted(scores.items(), key=key_func, reverse=True)
-    top = args.top or len(sorted_items)
-    for i, (s, metrics) in enumerate(sorted_items[:top], start=1):
-        p_score = metrics.get("patternability", 0.0)
-        connector = metrics.get("connector", 0.0)
-        occurrences = metrics.get("occurrences", 0)
+        items.sort(key=lambda item: item[1].get("patternability", item[2].get("patternability", 0.0)), reverse=True)
+    top = args.top or len(items)
+    for i, (text, entry, metrics) in enumerate(items[:top], start=1):
+        patternability = float(entry.get("patternability", metrics.get("patternability", 0.0)))
+        connector = float(entry.get("connector", metrics.get("connector", 0.0)))
+        occurrences = int(entry.get("occurrences", 0))
         print(
-            f"{i:3d}. {s:<24} pattern={p_score:.3f}"
+            f"{i:3d}. {text:<24} pattern={patternability:.3f}"
             f" connector={connector:.3f} occ={occurrences}"
         )
 
@@ -217,6 +232,80 @@ def cmd_propose(args: argparse.Namespace) -> None:
             f" pattern={item['patternability']:.3f} connector={item['connector']:.3f}"
             f" occ={item['occurrences']}"
         )
+
+
+def cmd_similar(args: argparse.Namespace) -> None:
+    source_path = Path(args.source)
+    if not source_path.exists():
+        print(f"Source state not found: {source_path}")
+        return
+    source_state = _load_state(source_path)
+    if not source_state.get("string_scores"):
+        print("Source state is missing 'string_scores'. Run 'stm ingest' with --store-profiles.")
+        return
+
+    target_state: Optional[Dict[str, Any]] = None
+    target_state_path: Optional[Path] = None
+    if args.target_state:
+        target_state_path = Path(args.target_state)
+        if not target_state_path.exists():
+            print(f"Target state not found: {target_state_path}")
+            return
+        target_state = _load_state(target_state_path)
+
+    ann_path = Path(args.target_ann) if args.target_ann else None
+    meta_path: Optional[Path] = Path(args.target_meta) if args.target_meta else None
+    if ann_path and meta_path is None:
+        guess = ann_path.with_suffix(".meta")
+        if guess.exists():
+            meta_path = guess
+        else:
+            alt = ann_path.parent / (ann_path.stem + ".meta")
+            if alt.exists():
+                meta_path = alt
+
+    try:
+        result = cross_corpus_similarity(
+            source_state,
+            profile=args.profile,
+            min_connector=args.min_connector,
+            min_patternability=args.min_patternability,
+            min_occurrences=args.min_occurrences,
+            sort_key=args.sort,
+            limit=args.limit,
+            ann_index_path=ann_path if ann_path and meta_path else None,
+            ann_meta_path=meta_path if ann_path and meta_path else None,
+            target_state=target_state,
+            k=args.k,
+            max_distance=args.max_distance,
+        )
+    except Exception as exc:  # pragma: no cover - defensive CLI surface
+        print(f"Error: {exc}")
+        return
+
+    payload = {
+        "source": str(source_path),
+        "target_ann": str(ann_path) if ann_path else None,
+        "target_meta": str(meta_path) if meta_path else None,
+        "target_state": str(target_state_path) if target_state_path else None,
+        "profile": args.profile,
+        "parameters": {
+            "min_connector": args.min_connector,
+            "min_patternability": args.min_patternability,
+            "min_occurrences": args.min_occurrences,
+            "sort": args.sort,
+            "limit": args.limit,
+            "k": args.k,
+            "max_distance": args.max_distance,
+        },
+    }
+    payload.update(result)
+
+    output = json.dumps(payload, indent=2)
+    if args.output:
+        Path(args.output).write_text(output, encoding="utf-8")
+    else:
+        print(output)
 
 
 def cmd_index_build(args: argparse.Namespace) -> None:
@@ -336,6 +425,11 @@ def main(argv: Optional[List[str]] = None) -> None:
     p_strings.add_argument("--input", default="stm_state.json", help="Path to analysis state JSON file")
     p_strings.add_argument("--top", type=int, help="Number of top strings to display")
     p_strings.add_argument("--sort", choices=("pattern", "connector"), default="pattern", help="Sort key to use")
+    p_strings.add_argument(
+        "--filter",
+        dest="filter",
+        help="Metric filter expression, e.g. coh>=0.8,ent<=0.35",
+    )
     p_strings.set_defaults(func=cmd_strings)
     # Themes command
     p_themes = subparsers.add_parser("themes", help="List detected themes")
@@ -358,6 +452,44 @@ def main(argv: Optional[List[str]] = None) -> None:
     p_propose.add_argument("--target-profile", help="Target metric profile constraints, e.g. coh>=0.7,ent<=0.3")
     p_propose.add_argument("--output", help="Optional path to write proposals JSON")
     p_propose.set_defaults(func=cmd_propose)
+    # Similar command
+    p_similar = subparsers.add_parser(
+        "similar",
+        help="Project high-quality strings from a source state into a target manifold via ANN or direct search",
+    )
+    p_similar.add_argument("--source", default="stm_state.json", help="Source analysis state JSON file")
+    p_similar.add_argument("--target-ann", help="Target ANN index built via 'stm index build'")
+    p_similar.add_argument(
+        "--target-meta",
+        help="Metadata JSON accompanying the ANN index (defaults to <target-ann>.meta or sibling .meta)",
+    )
+    p_similar.add_argument(
+        "--target-state",
+        help="Optional target state JSON. Required when ANN index is unavailable and enriches match output when present.",
+    )
+    p_similar.add_argument("--profile", help="Metric filter expression for source strings, e.g. coh>=0.8,ent<=0.35")
+    p_similar.add_argument("--min-connector", type=float, default=0.0, help="Minimum connector score in source")
+    p_similar.add_argument(
+        "--min-patternability", type=float, default=0.0, help="Minimum patternability score in source"
+    )
+    p_similar.add_argument(
+        "--min-occurrences", type=int, default=1, help="Minimum source occurrences required per string"
+    )
+    p_similar.add_argument(
+        "--sort",
+        choices=("patternability", "connector"),
+        default="patternability",
+        help="Sort key used to prioritise source strings",
+    )
+    p_similar.add_argument("--limit", type=int, help="Maximum number of source strings to project")
+    p_similar.add_argument("--k", type=int, default=50, help="Number of target windows to retrieve per string")
+    p_similar.add_argument(
+        "--max-distance",
+        type=float,
+        help="Optional distance ceiling when retrieving neighbours (applies to ANN and fallback search)",
+    )
+    p_similar.add_argument("--output", help="Optional path to write JSON payload")
+    p_similar.set_defaults(func=cmd_similar)
     # Discover command
     p_discover = subparsers.add_parser("discover", help="Assistive discovery workflow built on bridge proposals")
     p_discover.add_argument("--input", default="stm_state.json", help="Path to analysis state JSON file")

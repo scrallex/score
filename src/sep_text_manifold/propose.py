@@ -4,26 +4,13 @@ from __future__ import annotations
 
 import json
 import math
-import operator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
-METRIC_KEYS = ("coherence", "stability", "entropy", "rupture")
-TARGET_ALIASES = {
-    "coh": "coherence",
-    "stab": "stability",
-    "ent": "entropy",
-    "rup": "rupture",
-    "lambda": "rupture",  # lambda hazard mirrors rupture in placeholder metrics
-}
+from .filters import metric_matches, parse_metric_filter
 
-COMPARE_OPS = {
-    ">=": operator.ge,
-    "<=": operator.le,
-    ">": operator.gt,
-    "<": operator.lt,
-}
+METRIC_KEYS = ("coherence", "stability", "entropy", "rupture")
 
 
 @dataclass(frozen=True)
@@ -80,6 +67,13 @@ def build_candidates(state: Mapping[str, Any]) -> Tuple[List[Candidate], Dict[st
     for text, payload in string_scores.items():
         profile = payload.get("metrics") or {}
         metrics = {key: float(profile.get(key, payload.get(key, 0.0))) for key in METRIC_KEYS}
+        lambda_value = float(
+            profile.get(
+                "lambda_hazard",
+                payload.get("lambda_hazard", profile.get("rupture", payload.get("rupture", metrics.get("rupture", 0.0)))),
+            )
+        )
+        metrics["lambda_hazard"] = lambda_value
         candidate = Candidate(
             text=text,
             metrics=metrics,
@@ -108,42 +102,6 @@ def centroid(vectors: Iterable[Tuple[float, float, float, float]]) -> Tuple[floa
 
 def l2_distance(a: Sequence[float], b: Sequence[float]) -> float:
     return math.sqrt(sum((float(x) - float(y)) ** 2 for x, y in zip(a, b)))
-
-
-def parse_target_profile(spec: Optional[str]) -> Dict[str, Tuple[str, float]]:
-    """Parse simple comparison expressions like ``coh>=0.75``."""
-    if not spec:
-        return {}
-    constraints: Dict[str, Tuple[str, float]] = {}
-    for raw in spec.split(","):
-        clause = raw.strip()
-        if not clause:
-            continue
-        for op_token in (">=", "<=", ">", "<"):
-            if op_token in clause:
-                left, right = clause.split(op_token, 1)
-                key = TARGET_ALIASES.get(left.strip().lower(), left.strip().lower())
-                try:
-                    value = float(right)
-                except ValueError as exc:  # pragma: no cover - validation
-                    raise ValueError(f"Invalid target profile value in '{clause}'") from exc
-                constraints[key] = (op_token, value)
-                break
-        else:  # pragma: no cover - validation
-            raise ValueError(f"Could not parse target component '{clause}'")
-    return constraints
-
-
-def satisfies_profile(candidate: Candidate, profile: Dict[str, Tuple[str, float]]) -> bool:
-    for key, (op_token, threshold) in profile.items():
-        metric_key = TARGET_ALIASES.get(key, key)
-        value = candidate.metrics.get(metric_key)
-        if value is None:
-            return False
-        comparator = COMPARE_OPS[op_token]
-        if not comparator(value, threshold):
-            return False
-    return True
 
 
 def novelty_score(candidate: Candidate) -> float:
@@ -184,7 +142,7 @@ def propose_from_state(
         raise ValueError("None of the provided seeds are present in the analysis state")
     seed_vectors = [seed.vector for seed in seed_objects]
     target = centroid(seed_vectors)
-    profile_constraints = parse_target_profile(target_profile)
+    profile_constraints = parse_metric_filter(target_profile)
     exclude_set = set(exclude or ()) | set(seeds)
     proposals: List[Proposal] = []
     for candidate in candidates:
@@ -194,7 +152,7 @@ def propose_from_state(
             continue
         if candidate.patternability < min_patternability:
             continue
-        if not satisfies_profile(candidate, profile_constraints):
+        if not metric_matches(candidate.metrics, profile_constraints):
             continue
         score, diagnostics = compute_score(candidate, target)
         diagnostics.update({key: candidate.metrics.get(key, 0.0) for key in METRIC_KEYS})
