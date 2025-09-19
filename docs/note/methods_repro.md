@@ -1,6 +1,12 @@
 # MMS Structural Precursors – Reproducibility Cheat Sheet
 
-All commands assume repository root (`/score`) with STM CLI available in the virtualenv.
+Environment reference:
+
+- OS: Ubuntu 22.04 LTS (64-bit)
+- Python: `python --version` → 3.11.x (match your env)
+- Dependencies: `pip install -r requirements.txt` (`pip freeze > docs/note/requirements.txt` to snapshot)
+
+All commands assume repository root (`/score`) with STM CLI available in the active virtualenv.
 
 1. **Bit-slice preparation**
    ```bash
@@ -62,4 +68,4 @@ with out.open('w', newline='', encoding='utf-8') as f:
 PY
    ```
 
-Repeat the same sequence for 22:30–23:30 (`_2230-2330`), 23:00–00:00 (`_2300-0000`), 01:00–02:00 (`_0100-0200`), and quiet baseline (`2017-09-10_0000-0100`).
+Repeat the same sequence for 22:30–23:30 (`_2230-2330`), 23:00–00:00 (`_2300-0000`), 01:00–02:00 (`_0100-0200`), and quiet baseline (`2017-09-10_0000-0100`). Run `make all` afterwards to refresh plots, lead-time summaries, twin diagnostics, and the scorecard.

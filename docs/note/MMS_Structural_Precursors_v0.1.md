@@ -13,6 +13,18 @@ We transform MMS telemetry into structural bit streams (UP/ACCEL/RANGEEXP/ZPOS) 
 Full reproducibility commands are listed in `docs/note/methods_repro.md`.
 
 ## 2. Results
+
+**Table 1. Storm-hour scorecard** (source: `docs/note/tab1_scorecard.csv`).
+
+| Slice | fg_coverage_% | Structural proposals | Storm twins (≥50 windows) | Aligned windows total | Mean ANN distance | Lead density (−5..0 min) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2017-09-07 22:30–23:30 | 6.86 | 2 | 1 | 50 | 2.33×10⁻³ | 0.1299 |
+| 2017-09-07 23:00–00:00 | 5.37 | 4 | 1 | 50 | 2.26×10⁻³ | 0.0312 |
+| **2017-09-08 00:00–01:00** | **5.67** | **4** | **3** | **150** | **1.97×10⁻³** | **0.0741** |
+| 2017-09-08 01:00–02:00 | 5.14 | 4 | 3 | 150 | 2.14×10⁻³ | 0.0735 |
+| 2017-09-10 00:00–01:00 (quiet) | 5.91 | 3 (`__UP` only) | 4 (generic) | 200 | 2.30×10⁻³ | 0.0884 |
+
+Midnight (00:00–01:00) remains the reference slice: it pairs the lowest mean ANN distances with multiple structural twins and a consistent foreground rise ahead of onset. The 22:30 and 01:00 neighbours retain the same structural vocabulary, confirming hour-over-hour stability, while the quiet baseline stays flat despite matching coverage.
 ### 2.1 Midnight reference (2017-09-08 00:00–01:00)
 - **Figures:** `fig1_mms_0000_overview.png`, `fig2_mms_0000_zoom.png`, `fig3_mms_0000_lead.png`
 - **Tables:** `tab1_scorecard.csv` (row “2017-09-08 00:00–01:00”), `tab2_midnight_proposals.csv`, `tab3_midnight_twins.csv`, `tab4_leadtime_bins_midnight.csv`
@@ -24,12 +36,49 @@ Key findings:
 - Three storm→storm twins align 50 windows each against 2017-09-13 (mean ANN 1.97×10⁻³) and share the signature q-gram `c0.01_s0.49_e0.99`.
 - Lead-time density climbs from 5.2 %→7.4 % in the final 20→0 min before onset (see also onset sweep in `tab4a_midnight_onset_sweep.csv`).
 
+**Table 2. Midnight structural proposals** (source: `docs/note/tab2_midnight_proposals.csv`).
+
+| String | Coherence | Entropy | Stability | ANN distance | Connector |
+| --- | --- | --- | --- | --- | --- |
+| `mms1_fgm_b_gse_srvy_l2_x__zpos` | 7.32×10⁻³ | 0.99268 | 0.46601 | 7.52×10⁻⁴ | 0.50 |
+| `mms1_fgm_b_gse_srvy_l2_z__zpos` | 7.23×10⁻³ | 0.99277 | 0.46580 | 7.28×10⁻⁴ | 0.50 |
+| `mms1_fgm_b_gse_srvy_l2_y__zpos` | 7.43×10⁻³ | 0.99257 | 0.46532 | 1.39×10⁻³ | 0.50 |
+| `mms1_fgm_b_gse_srvy_l2_y__up`   | 7.42×10⁻³ | 0.99258 | 0.46530 | 1.40×10⁻³ | 0.50 |
+
+**Table 3. Midnight storm→storm twins** (source: `docs/note/tab3_midnight_twins.csv`).
+
+| String | Aligned windows | Mean ANN distance | Min ANN distance | Max ANN distance | Top signature tokens |
+| --- | --- | --- | --- | --- | --- |
+| `mms1_fgm_b_gse_srvy_l2_x__zpos` | **50** | 1.93×10⁻³ | 8.20×10⁻⁴ | 2.22×10⁻³ | `c0.01_s0.49_e0.99` (48) |
+| `mms1_fgm_b_gse_srvy_l2_z__zpos` | **50** | 1.96×10⁻³ | 8.42×10⁻⁴ | 2.25×10⁻³ | `c0.01_s0.49_e0.99` (48) |
+| `mms1_fgm_b_gse_srvy_l2_y__zpos` | **50** | 2.03×10⁻³ | 8.87×10⁻⁴ | 2.33×10⁻³ | `c0.01_s0.49_e0.99` (48) |
+
+**Table 4. Midnight lead-time bins** (source: `docs/note/tab4_leadtime_bins_midnight.csv`).
+
+| Bin (min) | Windows | Foreground | Density |
+| --- | --- | --- | --- |
+| −20…−15 | 135 | 7 | 0.0519 |
+| −15…−10 | 135 | 5 | 0.0370 |
+| −10…−5  | 136 | 5 | 0.0368 |
+| −5…0    | 135 | 10 | **0.0741** |
+
+**Table 4a. Midnight onset sweep** (source: `docs/note/tab4a_midnight_onset_sweep.csv`).
+
+| Onset (UTC) | Final-bin density | Monotonic increase |
+| --- | --- | --- |
+| 2017-09-08T00:20:00 | 0.0667 | false |
+| 2017-09-08T00:30:00 | 0.0370 | false |
+| 2017-09-08T00:35:00 | 0.0368 | false |
+| 2017-09-08T00:40:00 | 0.0741 | false |
+| 2017-09-08T00:45:00 | 0.0667 | false |
+| 2017-09-08T00:50:00 | 0.0741 | false |
+
 ### 2.2 Neighbour slice (2017-09-08 01:00–02:00)
 - **Figures:** `fig4_mms_0100_overview.png`, `docs/plots/mms_0100_lead.png`
 - **Tables:** `tab1_scorecard.csv` (row “2017-09-08 01:00–02:00”), `tab4_leadtime_bins_neighbor.csv`
 - **JSON:** `analysis/mms_0100_state.json`, `analysis/router_config_0100.json`, `analysis/mms_0100_proposals_struct.json`, `analysis/mms_twins_0100_to_0913.json`, `analysis/mms_twins_0100_diagnostics.json`, `analysis/mms_0100_leadtime.json`
 
-This slice mirrors the midnight vocabulary (four structural proposals, three 50-window twins with mean ANN ≈2.14×10⁻³) and exhibits a similar rise to 7.3 % foreground in the final bin, confirming hour-over-hour stability.
+This slice mirrors the midnight vocabulary (four structural proposals, three 50-window twins with mean ANN ≈2.14×10⁻³) and exhibits a similar rise to 7.3 % foreground in the final bin (see `docs/note/tab4_leadtime_bins_neighbor.csv`), confirming hour-over-hour stability.
 
 ### 2.3 Additional evidence
 - 22:30–23:30 retains two proposals and a single 50-window twin (ANN 2.33×10⁻³) with a sharper late-bin surge (13 %); see `analysis/mms_proposals_struct_2017-09-07_2230-2330.json`, `analysis/mms_twins_2230_diagnostics.json`, `analysis/mms_2230_leadtime.json`.
