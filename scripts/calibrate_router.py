@@ -43,9 +43,9 @@ def compute_quantiles(data: np.ndarray) -> dict:
     cfg = {
         "router": {
             "foreground": {
-                "min_coh": float(np.nanquantile(coherence, 0.90)),
-                "max_ent": float(np.nanquantile(entropy, 0.20)),
-                "min_stab": float(np.nanquantile(stability, 0.75)),
+                "min_coh": float(np.nanquantile(coherence, 0.75)),
+                "max_ent": float(np.nanquantile(entropy, 0.35)),
+                "min_stab": float(np.nanquantile(stability, 0.60)),
             },
             "triggers": {
                 "min_sig_qgrams": 2,
