@@ -16,15 +16,11 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List, Optional
 
-from .ingest import ingest_directory
-from .manifold import build_manifold
-from .strings import extract_strings, aggregate_string_metrics
-from .scoring import patternability_score
-from .themes import build_theme_graph, detect_themes, compute_graph_metrics
+from .pipeline import analyse_directory, compute_summary
 
 
 def _load_state(state_file: Path) -> Dict[str, Any]:
@@ -39,82 +35,76 @@ def _save_state(state_file: Path, data: Dict[str, Any]) -> None:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
+def _print_summary(summary: Dict[str, Any]) -> None:
+    if not summary:
+        print("No summary available.")
+        return
+    file_count = summary.get("file_count")
+    token_count = summary.get("token_count")
+    corpus_size = summary.get("corpus_size_bytes")
+    window_count = summary.get("window_count")
+    print("Summary")
+    print("-------")
+    if file_count is not None:
+        print(f"Files analysed: {file_count}")
+    if token_count is not None:
+        print(f"Tokens extracted: {token_count}")
+    if corpus_size is not None:
+        print(f"Corpus size (bytes): {corpus_size}")
+    if window_count is not None:
+        print(f"Manifold windows: {window_count}")
+    print(f"Unique strings scored: {summary.get('string_count', 0)}")
+    top_patterns = summary.get("top_patternable_strings", [])
+    if top_patterns:
+        print("\nTop patternable strings:")
+        for entry in top_patterns:
+            label = entry.get("string", "<unknown>")
+            print(
+                f"  {label:<24} pattern={entry.get('patternability', 0.0):.3f}"
+                f" occ={entry.get('occurrences', 0)}"
+            )
+    top_connectors = summary.get("top_connectors", [])
+    if top_connectors:
+        print("\nTop connectors:")
+        for entry in top_connectors:
+            label = entry.get("string", "<unknown>")
+            print(
+                f"  {label:<24} connector={entry.get('connector', 0.0):.3f}"
+                f" occ={entry.get('occurrences', 0)}"
+            )
+    if summary.get("theme_count") is not None:
+        print(f"\nTheme count: {summary['theme_count']}")
+    mean_metrics = summary.get("mean_window_metrics")
+    if mean_metrics:
+        print("\nMean window metrics:")
+        for name, value in mean_metrics.items():
+            print(f"  {name}: {value:.3f}")
+
+
 def cmd_ingest(args: argparse.Namespace) -> None:
     """Ingest a directory of text files and analyse it."""
     directory = args.directory
     window_bytes = args.window_bytes
     stride = args.stride
     state_file = Path(args.output)
-    # Read all files and concatenate their bytes with a separator
-    corpus_bytes = bytearray()
-    occurrences = []
-    # Keep track of byte offset for each file to realign occurrences
-    current_offset = 0
-    for file_id, path, text in ingest_directory(directory, extensions=args.extensions):
-        # Extract occurrences for this file
-        occs = extract_strings(text, file_id)
-        # Adjust byte offsets by current_offset
-        for occ in occs:
-            occ.byte_start += current_offset
-            occ.byte_end += current_offset
-            occurrences.append(occ)
-        # Append file bytes and a newline separator
-        data_bytes = text.encode("utf-8")
-        corpus_bytes.extend(data_bytes)
-        # Use a single byte separator to delineate files
-        corpus_bytes.append(0)
-        current_offset += len(data_bytes) + 1
-    # Build manifold
-    signals = build_manifold(bytes(corpus_bytes), window_bytes=window_bytes, stride=stride)
-    # Aggregate string metrics
-    string_profiles = aggregate_string_metrics(
-        occurrences,
-        signals,
+    result = analyse_directory(
+        directory,
         window_bytes=window_bytes,
         stride=stride,
+        extensions=args.extensions,
     )
-    # Compute patternability score for each string
-    string_scores: Dict[str, Dict[str, Any]] = {}
-    for s, profile in string_profiles.items():
-        metrics = profile.get("metrics", {})
-        p_score = patternability_score(
-            metrics.get("coherence", 0.0),
-            metrics.get("stability", 0.0),
-            metrics.get("entropy", 0.0),
-            metrics.get("rupture", 0.0),
-        )
-        string_scores[s] = {
-            "metrics": metrics,
-            "occurrences": profile.get("occurrences", 0),
-            "window_ids": profile.get("window_ids", []),
-            "patternability": p_score,
-        }
-        for field, value in metrics.items():
-            string_scores[s][field] = value
-    # Build co‑occurrence graph using shared manifold windows per string
-    graph = build_theme_graph({s: prof.get("window_ids", []) for s, prof in string_scores.items()})
-    themes = detect_themes(graph)
-    graph_metrics = compute_graph_metrics(graph)
-    # Combine connector metrics into string_scores
-    from .scoring import connector_score
-    for s in string_scores:
-        gm = graph_metrics.get(s, {})
-        c_score = connector_score(
-            gm.get("betweenness", 0.0),
-            gm.get("bridging", 0.0),
-            0.0,  # PMI across themes not computed yet
-            gm.get("theme_entropy_neighbors", 0.0),
-            gm.get("redundant_degree", 0.0),
-        )
-        string_scores[s]["connector"] = c_score
-        string_scores[s]["graph_metrics"] = gm
-    # Save state
-    state = {
-        "string_scores": string_scores,
-        "themes": [list(t) for t in themes],
-    }
+    summary = result.summary(top=args.summary_top)
+    state = result.to_state(
+        include_signals=args.store_signals,
+        include_occurrences=args.store_occurrences,
+        include_profiles=args.store_profiles,
+    )
+    state["summary"] = summary
+    state["generated_at"] = datetime.utcnow().isoformat() + "Z"
     _save_state(state_file, state)
     print(f"Analysis complete.  Saved state to {state_file}")
+    print()
+    _print_summary(summary)
 
 
 def cmd_strings(args: argparse.Namespace) -> None:
@@ -124,12 +114,20 @@ def cmd_strings(args: argparse.Namespace) -> None:
     if not scores:
         print("No string scores found.  Run 'stm ingest' first.")
         return
-    # Sort by patternability descending
-    sorted_items = sorted(scores.items(), key=lambda kv: kv[1].get("patternability", 0.0), reverse=True)
+    if args.sort == "connector":
+        key_func = lambda kv: kv[1].get("connector", 0.0)
+    else:
+        key_func = lambda kv: kv[1].get("patternability", 0.0)
+    sorted_items = sorted(scores.items(), key=key_func, reverse=True)
     top = args.top or len(sorted_items)
     for i, (s, metrics) in enumerate(sorted_items[:top], start=1):
         p_score = metrics.get("patternability", 0.0)
-        print(f"{i:3d}. {s:20s} {p_score:.3f}")
+        connector = metrics.get("connector", 0.0)
+        occurrences = metrics.get("occurrences", 0)
+        print(
+            f"{i:3d}. {s:<24} pattern={p_score:.3f}"
+            f" connector={connector:.3f} occ={occurrences}"
+        )
 
 
 def cmd_themes(args: argparse.Namespace) -> None:
@@ -143,6 +141,25 @@ def cmd_themes(args: argparse.Namespace) -> None:
         print(f"Theme {i} ({len(members)} strings): {', '.join(sorted(members)[:20])}{'...' if len(members) > 20 else ''}")
 
 
+def cmd_summary(args: argparse.Namespace) -> None:
+    """Display a summary of the latest analysis."""
+    state = _load_state(Path(args.input))
+    if not state:
+        print("No analysis state found.  Run 'stm ingest' first.")
+        return
+    top_n = args.top or 10
+    summary = compute_summary(
+        state.get("string_scores", {}),
+        signals=state.get("signals"),
+        themes=state.get("themes"),
+        corpus_size_bytes=state.get("corpus_size_bytes"),
+        token_count=state.get("token_count"),
+        file_count=len(state.get("files", [])) or state.get("summary", {}).get("file_count"),
+        top=top_n,
+    )
+    _print_summary(summary)
+
+
 def main(argv: Optional[List[str]] = None) -> None:
     parser = argparse.ArgumentParser(prog="stm", description="Sep Text Manifold CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -153,16 +170,26 @@ def main(argv: Optional[List[str]] = None) -> None:
     p_ingest.add_argument("--stride", dest="stride", type=int, default=1024, help="Stride between windows in bytes")
     p_ingest.add_argument("--extensions", nargs="*", help="Optional list of file extensions to include (e.g. txt md)")
     p_ingest.add_argument("--output", default="stm_state.json", help="Path to output analysis state JSON file")
+    p_ingest.add_argument("--store-signals", action="store_true", help="Persist per-window metrics in the output state")
+    p_ingest.add_argument("--store-occurrences", action="store_true", help="Persist raw string occurrences in the output state")
+    p_ingest.add_argument("--store-profiles", action="store_true", help="Persist aggregated string profiles in the output state")
+    p_ingest.add_argument("--summary-top", dest="summary_top", type=int, default=10, help="Number of top items to include in the summary output")
     p_ingest.set_defaults(func=cmd_ingest)
     # Strings command
     p_strings = subparsers.add_parser("strings", help="List strings by patternability")
     p_strings.add_argument("--input", default="stm_state.json", help="Path to analysis state JSON file")
     p_strings.add_argument("--top", type=int, help="Number of top strings to display")
+    p_strings.add_argument("--sort", choices=("pattern", "connector"), default="pattern", help="Sort key to use")
     p_strings.set_defaults(func=cmd_strings)
     # Themes command
     p_themes = subparsers.add_parser("themes", help="List detected themes")
     p_themes.add_argument("--input", default="stm_state.json", help="Path to analysis state JSON file")
     p_themes.set_defaults(func=cmd_themes)
+    # Summary command
+    p_summary = subparsers.add_parser("summary", help="Show aggregated analysis statistics")
+    p_summary.add_argument("--input", default="stm_state.json", help="Path to analysis state JSON file")
+    p_summary.add_argument("--top", type=int, help="Number of top strings/connectors to display")
+    p_summary.set_defaults(func=cmd_summary)
     args = parser.parse_args(argv)
     args.func(args)
 

@@ -14,6 +14,7 @@ how to integrate with the existing C++ codebase.
 from .ingest import ingest_directory
 from .encode import encode_window
 from .manifold import build_manifold
+from .pipeline import AnalysisResult, analyse_directory
 from .strings import extract_strings, aggregate_string_metrics
 from .scoring import patternability_score, connector_score
 from .themes import build_theme_graph, detect_themes
@@ -24,6 +25,8 @@ __all__ = [
     "build_manifold",
     "extract_strings",
     "aggregate_string_metrics",
+    "analyse_directory",
+    "AnalysisResult",
     "patternability_score",
     "connector_score",
     "build_theme_graph",

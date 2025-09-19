@@ -48,20 +48,20 @@ def ingest_directory(directory: str, *, extensions: Optional[Iterable[str]] = No
     exts = None
     if extensions is not None:
         exts = {ext.lower() for ext in extensions}
-    for path in root.rglob("*"):
-        if path.is_file():
-            if exts is not None:
-                if path.suffix:
-                    suffix = path.suffix.lstrip(".").lower()
-                    if suffix not in exts:
-                        continue
-                else:
+    file_paths = sorted((p for p in root.rglob("*") if p.is_file()), key=lambda p: p.relative_to(root).as_posix())
+    for path in file_paths:
+        if exts is not None:
+            if path.suffix:
+                suffix = path.suffix.lstrip(".").lower()
+                if suffix not in exts:
                     continue
-            try:
-                data = path.read_text(encoding="utf-8", errors="replace")
-            except (UnicodeDecodeError, OSError):
-                # Skip files we cannot decode
+            else:
                 continue
-            # Use relative path from root as file_id
-            file_id = str(path.relative_to(root)).replace(os.sep, "/")
-            yield file_id, str(path), data
+        try:
+            data = path.read_text(encoding="utf-8", errors="replace")
+        except (UnicodeDecodeError, OSError):
+            # Skip files we cannot decode
+            continue
+        # Use relative path from root as file_id
+        file_id = str(path.relative_to(root)).replace(os.sep, "/")
+        yield file_id, str(path), data
