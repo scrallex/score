@@ -299,3 +299,4 @@ cmake-build-*/
 *_generated.*
 !*_template.*
 .env.hotband
+!analysis/router_config.json

@@ -1,1 +1,16 @@
-  1. mms1_fgm_b_gse_srvy_l2_y__zpos pattern=0.459 connector=0.500 occ=895
+  1. mms1_fgm_b_gse_srvy_l2_x__accel pattern=0.460 connector=0.500 occ=1801
+  2. mms1_fgm_b_gse_srvy_l2_mag__accel pattern=0.460 connector=0.500 occ=1803
+  3. mms1_fgm_b_gse_srvy_l2_z__accel pattern=0.460 connector=0.500 occ=1797
+  4. mms1_fgm_b_gse_srvy_l2_y__accel pattern=0.460 connector=0.500 occ=1809
+  5. mms1_fgm_b_gse_srvy_l2_x__up pattern=0.459 connector=0.500 occ=925
+  6. mms1_fgm_b_gse_srvy_l2_y__zpos pattern=0.459 connector=0.500 occ=895
+  7. mms1_fgm_b_gse_srvy_l2_x__zpos pattern=0.459 connector=0.500 occ=824
+  8. mms1_fgm_b_gse_srvy_l2_y__up pattern=0.459 connector=0.500 occ=923
+  9. mms1_fgm_b_gse_srvy_l2_z__zpos pattern=0.459 connector=0.497 occ=764
+ 10. mms1_fgm_b_gse_srvy_l2_z__up pattern=0.459 connector=0.497 occ=778
+ 11. mms1_fgm_b_gse_srvy_l2_mag__zpos pattern=0.459 connector=0.515 occ=446
+ 12. mms1_fgm_b_gse_srvy_l2_x__rangeexp pattern=0.459 connector=0.497 occ=493
+ 13. mms1_fgm_b_gse_srvy_l2_mag__up pattern=0.459 connector=0.511 occ=429
+ 14. mms1_fgm_b_gse_srvy_l2_z__rangeexp pattern=0.459 connector=0.497 occ=442
+ 15. mms1_fgm_b_gse_srvy_l2_y__rangeexp pattern=0.459 connector=0.497 occ=487
+ 16. mms1_fgm_b_gse_srvy_l2_mag__rangeexp pattern=0.459 connector=0.515 occ=309
