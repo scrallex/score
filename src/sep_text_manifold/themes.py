@@ -11,7 +11,7 @@ from __future__ import annotations
 import math
 from collections import defaultdict
 from itertools import combinations
-from typing import Dict, Iterable, List, Optional, Set
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 try:
     import networkx as nx
@@ -36,31 +36,37 @@ def build_theme_graph(string_windows: Dict[str, Iterable[int]], *, cooccurrence_
         A NetworkX graph if the `networkx` package is installed;
         otherwise a simple adjacency dictionary.
     """
-    # Convert window iterables into sets for efficient intersection.
     window_sets: Dict[str, Set[int]] = {
         string: set(windows)
         for string, windows in string_windows.items()
     }
     nodes = list(window_sets.keys())
+    # Build co-occurrence weights by aggregating over windows.
+    window_buckets: Dict[int, List[str]] = defaultdict(list)
+    for string, windows in window_sets.items():
+        for wid in windows:
+            window_buckets[wid].append(string)
+    edge_weights: Dict[Tuple[str, str], int] = defaultdict(int)
+    for members in window_buckets.values():
+        if len(members) < 2:
+            continue
+        for u, v in combinations(sorted(set(members)), 2):
+            edge_weights[(u, v)] += 1
     if nx is not None:
         G = nx.Graph()
         G.add_nodes_from(nodes)
-        for u, v in combinations(nodes, 2):
-            weight = len(window_sets[u] & window_sets[v])
+        for (u, v), weight in edge_weights.items():
             if weight >= cooccurrence_threshold:
                 G.add_edge(u, v, weight=weight)
         return G
     else:
-        # Simple adjacency list representation
         adj: Dict[str, Set[str]] = defaultdict(set)
-        for u, v in combinations(nodes, 2):
-            weight = len(window_sets[u] & window_sets[v])
+        for node in nodes:
+            adj.setdefault(node, set())
+        for (u, v), weight in edge_weights.items():
             if weight >= cooccurrence_threshold:
                 adj[u].add(v)
                 adj[v].add(u)
-        # Ensure isolated nodes are present
-        for node in nodes:
-            adj.setdefault(node, set())
         return adj
 
 

@@ -16,6 +16,7 @@ sophisticated tokenisation, and to compute additional statistics
 from __future__ import annotations
 
 import re
+from bisect import bisect_left, bisect_right
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import DefaultDict, Dict, Iterable, List, Optional, Set, Tuple
@@ -101,25 +102,39 @@ def aggregate_string_metrics(
         covered at least one occurrence.
     """
     if aggregated_fields is None:
-        aggregated_fields = ["coherence", "stability", "entropy", "rupture"]
-    # Build list of tuples: (window_id, window_start, window_end, metrics)
-    window_ranges: List[Tuple[int, int, int, Dict[str, float]]] = []
+        aggregated_fields = ("coherence", "stability", "entropy", "rupture")
+    else:
+        aggregated_fields = tuple(aggregated_fields)
+    window_ids: List[int] = []
+    window_starts: List[int] = []
+    window_ends: List[int] = []
+    window_metrics: List[Dict[str, float]] = []
     for fallback_id, sig in enumerate(signals):
         end = int(sig.get("window_end", sig.get("index", 0)))
         start = int(sig.get("window_start", end - window_bytes))
         if start < 0:
             start = 0
-        metrics = sig.get("metrics", {})
-        window_id = int(sig.get("id", fallback_id))
-        window_ranges.append((window_id, start, end, metrics))
+        window_ids.append(int(sig.get("id", fallback_id)))
+        window_starts.append(start)
+        window_ends.append(end)
+        window_metrics.append(sig.get("metrics", {}))
     metric_samples: DefaultDict[str, Dict[str, List[float]]] = defaultdict(lambda: defaultdict(list))
     window_hits: DefaultDict[str, Set[int]] = defaultdict(set)
     occurrence_counts: DefaultDict[str, int] = defaultdict(int)
+    window_count = len(window_ids)
     for occ in occurrences:
         occurrence_counts[occ.string] += 1
-        for wid, ws, we, metrics in window_ranges:
-            if occ.byte_start >= ws and occ.byte_end <= we:
+        if window_count == 0:
+            continue
+        last_cover_idx = bisect_right(window_starts, occ.byte_start) - 1
+        first_cover_idx = bisect_left(window_ends, occ.byte_end)
+        if first_cover_idx >= window_count or last_cover_idx < 0 or first_cover_idx > last_cover_idx:
+            continue
+        for idx in range(first_cover_idx, last_cover_idx + 1):
+            if window_starts[idx] <= occ.byte_start and window_ends[idx] >= occ.byte_end:
+                wid = window_ids[idx]
                 window_hits[occ.string].add(wid)
+                metrics = window_metrics[idx]
                 for field in aggregated_fields:
                     value = metrics.get(field)
                     if value is not None:
