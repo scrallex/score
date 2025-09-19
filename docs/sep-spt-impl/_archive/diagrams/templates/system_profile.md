@@ -1,0 +1,64 @@
+<!-- Use this template per subsystem / service (e.g., allocator-lite, rolling evaluator, kill-switch UI) -->
+## System Profile: `<subsystem_name>`
+- **Owner / Point-of-contact**:
+- **Code Roots**: `scripts/allocator_lite.py`, ...
+- **Runtime**: (python process, container name, schedule, threads)
+- **Responsibilities**:
+  - bullet list
+- **Inputs**:
+  - Environment variables
+  - CLI args / config files
+  - Valkey keys / pub-sub channels
+  - REST / WS endpoints consumed
+- **Outputs**:
+  - Valkey keys updated
+  - REST / WS endpoints exposed
+  - Files / reports generated
+- **Critical Variables**:
+  - `VAR_NAME`: purpose
+- **Failure Signals**:
+  - logs, metrics, alerts
+- **Dependencies**:
+  - services, scripts, libraries
+- **Open Risks / TODOs**:
+  - pending investigations
+
+---
+
+## System Profile: Core Trading Loop (reference)
+- **Owner / Point-of-contact**: Trading Ops / Quant Engineering
+- **Code Roots**: `bin/manifold_generator`, `scripts/ws_hydrator.py`, `scripts/rolling_backtest_evaluator.py`, `scripts/allocator_lite.py`, `scripts/trading_service.py`
+- **Runtime**: Docker services (`candle-fetcher`, `ws-hydrator`, `rolling-evaluator`, `allocator-lite`, `backend`, `trading_service`); `manifold_generator` invoked on demand during priming/hydration workflows.
+- **Responsibilities**:
+  - Convert live OANDA candles into QFH metrics (coherence, stability, entropy, rupture, hazard).
+  - Maintain manifold/state mirrors (`ws:last:manifold`, `ws:manifold:hist`) and publish to websocket.
+  - Run strict rolling backtests, adapt thresholds, and gate instruments.
+  - Publish consolidated gating blob and Top-K allocation weights for execution.
+  - Submit/guard live orders and enforce kill-switch.
+- **Inputs**:
+  - Environment: `HOTBAND_PAIRS`, `AUTO_MIN_COHERENCE`, `AUTO_MAX_ENTROPY`, `AUTO_MAX_RUPTURE`, `GUARD_MIN_STABILITY`, `HYSTERESIS_DEFAULT`, `HYSTERESIS_PAIR_JSON`, `SESSION_TRADING_ENABLED`, `SESSION_PATTERN_MIN_OCCURRENCES`, `EVAL_INTERVAL_SEC`, `EVAL_MIN_TRADES`, `EVAL_CALMAR_MIN`, `EVAL_PNL_MIN`, `ALLOC_INTERVAL_SEC`, `ALLOC_TOP_K`, `ALLOC_W_C/STAB/RUP/ENT`, `RISK_ALLOC_TARGET_PCT`, `PM_MAX_PER_POS_PCT`.
+  - CLI/config: none (services use env + compose definitions).
+  - Valkey: `md:candles:{instrument}:M1`, `sep:signal_index:{instrument}`, `ws:manifold:hist:{instrument}`, `opt:best_config:{instrument}`.
+  - REST/WS: `/api/candles/fetch`, `/api/coherence/status`, `/api/oanda/*`, `/api/kill-switch`, Pub/Sub `ws:manifold`.
+- **Outputs**:
+  - Valkey: `ws:last:manifold:{instrument}`, `sep:signal:{instrument}:{ts_ns}`, `bt:rolling:summary:{instrument}`, `opt:rolling:eligible:{instrument}`, `opt:rolling:gates_blob`, `risk:allocation_weights`, `opt:allocator:status`.
+  - REST/WS: `/metrics` (backend Prometheus), `/status` endpoints (`allocator-lite`, `ws-hydrator`), OANDA order placements.
+  - Files: optional manifold snapshots (`output/manifolds/*`), allocator snapshots (ops tooling).
+- **Critical Variables**:
+  - `AUTO_MIN_COHERENCE`, `GUARD_MIN_STABILITY`, `AUTO_MAX_ENTROPY`, `AUTO_MAX_RUPTURE` – gating floors/ceilings.
+  - `HYSTERESIS_DEFAULT` / `HYSTERESIS_PAIR_JSON` – per-pair buffer controlling flips.
+  - `SESSION_PATTERN_MIN_OCCURRENCES` – repetition guard (“string-type band” detection).
+  - `EVAL_MIN_TRADES` / `EVAL_CALMAR_MIN` / `EVAL_PNL_MIN` – adaptive floor baselines.
+  - `ALLOC_TOP_K`, `ALLOC_W_C/STAB/RUP/ENT`, `RISK_ALLOC_TARGET_PCT`, `PM_MAX_PER_POS_PCT` – allocation scaling + caps.
+- **Failure Signals**:
+  - `ws:last:manifold:{instrument}` stale (>300s) or missing metrics.
+  - `opt:rolling:gates_blob` absent / timestamp older than `EVAL_INTERVAL_SEC`.
+  - `risk:allocation_weights` not refreshed (allocator status age) or zeroed unexpectedly.
+  - Backend `/metrics` alarms (`sep_rolling_gate`, allocator cooldown gauges) or kill-switch stuck enabled.
+  - OANDA order rejections / REST errors from trading service.
+- **Dependencies**:
+  - OANDA REST & streaming, Valkey, backend StrategyEngine, `libquantum_metrics.so`, `manifold_generator` binary, Docker runtime.
+- **Open Risks / TODOs**:
+  - Align hydrator TTL (`ws:last:manifold`) with repetition gate lookbacks.
+  - Collapse duplicate warmup/runtime loops into single orchestrator.
+  - Evaluate feeding `manifold.coeffs.lambda` directly into allocator scoring for hazard-aware sizing.

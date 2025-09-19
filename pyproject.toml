@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sep-text-manifold"
+version = "0.1.0"
+description = "Text analysis framework based on SEP's quantum metrics"
+authors = [ { name = "SepDynamics", email = "contact@sepdynamics.example" } ]
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110.0",
+    "pydantic>=2.0",
+    "uvicorn>=0.27.0",
+    # Optional dependency for community detection and centrality metrics
+    "networkx>=3.0",
+]
+
+[project.scripts]
+stm = "sep_text_manifold.cli:main"
