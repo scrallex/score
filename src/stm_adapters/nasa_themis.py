@@ -83,9 +83,16 @@ class ThemisAdapter:
         numeric = frame[self.config.channels].resample(self.config.resample).mean().interpolate()
         return _encode_struct_bits(numeric, self.config.channels)
 
-    def run(self, csv_path: Path, output_path: Path | None = None) -> Path:
+    def run(self, csv_path: Path, output_dir: Path | None = None) -> Path:
         frame = self.load(csv_path)
         bits = self.to_bits(frame)
-        output_path = output_path or csv_path.with_name(csv_path.stem + "_bits.csv")
-        bits.reset_index().to_csv(output_path, index=False)
-        return output_path
+        output_dir = output_dir or csv_path.parent / f"{csv_path.stem}_stm"
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        bit_csv = output_dir / f"{csv_path.stem}_bits.csv"
+        bits.reset_index().to_csv(bit_csv, index=False)
+
+        tokens = bits.apply(lambda row: " ".join(token for token in row.values if token), axis=1)
+        text_path = output_dir / f"{csv_path.stem}_tokens.txt"
+        text_path.write_text("\n".join(tokens), encoding="utf-8")
+        return text_path

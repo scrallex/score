@@ -1,27 +1,11 @@
 source:
-  kind: kafka
-  topic: mms.telemetry
-  bootstrap_servers: localhost:9092
-  schema:
-    time: iso8601
-    Bx: float
-    By: float
-    Bz: float
-    density: float
-encode:
-  resample: 1S
-  bits: [UP, ACCEL, RANGEEXP, ZPOS]
+  kind: manifold_log
+  path: analysis/mms_20170907_manifold.log
+buffer_size: 5000
+api:
+  host: 0.0.0.0
+  port: 8000
 router:
   guardrail:
     coverage_min: 0.05
     coverage_max: 0.20
-indices:
-  ann:
-    ef_construction: 200
-    ef_runtime: 100
-    M: 32
-api:
-  port: 8000
-alerts:
-  foreground_density_bin: 300
-  min_density: 0.07

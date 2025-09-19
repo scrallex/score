@@ -101,3 +101,5 @@ This slice mirrors the midnight vocabulary (four structural proposals, three 50-
 
 ## 5. Artifact Index
 All referenced files live under `/docs/note/` (figures, tables, reproducibility sheet) and `/analysis/` (states, configs, proposals, twins, diagnostics, leadtime). The helper CLI entry points `stm-plots` and `stm-leadtime` regenerate plots and lead summaries; `scripts/make_scorecard.py` refreshes the scorecard.
+
+Rebuild the entire evidence bundle with `make all` (scorecard + plots + lead-time + diagnostics) after any slice refresh.

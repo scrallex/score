@@ -1,11 +1,9 @@
 # STM API Notes (Draft)
 
-## Planned endpoints
+## Endpoints (current prototype)
 
-- `POST /v1/seen` — return foreground/deferred windows for a trigger.
-- `POST /v1/propose` — generate structural proposals.
-- `POST /v1/lead` — lead-time bins and trend flag.
-- `POST /v1/onsets/autolabel` — run rules on a state file.
-- `GET /v1/health` — readiness/liveness.
+- `POST /stm/seen` — recent windows matching a signature (stream runtime).
+- `GET /stm/health` — streaming runtime status.
+- Future: `POST /v1/propose`, `/v1/lead`, `/v1/onsets/autolabel` once the API layer wraps the batch utilities.
 
 Implementation pending streaming/runtime work.
