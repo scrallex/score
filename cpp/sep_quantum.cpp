@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "qfh_native.h"
+#include "sep_core/core/qfh.h"
 
 namespace py = pybind11;
 
@@ -28,15 +28,19 @@ Metrics analyze_bits_native(const std::vector<std::uint8_t>& bits) {
     static QFHOptions options;
     static QFHBasedProcessor processor(options);
     auto result = processor.analyze(bits);
+    const float coherence = static_cast<float>(result.coherence);
+    const float entropy = static_cast<float>(result.entropy);
+    const float rupture = static_cast<float>(result.rupture_ratio);
+    const float stability = 1.0f - rupture;
     Metrics metrics{};
-    metrics.coherence = static_cast<float>(result.coherence);
-    metrics.stability = static_cast<float>(result.stability);
-    metrics.entropy = static_cast<float>(result.entropy);
-    metrics.rupture = static_cast<float>(result.rupture_ratio);
-    metrics.lambda_hazard = static_cast<float>(result.rupture_ratio);
-    metrics.sig_c = bucket(metrics.coherence);
-    metrics.sig_s = bucket(metrics.stability);
-    metrics.sig_e = bucket(metrics.entropy);
+    metrics.coherence = coherence;
+    metrics.stability = stability;
+    metrics.entropy = entropy;
+    metrics.rupture = rupture;
+    metrics.lambda_hazard = rupture;
+    metrics.sig_c = bucket(coherence);
+    metrics.sig_s = bucket(stability);
+    metrics.sig_e = bucket(entropy);
     return metrics;
 }
 
