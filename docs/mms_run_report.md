@@ -46,6 +46,7 @@
 | 2017-09-07 23:00–00:00 | 5.4 % | 4 | 1 | 2.26 | 0.0312 |
 | **2017-09-08 00:00–01:00** | **5.7 %** | **4** | **3** | **1.97** | **0.0741** |
 | 2017-09-08 01:00–02:00 | 5.1 % | 4 | 3 | 2.14 | 0.0735 |
+| 2017-09-10 00:00–01:00 (quiet) | 5.9 % | 3 (`__UP` only) | 4 (generic) | 2.30 | 0.0884 |
 
 Midnight (00:00–01:00) remains the reference slice: it pairs the lowest mean ANN distances with multiple structural twins and a consistent foreground rise ahead of onset. The 22:30 and 01:00 neighbours retain the same structural vocabulary, confirming the signature is hour-stable rather than a lone burst.
 
@@ -78,6 +79,19 @@ Midnight (00:00–01:00) remains the reference slice: it pairs the lowest mean A
 - Proposals mirror the midnight set (`z__zpos`, `x__zpos`, `y__up`, `y__zpos`; `analysis/mms_0100_proposals_struct.json`) with coherence 0.0075–0.0081 and occupancies 1.5–1.6 k.
 - Storm→storm twins (`analysis/mms_twins_0100_to_0913.json`) retain three 50-window matches (`x__zpos`, `z__zpos`, `y__up`) with mean ANN distance ≈2.14×10⁻³ (`analysis/mms_twins_0100_diagnostics.json`).
 - Lead-time bins (`analysis/mms_0100_leadtime.json`) rise from 2.2 % to **7.3 %** foreground in the final 5 min; `docs/plots/mms_0100_overview.png`, `_zoom.png`, and `docs/plots/mms_0100_lead.png` show the structural overlays and density ramp.
+
+| 01:00–02:00 structural proposals (`analysis/mms_0100_proposals_struct.json`) | Coh | Ent | Stab | ANN dist |
+| --- | --- | --- | --- | --- |
+| `mms1_fgm_b_gse_srvy_l2_z__zpos` | 7.48×10⁻³ | 0.99252 | 0.46480 | 7.03×10⁻⁴ |
+| `mms1_fgm_b_gse_srvy_l2_x__zpos` | 7.74×10⁻³ | 0.99226 | 0.46467 | 1.11×10⁻³ |
+| `mms1_fgm_b_gse_srvy_l2_y__up`   | 7.72×10⁻³ | 0.99228 | 0.46416 | 1.54×10⁻³ |
+| `mms1_fgm_b_gse_srvy_l2_y__zpos` | 8.07×10⁻³ | 0.99193 | 0.46391 | 2.13×10⁻³ |
+
+| 01:00–02:00 storm→storm twins (`analysis/mms_twins_0100_diagnostics.json`) | Aligned windows | Mean ANN (×10⁻³) | Top signature token |
+| --- | --- | --- | --- |
+| `mms1_fgm_b_gse_srvy_l2_x__zpos` | 50 | 2.12 | `c0.01_s0.49_e0.99` (48 hits) |
+| `mms1_fgm_b_gse_srvy_l2_z__zpos` | 50 | 2.11 | `c0.01_s0.49_e0.99` (48 hits) |
+| `mms1_fgm_b_gse_srvy_l2_y__up`   | 50 | 2.20 | `c0.01_s0.49_e0.99` (48 hits) |
 
 ### Cross-hour takeaways
 - Structural vocab stays collapsed to 16 tokens across all slices; `time` is the lone non-structural artifact and is now filtered out in delivered lists.
@@ -125,6 +139,20 @@ These small probes show the headline stays intact under resampling and seed abla
 - **Twin diagnostics:** `analysis/mms_twins_0000_diagnostics.json` summarises the three twin hits (mean ANN distance 1.97×10⁻³, 150 aligned windows, dominant `c0.01_s0.49_e0.99` signature).
 - **Lead time:** `analysis/mms_0000_leadtime.json` captures the 5 min bins + monotonic flag (false), showing a rise to **7.4 %** just before onset, with the companion plot `docs/plots/mms_0000_lead.png`.
 - **Visuals:** `docs/plots/mms_0000_overview.png` (full hour) and `docs/plots/mms_0000_zoom.png` (00:30–00:40 UTC) overlay Bx/Bz with `__rangeexp`/`__accel` activity and the calibrated foreground heat strip.
+
+| Midnight structural proposals (`analysis/mms_0000_proposals_struct.json`) | Coh | Ent | Stab | ANN dist |
+| --- | --- | --- | --- | --- |
+| `mms1_fgm_b_gse_srvy_l2_x__zpos` | 7.32×10⁻³ | 0.99268 | 0.46600 | 7.52×10⁻⁴ |
+| `mms1_fgm_b_gse_srvy_l2_z__zpos` | 7.23×10⁻³ | 0.99277 | 0.46580 | 7.28×10⁻⁴ |
+| `mms1_fgm_b_gse_srvy_l2_y__zpos` | 7.43×10⁻³ | 0.99257 | 0.46532 | 1.39×10⁻³ |
+| `mms1_fgm_b_gse_srvy_l2_y__up`   | 7.42×10⁻³ | 0.99258 | 0.46530 | 1.40×10⁻³ |
+
+| Midnight storm→storm twins (`analysis/mms_twins_0000_diagnostics.json`) | Aligned windows | Mean ANN (×10⁻³) | Top signature token |
+| --- | --- | --- | --- |
+| `mms1_fgm_b_gse_srvy_l2_x__zpos` | 50 | 1.93 | `c0.01_s0.49_e0.99` (48 hits) |
+| `mms1_fgm_b_gse_srvy_l2_z__zpos` | 50 | 1.96 | `c0.01_s0.49_e0.99` (48 hits) |
+| `mms1_fgm_b_gse_srvy_l2_y__zpos` | 50 | 2.03 | `c0.01_s0.49_e0.99` (48 hits) |
+
 
 ## Next up
 1. Turn the evidence bundle into the draft “MMS Structural Precursors” note (method, coverage table, proposal/twin tables + diagnostics, lead-time chart, plot plate).
