@@ -1,0 +1,147 @@
+{
+  "target": {
+    "seeds": [
+      "mms1_fgm_b_gse_srvy_l2_x__rangeexp",
+      "mms1_fgm_b_gse_srvy_l2_z__accel"
+    ],
+    "vector": [
+      0.005387052330174898,
+      0.4675775856872774,
+      0.9946129476698251,
+      0.5324224143127225
+    ],
+    "constraints": {
+      "lambda_hazard": [
+        "<=",
+        [
+          "percentile",
+          0.7
+        ]
+      ],
+      "coherence": [
+        ">=",
+        [
+          "percentile",
+          0.6
+        ]
+      ],
+      "entropy": [
+        "<=",
+        [
+          "percentile",
+          0.4
+        ]
+      ]
+    }
+  },
+  "proposals": [
+    {
+      "string": "mms1_fgm_b_gse_srvy_l2_y__zpos",
+      "score": 0.7097676554391288,
+      "metrics": {
+        "coherence": 0.007226290272639219,
+        "stability": 0.46388122605606347,
+        "entropy": 0.9927737097273609,
+        "rupture": 0.5361187739439366
+      },
+      "patternability": 0.45933974050387044,
+      "connector": 0.5,
+      "occurrences": 895,
+      "themes": [],
+      "diagnostics": {
+        "distance": 0.005838813360995322,
+        "pattern_component": 0.9827851036180237,
+        "connector": 0.5,
+        "novelty": 0.1282389896614378,
+        "coherence": 0.007226290272639219,
+        "stability": 0.46388122605606347,
+        "entropy": 0.9927737097273609,
+        "rupture": 0.5361187739439366,
+        "occurrences": 895,
+        "patternability": 0.45933974050387044
+      }
+    },
+    {
+      "string": "mms1_fgm_b_gse_srvy_l2_x__zpos",
+      "score": 0.7094128272754469,
+      "metrics": {
+        "coherence": 0.007364084314737019,
+        "stability": 0.46367176214463535,
+        "entropy": 0.992635915685263,
+        "rupture": 0.5363282378553647
+      },
+      "patternability": 0.4593376851555619,
+      "connector": 0.5,
+      "occurrences": 824,
+      "themes": [],
+      "diagnostics": {
+        "distance": 0.00619097940785445,
+        "pattern_component": 0.9817657258242544,
+        "connector": 0.5,
+        "novelty": 0.1296111871473786,
+        "coherence": 0.007364084314737019,
+        "stability": 0.46367176214463535,
+        "entropy": 0.992635915685263,
+        "rupture": 0.5363282378553647,
+        "occurrences": 824,
+        "patternability": 0.4593376851555619
+      }
+    },
+    {
+      "string": "mms1_fgm_b_gse_srvy_l2_z__up",
+      "score": 0.7077894578465795,
+      "metrics": {
+        "coherence": 0.0072765565720307995,
+        "stability": 0.46322178830358784,
+        "entropy": 0.9927234434279693,
+        "rupture": 0.5367782116964122
+      },
+      "patternability": 0.45926659520147883,
+      "connector": 0.4968750406894683,
+      "occurrences": 778,
+      "themes": [
+        0
+      ],
+      "diagnostics": {
+        "distance": 0.0067146402923386065,
+        "pattern_component": 0.9802538441245642,
+        "connector": 0.4968750406894683,
+        "novelty": 0.13058220914152466,
+        "coherence": 0.0072765565720307995,
+        "stability": 0.46322178830358784,
+        "entropy": 0.9927234434279693,
+        "rupture": 0.5367782116964122,
+        "occurrences": 778,
+        "patternability": 0.45926659520147883
+      }
+    },
+    {
+      "string": "mms1_fgm_b_gse_srvy_l2_z__zpos",
+      "score": 0.7069504405455516,
+      "metrics": {
+        "coherence": 0.0075840208376216495,
+        "stability": 0.4629268441168182,
+        "entropy": 0.9924159791623783,
+        "rupture": 0.5370731558831818
+      },
+      "patternability": 0.4592834210547459,
+      "connector": 0.4968750406894683,
+      "occurrences": 764,
+      "themes": [
+        0
+      ],
+      "diagnostics": {
+        "distance": 0.007274072831352545,
+        "pattern_component": 0.9786438207164658,
+        "connector": 0.4968750406894683,
+        "novelty": 0.13089217963103156,
+        "coherence": 0.0075840208376216495,
+        "stability": 0.4629268441168182,
+        "entropy": 0.9924159791623783,
+        "rupture": 0.5370731558831818,
+        "occurrences": 764,
+        "patternability": 0.4592834210547459
+      }
+    }
+  ]
+}
