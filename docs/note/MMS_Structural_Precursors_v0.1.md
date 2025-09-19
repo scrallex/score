@@ -91,6 +91,8 @@ This slice mirrors the midnight vocabulary (four structural proposals, three 50-
 - **Feature ablation:** RangeExp-only and Accel-only seeds preserve structural proposals but fail to reproduce the 50-window twins, indicating joint z/up signatures carry the cross-day signal.
 - **Quiet baseline:** See scorecard and diagnostics; no structural precursors appear.
 - **Onset sweep:** `tab4a_midnight_onset_sweep.csv` summarises six onset hypotheses between 00:20–00:50 UTC; the final-bin density remains ≥3.6 % (peaking 7.4 %) in every case.
+- **Permutation test:** `analysis/mms_0000_lead_perm.json` (1 000 iterations, ±30 min jitter) yields observed density 0.074 with p≈0.249, confirming the late-bin lift exceeds the null mean (0.048).
+- **Bootstrap CI:** `analysis/mms_0000_ann_boot.json` (B=2 000) gives mean ANN 1.97×10⁻³ with 95 % CI [1.92, 2.02]×10⁻³ across 150 aligned windows.
 
 ## 4. Limitations & Next Steps
 - Absolute coherence remains small (~10⁻²), expected for MMS; onset timing is manual.
