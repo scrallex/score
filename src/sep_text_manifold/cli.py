@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Mapping, Optional
 
 from .pipeline import analyse_directory, compute_summary
 from .propose import propose as run_proposer, propose_from_state, load_state as load_analysis_state
+from .index_builder import build_indices
 
 
 def _load_state(state_file: Path) -> Dict[str, Any]:
@@ -218,6 +219,28 @@ def cmd_propose(args: argparse.Namespace) -> None:
         )
 
 
+def cmd_index_build(args: argparse.Namespace) -> None:
+    state_path = Path(args.state)
+    postings_path = Path(args.postings)
+    ann_path = Path(args.ann)
+    ann_meta_path = Path(args.ann_meta)
+    try:
+        build_indices(
+            state_path=state_path,
+            postings_path=postings_path,
+            ann_path=ann_path,
+            ann_meta_path=ann_meta_path,
+            q=args.q,
+        )
+    except Exception as exc:  # pragma: no cover - CLI surface
+        print(f"Error building indices: {exc}")
+        return
+    print(
+        "Index build complete:\n"
+        f"  postings → {postings_path}\n  ann → {ann_path}\n  meta → {ann_meta_path}"
+    )
+
+
 def _top_strings_for_theme(
     state: Mapping[str, Any],
     theme_index: int,
@@ -352,6 +375,16 @@ def main(argv: Optional[List[str]] = None) -> None:
     p_discover.add_argument("--target-profile", help="Target metric profile constraints, e.g. coh>=0.7,ent<=0.3")
     p_discover.add_argument("--output", help="Optional path to write discovery JSON")
     p_discover.set_defaults(func=cmd_discover)
+    # Index command
+    p_index = subparsers.add_parser("index", help="Index management (postings/ANN)")
+    index_sub = p_index.add_subparsers(dest="index_command", required=True)
+    p_index_build = index_sub.add_parser("build", help="Build signature postings and ANN index")
+    p_index_build.add_argument("--state", required=True, help="State JSON produced by 'stm ingest --store-signals'")
+    p_index_build.add_argument("--postings", default="analysis/signature_postings.json", help="Output path for signature postings JSON")
+    p_index_build.add_argument("--ann", default="analysis/ann.hnsw", help="Output path for ANN index file")
+    p_index_build.add_argument("--ann-meta", default="analysis/ann.meta", help="Output path for ANN metadata JSON")
+    p_index_build.add_argument("--q", type=int, default=3, help="Signature q-gram length")
+    p_index_build.set_defaults(func=cmd_index_build)
     args = parser.parse_args(argv)
     args.func(args)
 

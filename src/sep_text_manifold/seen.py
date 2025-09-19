@@ -4,17 +4,31 @@ import json
 from pathlib import Path
 from typing import Dict, Iterable, List, Sequence, Tuple
 
-import hnswlib
 import numpy as np
+
+try:  # Optional dependency – index build ensures availability
+    import hnswlib  # type: ignore
+except ImportError as exc:  # pragma: no cover - gracefully handled by callers
+    hnswlib = None  # type: ignore
+    _HNSW_IMPORT_ERROR = exc
+else:
+    _HNSW_IMPORT_ERROR = None
 
 
 class SeenEngine:
     """Routes trigger strings to foreground/deferred manifold windows."""
 
     def __init__(self, base_path: Path | str = Path("analysis")) -> None:
-        base = Path(base_path)
-        self.state: Dict[str, object] = json.loads((base / "score_state_native.json").read_text())
-        self.router: Dict[str, object] = json.loads((base / "router_config.json").read_text())
+        self.base = Path(base_path)
+        state_path = self.base / "score_state_native.json"
+        router_path = self.base / "router_config.json"
+        if not state_path.exists():
+            raise FileNotFoundError(f"State file not found: {state_path}. Run 'stm ingest --store-signals' first.")
+        if not router_path.exists():
+            raise FileNotFoundError(f"Router config not found: {router_path}.")
+        self.state: Dict[str, object] = json.loads(state_path.read_text())
+        self.router_path = router_path
+        self.router = self._load_router()
 
         # Window map (id -> signal)
         ordered_signals = sorted(self.state.get("signals", []), key=lambda s: s["id"])  # type: ignore[arg-type]
@@ -26,19 +40,37 @@ class SeenEngine:
         self.strings: Dict[str, Dict[str, object]] = self.state.get("string_scores", {})  # type: ignore[assignment]
 
         # Signature postings (q-gram -> window ids)
-        postings_raw = json.loads((base / "signature_postings.json").read_text())
+        postings_file = self.base / "signature_postings.json"
+        if not postings_file.exists():
+            raise FileNotFoundError(
+                f"Signature postings not found: {postings_file}. Run 'stm index build' after ingest."
+            )
+        postings_raw = json.loads(postings_file.read_text())
         self.postings: Dict[Tuple[str, ...], set[int]] = {
             tuple(key.split("\u001f")): set(map(int, ids)) for key, ids in postings_raw.items()
         }
 
         # ANN index
-        meta = json.loads((base / "ann.meta").read_text())
+        ann_meta = self.base / "ann.meta"
+        ann_index = self.base / "ann.hnsw"
+        if not ann_meta.exists() or not ann_index.exists():
+            raise FileNotFoundError(
+                f"ANN index/meta missing ({ann_index}, {ann_meta}). Run 'stm index build' first."
+            )
+        if hnswlib is None:
+            raise ImportError(
+                "hnswlib is required for the seen router. Install with 'pip install hnswlib' or 'pip install .[index]'."
+            ) from _HNSW_IMPORT_ERROR
+        meta = json.loads(ann_meta.read_text())
         dim = int(meta["dim"])
         self.ann = hnswlib.Index(space="l2", dim=dim)
-        self.ann.load_index(str(base / "ann.hnsw"))
-        self.ann.set_ef(100)
+        self.ann.load_index(str(ann_index))
+        self.ann.set_ef(int(meta.get("ef", 100)))
 
     # --- helpers ---------------------------------------------------------
+
+    def _load_router(self) -> Dict[str, object]:
+        return json.loads(self.router_path.read_text())
 
     def locate_trigger_windows(self, trigger: str) -> set[int]:
         entry = self.strings.get(trigger)
@@ -98,7 +130,8 @@ class SeenEngine:
         return {int(lbl) for lbl, dist in zip(labels[0], distances[0]) if dist <= max_dist}
 
     def route(self, candidates: Iterable[int]) -> Tuple[List[Dict[str, object]], List[Dict[str, object]]]:
-        cfg = self.router["router"]["foreground"]  # type: ignore[index]
+        router = self._load_router()
+        cfg = router["router"]["foreground"]  # type: ignore[index]
         min_coh = float(cfg.get("min_coh", 0.8))
         max_ent = float(cfg.get("max_ent", 0.35))
         foreground: List[Dict[str, object]] = []
@@ -131,13 +164,64 @@ class SeenEngine:
         if not seeds:
             return {"foreground": [], "deferred": []}
         centroid = self.centroid(seeds)
-        trig_cfg = self.router["router"]["triggers"]  # type: ignore[index]
+        router = self._load_router()
+        trig_cfg = router["router"]["triggers"]  # type: ignore[index]
         max_dist = float(trig_cfg.get("max_ann_dist", 0.20))
         q_hits = self.qgram_hits(seeds, q=int(trig_cfg.get("min_sig_qgrams", 2)))
         ann_hits = self.ann_hits(centroid, max_dist=max_dist) if centroid is not None else set()
         candidates = seeds | q_hits | ann_hits
         fg, df = self.route(candidates)
         return {"foreground": fg, "deferred": df}
+
+    def update_window(self, record: Dict[str, object]) -> None:
+        """Incrementally add a new window from the manifold log."""
+        if hnswlib is None:
+            raise ImportError(
+                "hnswlib is required for router updates. Install with 'pip install hnswlib'."
+            ) from _HNSW_IMPORT_ERROR
+        wid = int(record["window_id"])
+        metrics = {
+            "coherence": float(record.get("coherence", 0.0)),
+            "stability": float(record.get("stability", 0.0)),
+            "entropy": float(record.get("entropy", 1.0)),
+            "rupture": float(record.get("rupture", 0.0)),
+        }
+        signal = {
+            "id": wid,
+            "window_start": record.get("window_start"),
+            "window_end": record.get("window_end"),
+            "index": record.get("window_end"),
+            "metrics": metrics,
+            "signature": record.get("signature"),
+            "lambda_hazard": record.get("lambda_hazard", metrics["rupture"]),
+        }
+        self.windows[wid] = signal
+        self.id_order.append(wid)
+        self.id_to_pos[wid] = len(self.id_order) - 1
+        signature = str(record.get("signature", ""))
+        self.signature_sequence.append(signature)
+
+        # Update q-gram postings
+        router = self._load_router()
+        q = int(router["router"]["triggers"].get("min_sig_qgrams", 2))  # type: ignore[index]
+        if q <= 0:
+            q = 1
+        n = len(self.signature_sequence)
+        start_min = max(0, n - q)
+        for start in range(start_min, n):
+            if start + q > n:
+                continue
+            key = tuple(self.signature_sequence[start : start + q])
+            self.postings.setdefault(key, set()).add(wid)
+
+        # Update ANN index
+        vec = self.window_vector(wid)
+        if vec is not None:
+            current = self.ann.get_current_count()
+            max_elements = self.ann.get_max_elements()
+            if current >= max_elements:
+                self.ann.resize_index(max_elements + max(1, max_elements // 2))
+            self.ann.add_items(vec.reshape(1, -1), np.array([wid], dtype=np.int64))
 
 
 _engine: SeenEngine | None = None

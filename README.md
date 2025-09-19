@@ -40,40 +40,27 @@ stm themes
 stm propose --seeds signature,manifold_builder --min-connector 0.35 --top 10
 stm discover --theme-a 0 --theme-b 2 --min-connector 0.3 --top 10
 
-# Build the routing indices (signature postings + ANN)
-PYTHONPATH=src python - <<'PY'
-import json
-from collections import defaultdict
-from pathlib import Path
-state = json.load(open('analysis/score_state_native.json'))
-signals = sorted(state['signals'], key=lambda s: s['id'])
-postings = defaultdict(set)
-q=3
-for i in range(len(signals)-q+1):
-    qgram = tuple(signals[j]['signature'] for j in range(i, i+q))
-    postings[qgram].add(signals[i+q-1]['id'])
-Path('analysis').mkdir(exist_ok=True)
-json.dump({"\u001f".join(k): sorted(v) for k,v in postings.items()}, open('analysis/signature_postings.json','w'))
-PY
+# Build routing indices (signature q-grams + ANN)
+stm index build \
+  --state analysis/score_state_native.json \
+  --postings analysis/signature_postings.json \
+  --ann analysis/ann.hnsw --ann-meta analysis/ann.meta
 
-PYTHONPATH=src python - <<'PY'
-import json, numpy as np, hnswlib
-state=json.load(open('analysis/score_state_native.json'))
-vecs=[[s['metrics']['coherence'], s['metrics']['stability'],
-       s['metrics']['entropy'], s['metrics']['rupture'], s['lambda_hazard']] for s in state['signals']]
-ids=[s['id'] for s in state['signals']]
-vecs=np.asarray(vecs, dtype=np.float32); ids=np.asarray(ids, dtype=np.int64)
-index=hnswlib.Index(space='l2',dim=vecs.shape[1])
-index.init_index(max_elements=len(vecs), ef_construction=200, M=32)
-index.add_items(vecs, ids); index.set_ef(100)
-index.save_index('analysis/ann.hnsw')
-json.dump({'dim': vecs.shape[1], 'count': len(vecs)}, open('analysis/ann.meta','w'))
-PY
-
-# Call the context router once (foreground vs deferred)
+# Verify foreground/deferred routing
 PYTHONPATH=src python - <<'PY'
 from sep_text_manifold.seen import get_engine
 print(get_engine().seen('allocator'))
+PY
+
+# Follow the manifold log to keep the router hot
+PYTHONPATH=src python - <<'PY'
+from sep_text_manifold.stream import follow_log
+from sep_text_manifold.seen import get_engine
+
+engine = get_engine()
+for record in follow_log('analysis/manifold.log'):
+    engine.update_window(record)
+    break  # remove to stream continuously
 PY
 ```
 

@@ -49,9 +49,7 @@ stm strings --input state.json --top 10  # Top patternable strings
 stm themes --input state.json  # List themes
 stm propose --input state.json --seeds "quantum,metrics" --k 5  # Bridge proposals
 stm discover --input state.json --mode cross-theme --theme-a 0 --theme-b 2
-
-# Context routing shortcuts
-# build signature + ANN indices (see README for full script)
+stm index build --state state.json --postings analysis/signature_postings.json --ann analysis/ann.hnsw --ann-meta analysis/ann.meta
 python -m sep_text_manifold.seen   # verifies /stm/seen foreground/deferred router
 ```
 
