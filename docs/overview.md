@@ -41,7 +41,12 @@ Key ideas:
    strings representing themes in the corpus.  Additional graph
    analytics identify connector strings that bridge themes.
 
-This repository contains skeleton code for each of these steps.  The
-actual quantum algorithms are not reimplemented here; instead, you
-should port or wrap the QFH and QBSA implementations from the core
-SEP repositories (see `integration_with_sep.md`).
+This repository now includes an executable pipeline
+(`sep_text_manifold.pipeline.analyse_directory`) and a CLI (`stm`) that
+run these steps end-to-end on a directory of text files.  The pipeline
+produces manifold windows, aggregated string profiles, connector
+scores and theme assignments which can be inspected via
+`stm summary`, `stm strings` and `stm themes`.  The actual quantum
+algorithms are not reimplemented here; instead, you should port or
+wrap the QFH and QBSA implementations from the core SEP repositories
+(see `integration_with_sep.md`).

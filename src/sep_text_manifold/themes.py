@@ -118,7 +118,7 @@ def compute_graph_metrics(graph: "Graph") -> Dict[str, Dict[str, float]]:
     metrics: Dict[str, Dict[str, float]] = {}
     if nx is not None and isinstance(graph, nx.Graph):
         # Normalised betweenness centrality
-        bet = nx.betweenness_centrality(graph, normalised=True)
+        bet = nx.betweenness_centrality(graph, normalized=True)
         # Use bridging centrality approximation: edges bridging clusters have
         # high betweenness; reuse betweenness for bridging for now.
         bridging = bet

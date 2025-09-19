@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -100,7 +100,8 @@ def cmd_ingest(args: argparse.Namespace) -> None:
         include_profiles=args.store_profiles,
     )
     state["summary"] = summary
-    state["generated_at"] = datetime.utcnow().isoformat() + "Z"
+    generated_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    state["generated_at"] = generated_at
     _save_state(state_file, state)
     print(f"Analysis complete.  Saved state to {state_file}")
     print()

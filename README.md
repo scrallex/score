@@ -33,8 +33,8 @@ Once installed you can ingest a corpus and perform an initial analysis
 using the command line interface:
 
 ```bash
-stm ingest /path/to/text/data --window-bytes 2048 --stride 1024
-stm analyse
+stm ingest /path/to/text/data --window-bytes 2048 --stride 1024 --summary-top 15
+stm summary
 stm strings --top 50
 stm themes
 ```
@@ -44,10 +44,11 @@ For details on the commands and available options run `stm --help`.
 ## Repository structure
 
 - `src/sep_text_manifold/` – the Python package containing ingestion,
-  encoding, manifold construction, string analysis, scoring and API
-  definitions.
+  encoding, manifold construction, the analysis pipeline, string
+  scoring, theme detection and API definitions.
 - `docs/` – design notes and integration guidelines.
-- `tests/` – unit tests (empty for now).
+- `tests/` – pytest-based regression suite covering the pipeline and
+  CLI.
 
 ## Contributing
 

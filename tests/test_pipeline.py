@@ -17,7 +17,7 @@ def test_analyse_directory_basic(tmp_path):
     corpus = _build_corpus(tmp_path)
     result = analyse_directory(str(corpus), window_bytes=64, stride=32)
 
-    assert result.settings.directory.endswith(str(corpus))
+    assert Path(result.settings.directory) == corpus.resolve()
     assert len(result.files) == 2
     assert result.token_count == 6
     assert "alpha" in result.string_scores

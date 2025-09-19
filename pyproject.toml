@@ -18,5 +18,10 @@ dependencies = [
     "networkx>=3.0",
 ]
 
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+]
+
 [project.scripts]
 stm = "sep_text_manifold.cli:main"
