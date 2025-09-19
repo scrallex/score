@@ -26,13 +26,21 @@ def encode_bits(frame: pd.DataFrame, columns: list[str]) -> pd.DataFrame:
         rolling_std = series.rolling(window=301, min_periods=1, center=True).std().fillna(0.0).to_numpy()
         zscore = (values - rolling_med) / (rolling_std + 1e-12)
 
-        bits = {
-            f"{column}__UP": (dx > 0).astype(np.uint8),
-            f"{column}__ACCEL": (ddx > 0).astype(np.uint8),
-            f"{column}__RANGEEXP": (ddev > 0).astype(np.uint8),
-            f"{column}__ZPOS": (zscore > 0).astype(np.uint8),
+        mask_up = dx > 0
+        mask_accel = ddx > 0
+        mask_range = ddev > 0
+        mask_zpos = zscore > 0
+        columns_map = {
+            f"{column}__UP": mask_up,
+            f"{column}__ACCEL": mask_accel,
+            f"{column}__RANGEEXP": mask_range,
+            f"{column}__ZPOS": mask_zpos,
         }
-        outputs.append(pd.DataFrame(bits, index=frame.index))
+        data = {
+            name: np.where(mask, name, "")
+            for name, mask in columns_map.items()
+        }
+        outputs.append(pd.DataFrame(data, index=frame.index))
     if not outputs:
         return pd.DataFrame(index=frame.index)
     return pd.concat(outputs, axis=1)
