@@ -28,6 +28,9 @@ demo = [
 native = [
     "pybind11>=2.11",
 ]
+index = [
+    "hnswlib>=0.8.0",
+]
 
 [project.scripts]
 stm = "sep_text_manifold.cli:main"

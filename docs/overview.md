@@ -1,53 +1,71 @@
-# Overview
+# Sep Text Manifold Overview
 
-The Sep Text Manifold project is inspired by the SEP Engine’s ability
-to uncover hidden order in live data streams by analysing transitions
-in a stream of bits.  While the original SEP focus was on financial
-market data, the underlying theory is domain‑agnostic.  Any data
-source that can be reduced to a sequence of bytes can be analysed in
-the same way.  This project adapts the SEP methodology to the problem
-of **bulk text analysis**.
+The Sep Text Manifold (STM) is a quantum-inspired framework for analyzing text corpora to uncover hidden patterns, repetitive motifs, and thematic structures. Drawing from the SEP Engine's Quantum Field Harmonics (QFH) algorithms—originally developed for financial time-series analysis—STM adapts these techniques to treat text as a byte stream, detecting "echoes" of repetition and stability at the bit level.
 
-Key ideas:
+## Core Principles
 
-1. **Byte‑level encoding** – All text is treated as raw bytes.  We do
-   not tokenize or normalise into words before computing the quantum
-   metrics.  This is important because the SEP algorithms operate on
-   transitions between bits, not on higher‑level semantics.
+STM processes text without traditional NLP tokenization or semantics, focusing instead on raw byte transitions to compute informational metrics:
 
-2. **Sliding windows** – We process the byte stream using overlapping
-   windows (e.g., 2 KB windows with a 1 KB stride).  For each window we
-   compute quantum metrics such as coherence, stability, entropy and
-   rupture.  These metrics summarise how structured or noisy the
-   recent data is.
+1. **Byte-Level Processing**: Text files are read as UTF-8 bytes and concatenated into a continuous stream (with separators). This preserves the natural "rhythm" of the data.
 
-3. **Manifold build** – The metrics for each window are assembled
-   chronologically into a **manifold**.  A manifold is essentially
-   an ordered list of “dynamic fingerprints” summarising the recent
-   information flow, along with repetition signatures and hazard
-   estimates.
+2. **Sliding Windows and Manifolds**: Overlapping windows (default: 2048 bytes, 1024-byte stride) are analyzed to produce a *manifold*—a chronological sequence of *dynamic fingerprints*. Each fingerprint includes:
+   - **Metrics**: Coherence (pattern consistency, [0,1]), Stability (persistence, [0,1]), Entropy (uncertainty, [0,1]), Rupture (structural breaks, [0,1]).
+   - **Signature**: A coarse hash (e.g., "c0.85_s0.92_e0.15") for repetition detection.
+   - **Hazard**: Lambda hazard rate, indicating collapse risk.
 
-4. **String extraction** – After computing signals on the byte level,
-   we tokenise the original text into words and phrases.  Each string
-   occurrence is aligned back onto the windows that overlap it.
-   Aggregating the window metrics over all occurrences of a string
-   yields measures of how coherent, stable, entropic or ruptured that
-   string tends to be.  This allows us to surface strings that have
-   unusually high patternability or act as connectors between
-   different topics.
+3. **String Extraction and Aggregation**: Alphanumeric tokens (words/phrases) are extracted and aligned to covering windows. Metrics are aggregated (means) per string, yielding profiles of how "patternable" (high coherence/stability, low entropy/rupture) each string is across its occurrences.
 
-5. **Theme detection** – Strings are connected via co‑occurrence
-   graphs.  Community detection over this graph yields clusters of
-   strings representing themes in the corpus.  Additional graph
-   analytics identify connector strings that bridge themes.
+4. **Graph-Based Themes**: Strings are connected via co-occurrence in windows (filtered by PMI and degree). Community detection identifies *themes*—clusters of related motifs. Graph analytics (betweenness, entropy) highlight *connectors*—strings bridging themes.
 
-This repository now includes an executable pipeline
-(`sep_text_manifold.pipeline.analyse_directory`) and a CLI (`stm`) that
-run these steps end-to-end on a directory of text files.  The pipeline
-produces manifold windows, aggregated string profiles, connector
-scores, theme assignments, bridge-string proposals (`stm propose`,
-`stm discover`) and can be surfaced through a lightweight demo API.
-The actual quantum
-algorithms are not reimplemented here; instead, you should port or
-wrap the QFH and QBSA implementations from the core SEP repositories
-(see `integration_with_sep.md`).
+5. **Discovery and Querying**: Tools generate "bridge strings" (proposals matching seed centroids) and enable fast retrieval (ANN + q-grams in the *seen* engine) for trigger-based pattern surfacing.
+
+This approach reveals non-semantic structures: repetitive phrases in stable contexts, thematic bridges, and noisy vs. ordered regions—useful for document analysis, motif mining, or anomaly detection.
+
+## Architecture Layers
+
+- **C++ Core (QFH Engine)**: Native bitstream analysis for metrics (qfh.cpp/h, manifold_builder.cpp/h). Bound via pybind11 (sep_quantum.cpp) for Python acceleration. Fallback Python implementations in encode.py.
+
+- **Python Pipeline**: Ingestion (ingest.py), windowing/manifold (manifold.py), extraction/aggregation (strings.py), theming (themes.py), scoring (scoring.py). Full orchestration in pipeline.py.
+
+- **Utilities**: CLI (cli.py) for ingest/summary/propose; API (api.py) for serving; seen.py for indexed queries; binary logging (binary_log.py).
+
+- **Data Flow**:
+  ```
+  Text Directory → Ingest Bytes → Sliding Windows → QFH Metrics → Manifold Signals
+                  ↓
+  Extract Tokens → Align to Windows → Aggregate Profiles → Co-occurrence Graph → Themes/Scores
+                  ↓
+  CLI/API/Seen Queries → Proposals/Themes/Retrievals
+  ```
+
+## Usage
+
+Install: `pip install -e .` (requires C++ build for native).
+
+CLI Example:
+```
+stm ingest ./docs --output state.json  # Analyze directory
+stm strings --input state.json --top 10  # Top patternable strings
+stm themes --input state.json  # List themes
+stm propose --input state.json --seeds "quantum,metrics" --k 5  # Bridge proposals
+stm discover --input state.json --mode cross-theme --theme-a 0 --theme-b 2
+
+# Context routing shortcuts
+# build signature + ANN indices (see README for full script)
+python -m sep_text_manifold.seen   # verifies /stm/seen foreground/deferred router
+```
+
+API: Run `uvicorn sep_text_manifold.api:app` for endpoints like `/strings/search`, `/discover`.
+
+For integration with full SEP Engine, see [integration_with_sep.md](integration_with_sep.md).
+
+## Limitations and Extensions
+
+- **Current Scope**: Focuses on English alphanumeric tokens; extend regex in strings.py for phrases/n-grams.
+- **Performance**: Native QFH scales to large corpora; Python fallbacks for prototyping.
+- **No Semantics**: Bit-level ignores meaning—combine with embeddings for hybrid analysis.
+- **Themes**: Relies on co-occurrence; tune graph params (min_pmi, max_degree) in pipeline.py.
+
+STM transforms text into a "quantum manifold" for pattern discovery. Future work: Streaming ingestion, vector embeddings, multi-language support.
+
+Last Updated: 2025-09-19

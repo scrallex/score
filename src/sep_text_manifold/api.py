@@ -17,6 +17,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from .propose import propose_from_state, load_state as load_analysis_state
+from .seen import get_engine
 
 
 class Metrics(BaseModel):
@@ -140,3 +141,12 @@ def discover_strings(request: DiscoverRequest) -> Dict[str, Any]:
     except ValueError as exc:  # pragma: no cover - guarded by validation
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return result
+
+
+@app.post("/seen")
+def seen_context(payload: Dict[str, Any]) -> Dict[str, Any]:
+    trigger = payload.get("trigger")
+    if not trigger:
+        raise HTTPException(status_code=400, detail="Missing 'trigger' field")
+    engine = get_engine()
+    return engine.seen(str(trigger))

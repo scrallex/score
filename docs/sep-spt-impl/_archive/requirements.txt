@@ -1,6 +1,0 @@
-mkdocs>=1.6
-mkdocs-material>=9.5
-mkdocs-git-revision-date-localized-plugin>=1.2
-pymdown-extensions>=10.8
-mkdocs-redirects>=1.2
-PyYAML>=6.0.1

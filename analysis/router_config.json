@@ -1,0 +1,12 @@
+{
+  "router": {
+    "foreground": {
+      "min_coh": 0.45,
+      "max_ent": 0.95
+    },
+    "triggers": {
+      "min_sig_qgrams": 2,
+      "max_ann_dist": 0.2
+    }
+  }
+}
