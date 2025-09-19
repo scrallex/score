@@ -8,7 +8,9 @@ from typing import Any, Dict
 
 import yaml
 
-from .router import RouterConfig, StreamingRouter
+import uvicorn
+
+from .runtime import StreamingRuntime
 
 
 def parse_args() -> argparse.Namespace:
@@ -25,13 +27,10 @@ def load_config(path: Path) -> Dict[str, Any]:
 def main() -> None:
     args = parse_args()
     cfg = load_config(Path(args.config))
-    guardrail = cfg.get("router", {}).get("guardrail", {})
-    router = StreamingRouter(
-        RouterConfig(
-            coverage_min=float(guardrail.get("coverage_min", 0.05)),
-            coverage_max=float(guardrail.get("coverage_max", 0.20)),
-        )
-    )
-    print("STM streaming runtime not fully implemented yet.")
-    print(f"Loaded config: {args.config}")
-    print(f"Router guardrail: {router.config}")
+    runtime = StreamingRuntime(cfg)
+    runtime.start()
+    app = runtime.create_app()
+    api_cfg = cfg.get("api", {})
+    host = api_cfg.get("host", "0.0.0.0")
+    port = int(api_cfg.get("port", 8000))
+    uvicorn.run(app, host=host, port=port)

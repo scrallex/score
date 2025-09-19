@@ -17,6 +17,7 @@ dependencies = [
     # Optional dependency for community detection and centrality metrics
     "networkx>=3.0",
     "numpy>=1.23",
+    "PyYAML>=6.0",
 ]
 
 

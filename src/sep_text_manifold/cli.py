@@ -17,6 +17,8 @@ from __future__ import annotations
 import argparse
 import json
 from datetime import datetime, timezone
+import shutil
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional
 
@@ -112,16 +114,34 @@ def _collect_seeds(args: argparse.Namespace) -> List[str]:
 
 
 def cmd_ingest(args: argparse.Namespace) -> None:
-    """Ingest a directory of text files and analyse it."""
-    directory = args.directory
+    """Ingest a directory of text files (or adapter output) and analyse it."""
+    source_path = Path(args.directory)
+    cleanup_dir: Optional[Path] = None
+    directory_path: Path
+    extensions = args.extensions
+    adapter_name = getattr(args, "adapter", None)
+    if adapter_name:
+        from stm_adapters import get_adapter
+
+        adapter = get_adapter(adapter_name)
+        tmp_dir = Path(tempfile.mkdtemp(prefix="stm_adapter_"))
+        tokens_path = adapter.run(source_path, tmp_dir)
+        directory_path = tokens_path.parent
+        if not extensions:
+            extensions = ["txt"]
+        if not args.keep_adapter_output:
+            cleanup_dir = tmp_dir
+    else:
+        directory_path = source_path
+
     window_bytes = args.window_bytes
     stride = args.stride
     state_file = Path(args.output)
     result = analyse_directory(
-        directory,
+        str(directory_path),
         window_bytes=window_bytes,
         stride=stride,
-        extensions=args.extensions,
+        extensions=extensions,
         verbose=args.verbose,
         min_token_length=args.min_token_len,
         min_alpha_ratio=args.alpha_ratio,
@@ -146,6 +166,8 @@ def cmd_ingest(args: argparse.Namespace) -> None:
     print(f"Analysis complete.  Saved state to {state_file}")
     print()
     _print_summary(summary)
+    if cleanup_dir is not None:
+        shutil.rmtree(cleanup_dir, ignore_errors=True)
 
 
 def cmd_strings(args: argparse.Namespace) -> None:
@@ -413,7 +435,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     subparsers = parser.add_subparsers(dest="command", required=True)
     # Ingest command
     p_ingest = subparsers.add_parser("ingest", help="Ingest and analyse a directory of text files")
-    p_ingest.add_argument("directory", help="Directory containing text files to analyse")
+    p_ingest.add_argument("directory", help="Directory containing text files (or raw file when using --adapter)")
     p_ingest.add_argument("--window-bytes", dest="window_bytes", type=int, default=2048, help="Size of sliding window in bytes")
     p_ingest.add_argument("--stride", dest="stride", type=int, default=1024, help="Stride between windows in bytes")
     p_ingest.add_argument("--extensions", nargs="*", help="Optional list of file extensions to include (e.g. txt md)")
@@ -432,6 +454,8 @@ def main(argv: Optional[List[str]] = None) -> None:
     p_ingest.add_argument("--theme-min-size", dest="theme_min_size", type=int, default=1, help="Minimum number of members required for a theme")
     p_ingest.add_argument("--log-file", dest="log_file", help="Optional path to append-only manifold log")
     p_ingest.add_argument("--verbose", action="store_true", help="Print progress information during analysis")
+    p_ingest.add_argument("--adapter", help="Adapter name for preprocessing telemetry (e.g. nasa_themis)")
+    p_ingest.add_argument("--keep-adapter-output", action="store_true", help="Preserve intermediate adapter artefacts")
     p_ingest.set_defaults(func=cmd_ingest)
     # Strings command
     p_strings = subparsers.add_parser("strings", help="List strings by patternability")

@@ -19,3 +19,13 @@ make scorecard
 ```bash
 stm stream --config configs/mms_stream.yaml
 ```
+
+## Auto-label onsets and compute lead-time (guardrail rules)
+
+```bash
+stm onsets --state analysis/mms_0000_state.json \
+  --config analysis/router_config_0000.json \
+  --start 2017-09-08T00:00:00 --stop 2017-09-08T01:00:00 \
+  --lead-output analysis/mms_0000_lead_autolabel.json \
+  --lead-plot docs/plots/mms_0000_lead_autolabel.png
+```
