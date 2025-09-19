@@ -92,6 +92,7 @@ def cmd_ingest(args: argparse.Namespace) -> None:
         window_bytes=window_bytes,
         stride=stride,
         extensions=args.extensions,
+        verbose=args.verbose,
     )
     summary = result.summary(top=args.summary_top)
     state = result.to_state(
@@ -175,6 +176,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     p_ingest.add_argument("--store-occurrences", action="store_true", help="Persist raw string occurrences in the output state")
     p_ingest.add_argument("--store-profiles", action="store_true", help="Persist aggregated string profiles in the output state")
     p_ingest.add_argument("--summary-top", dest="summary_top", type=int, default=10, help="Number of top items to include in the summary output")
+    p_ingest.add_argument("--verbose", action="store_true", help="Print progress information during analysis")
     p_ingest.set_defaults(func=cmd_ingest)
     # Strings command
     p_strings = subparsers.add_parser("strings", help="List strings by patternability")

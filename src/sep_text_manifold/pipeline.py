@@ -89,6 +89,7 @@ def analyse_directory(
     window_bytes: int = 2048,
     stride: int = 1024,
     extensions: Optional[Iterable[str]] = None,
+    verbose: bool = False,
 ) -> AnalysisResult:
     root = Path(directory)
     if not root.is_dir():
@@ -107,6 +108,11 @@ def analyse_directory(
         data_bytes = text.encode("utf-8")
         corpus_bytes.extend(data_bytes)
         corpus_bytes.append(0)
+        if verbose:
+            print(
+                f"[stm] processed {file_id} ({len(data_bytes)} bytes, {len(occs)} tokens)",
+                flush=True,
+            )
         files.append(
             FileDigest(
                 file_id=file_id,
@@ -118,6 +124,8 @@ def analyse_directory(
         )
         current_offset += len(data_bytes) + 1
     signals = build_manifold(bytes(corpus_bytes), window_bytes=window_bytes, stride=stride)
+    if verbose:
+        print(f"[stm] manifold windows: {len(signals)}", flush=True)
     string_profiles = aggregate_string_metrics(
         tokenised_occurrences,
         signals,
