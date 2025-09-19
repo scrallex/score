@@ -123,15 +123,20 @@ def analyse_directory(
             )
         )
         current_offset += len(data_bytes) + 1
+    if verbose:
+        print(f"[stm] building manifold ({len(corpus_bytes)} bytes)", flush=True)
     signals = build_manifold(bytes(corpus_bytes), window_bytes=window_bytes, stride=stride)
     if verbose:
         print(f"[stm] manifold windows: {len(signals)}", flush=True)
+        print("[stm] aggregating string metrics", flush=True)
     string_profiles = aggregate_string_metrics(
         tokenised_occurrences,
         signals,
         window_bytes=window_bytes,
         stride=stride,
     )
+    if verbose:
+        print(f"[stm] strings with profiles: {len(string_profiles)}", flush=True)
     string_scores: Dict[str, Dict[str, Any]] = {}
     for s, profile in string_profiles.items():
         metrics = profile.get("metrics", {})
@@ -150,9 +155,16 @@ def analyse_directory(
         for field, value in metrics.items():
             entry[field] = value
         string_scores[s] = entry
-    graph = build_theme_graph({s: prof.get("window_ids", []) for s, prof in string_profiles.items()})
+    if verbose:
+        print("[stm] computing theme graph", flush=True)
+    graph = build_theme_graph(
+        {s: prof.get("window_ids", []) for s, prof in string_profiles.items()},
+        max_members_per_window=80,
+    )
     graph_metrics = compute_graph_metrics(graph)
     themes = [sorted(list(t)) for t in detect_themes(graph)]
+    if verbose:
+        print(f"[stm] themes detected: {len(themes)}", flush=True)
     for s, entry in string_scores.items():
         gm = graph_metrics.get(s, {})
         c_score = connector_score(

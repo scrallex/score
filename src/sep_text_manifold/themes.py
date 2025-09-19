@@ -19,7 +19,12 @@ except ImportError:  # pragma: no cover
     nx = None  # type: ignore
 
 
-def build_theme_graph(string_windows: Dict[str, Iterable[int]], *, cooccurrence_threshold: int = 1) -> "Graph":
+def build_theme_graph(
+    string_windows: Dict[str, Iterable[int]],
+    *,
+    cooccurrence_threshold: int = 1,
+    max_members_per_window: int = 100,
+) -> "Graph":
     """Build an undirected co‑occurrence graph from string window coverage.
 
     Parameters
@@ -50,7 +55,10 @@ def build_theme_graph(string_windows: Dict[str, Iterable[int]], *, cooccurrence_
     for members in window_buckets.values():
         if len(members) < 2:
             continue
-        for u, v in combinations(sorted(set(members)), 2):
+        unique_members = sorted(set(members))
+        if max_members_per_window and len(unique_members) > max_members_per_window:
+            unique_members = unique_members[:max_members_per_window]
+        for u, v in combinations(unique_members, 2):
             edge_weights[(u, v)] += 1
     if nx is not None:
         G = nx.Graph()
