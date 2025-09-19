@@ -1,0 +1,2 @@
+[console_scripts]
+stm = sep_text_manifold.cli:main

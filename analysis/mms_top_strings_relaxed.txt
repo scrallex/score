@@ -1,0 +1,9 @@
+  1. mms1_dis_bulkv_gse_fast_z pattern=0.467 connector=0.499 occ=5
+  2. mms1_dis_numberdensity_bg_fast pattern=0.467 connector=0.499 occ=5
+  3. mms1_fgm_b_gse_srvy_l2_x pattern=0.467 connector=0.499 occ=5
+  4. mms1_fgm_b_gse_srvy_l2_y pattern=0.467 connector=0.499 occ=5
+  5. mms1_fgm_b_gse_srvy_l2_z pattern=0.467 connector=0.499 occ=5
+  6. mms1_fgm_b_gse_srvy_l2_mag pattern=0.467 connector=0.499 occ=5
+  7. mms1_dis_bulkv_gse_fast_y pattern=0.467 connector=0.499 occ=5
+  8. time                     pattern=0.467 connector=0.574 occ=10
+  9. mms1_dis_bulkv_gse_fast_x pattern=0.467 connector=0.499 occ=5

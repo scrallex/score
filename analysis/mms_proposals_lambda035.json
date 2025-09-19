@@ -1,0 +1,21 @@
+{
+  "target": {
+    "seeds": [
+      "mms1_fgm_b_gse_srvy_l2_x",
+      "mms1_dis_bulkv_gse_fast_z"
+    ],
+    "vector": [
+      0.012682034704185656,
+      0.5191802656031688,
+      0.9873179652958144,
+      0.48081973439683123
+    ],
+    "constraints": {
+      "lambda_hazard": [
+        "<=",
+        0.35
+      ]
+    }
+  },
+  "proposals": []
+}
