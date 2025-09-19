@@ -24,4 +24,4 @@
 ## Contact
 - Snapshot repo package: `MMS_structural_precursors_v0.1.zip`
 - QuickStart & API docs: `/docs/TOOL_QUICKSTART.md`, `/docs/API.md`
-- Reach: <your-name@company.com> / <phone>
+- Reach: <alex@sepdynamics.com> / <phone>
