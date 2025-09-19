@@ -1,8 +1,9 @@
 {
   "router": {
     "foreground": {
-      "min_coh": 0.01,
-      "max_ent": 0.99
+      "min_coh": 0.010221400550120552,
+      "max_ent": 0.9907633337049657,
+      "min_stab": 0.4649005005493835
     },
     "triggers": {
       "min_sig_qgrams": 2,

@@ -1,0 +1,7 @@
+  1. mms1_fgm_b_gse_srvy_l2_y__up pattern=0.459 connector=0.522 occ=42497
+  2. mms1_fgm_b_gse_srvy_l2_y__zpos pattern=0.459 connector=0.522 occ=38702
+  7. mms1_fgm_b_gse_srvy_l2_x__zpos pattern=0.459 connector=0.500 occ=39457
+  8. mms1_fgm_b_gse_srvy_l2_z__up pattern=0.459 connector=0.500 occ=42633
+  9. mms1_fgm_b_gse_srvy_l2_z__zpos pattern=0.459 connector=0.500 occ=40077
+ 10. mms1_fgm_b_gse_srvy_l2_mag__up pattern=0.459 connector=0.500 occ=42553
+ 11. mms1_fgm_b_gse_srvy_l2_mag__zpos pattern=0.459 connector=0.500 occ=38194

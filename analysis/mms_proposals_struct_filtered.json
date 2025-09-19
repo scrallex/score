@@ -1,0 +1,65 @@
+{
+  "target": {
+    "seeds": [
+      "mms1_fgm_b_gse_srvy_l2_x__rangeexp",
+      "mms1_fgm_b_gse_srvy_l2_z__accel"
+    ],
+    "vector": [
+      0.007723853566007634,
+      0.4633874666275757,
+      0.9922761464339923,
+      0.5366125333724243
+    ],
+    "constraints": {
+      "lambda_hazard": [
+        "<=",
+        [
+          "percentile",
+          0.7
+        ]
+      ],
+      "coherence": [
+        ">=",
+        [
+          "percentile",
+          0.6
+        ]
+      ],
+      "entropy": [
+        "<=",
+        [
+          "percentile",
+          0.5
+        ]
+      ]
+    }
+  },
+  "proposals": [
+    {
+      "string": "mms1_fgm_b_gse_srvy_l2_mag__zpos",
+      "score": 0.7109576006962328,
+      "metrics": {
+        "coherence": 0.008296323023207732,
+        "stability": 0.46272876596622126,
+        "entropy": 0.9917036769767923,
+        "rupture": 0.5372712340337787
+      },
+      "patternability": 0.45938265335439243,
+      "connector": 0.5,
+      "occurrences": 38194,
+      "themes": [],
+      "diagnostics": {
+        "distance": 0.0012341862425871476,
+        "pattern_component": 0.9963110996424532,
+        "connector": 0.5,
+        "novelty": 0.08657663928588949,
+        "coherence": 0.008296323023207732,
+        "stability": 0.46272876596622126,
+        "entropy": 0.9917036769767923,
+        "rupture": 0.5372712340337787,
+        "occurrences": 38194,
+        "patternability": 0.45938265335439243
+      }
+    }
+  ]
+}
