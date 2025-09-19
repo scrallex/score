@@ -7,7 +7,7 @@ import argparse
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Iterable
+from typing import Tuple
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
@@ -50,7 +50,7 @@ def load_series(bit_path: Path, numeric_path: Path, start: datetime, stop: datet
         ]],
         on="time",
         how="left",
-    ).fillna(False)
+    )
     merged.rename(
         columns={
             "mms1_fgm_b_gse_srvy_l2_x__RANGEEXP": "x_rangeexp",
@@ -58,6 +58,8 @@ def load_series(bit_path: Path, numeric_path: Path, start: datetime, stop: datet
         },
         inplace=True,
     )
+    merged["x_rangeexp"] = merged["x_rangeexp"].where(merged["x_rangeexp"].notna(), False).astype(bool)
+    merged["z_accel"] = merged["z_accel"].where(merged["z_accel"].notna(), False).astype(bool)
     return merged
 
 
@@ -182,6 +184,68 @@ def main() -> None:
         fg_mask=fg_mask,
         full_start=full_start_num,
         full_stop=full_stop_num,
+    )
+def generate_plots(
+    *,
+    bits_path: Path,
+    numeric_path: Path,
+    state_path: Path,
+    config_path: Path,
+    start: datetime,
+    stop: datetime,
+    zoom_minutes: int,
+    zoom_end: datetime | None,
+    out_prefix: Path,
+) -> Tuple[Path, Path]:
+    merged = load_series(bits_path, numeric_path, start, stop)
+    _, fg_mask = load_foreground(state_path, config_path)
+    full_start_num = mdates.date2num(start)
+    full_stop_num = mdates.date2num(stop)
+
+    overview_path = out_prefix.with_name(out_prefix.name + "_overview.png")
+    plot_window(
+        merged,
+        overview_path,
+        title=f"{start:%Y-%m-%d %H:%M} to {stop:%H:%M} UTC",
+        edge_span=(full_start_num, full_stop_num),
+        fg_mask=fg_mask,
+        full_start=full_start_num,
+        full_stop=full_stop_num,
+    )
+
+    zoom_end = zoom_end or stop
+    zoom_start = zoom_end - timedelta(minutes=zoom_minutes)
+    zoom_slice = merged[(merged["time"] >= zoom_start) & (merged["time"] <= zoom_end)].copy()
+    zoom_start_num = mdates.date2num(zoom_start)
+    zoom_end_num = mdates.date2num(zoom_end)
+    zoom_path = out_prefix.with_name(out_prefix.name + "_zoom.png")
+    plot_window(
+        zoom_slice,
+        zoom_path,
+        title=f"Zoom {zoom_start:%H:%M}–{zoom_end:%H:%M} UTC",
+        edge_span=(zoom_start_num, zoom_end_num),
+        fg_mask=fg_mask,
+        full_start=full_start_num,
+        full_stop=full_stop_num,
+    )
+    return overview_path, zoom_path
+
+
+def main() -> None:
+    args = parse_args()
+    start = datetime.fromisoformat(args.start)
+    stop = datetime.fromisoformat(args.stop)
+    zoom_end = datetime.fromisoformat(args.zoom_end) if args.zoom_end else None
+    generate_plots(
+        bits_path=args.bits,
+        numeric_path=args.numeric,
+        state_path=args.state,
+        config_path=args.config,
+        start=start,
+        stop=stop,
+        zoom_minutes=args.zoom_minutes,
+        zoom_end=zoom_end,
+        out_prefix=args.out_prefix,
     )
 
 

@@ -35,3 +35,5 @@ index = [
 
 [project.scripts]
 stm = "sep_text_manifold.cli:main"
+stm-plots = "sep_text_manifold.cli_plots:main"
+stm-leadtime = "sep_text_manifold.cli_lead:main"

@@ -300,3 +300,5 @@ cmake-build-*/
 !*_template.*
 .env.hotband
 !analysis/router_config.json
+plots/
+analysis2/

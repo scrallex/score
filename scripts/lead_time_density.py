@@ -1,27 +1,35 @@
 #!/usr/bin/env python3
-"""Compute foreground density in lead-time bins."""
+"""Compute foreground density in lead-time bins and optional plot."""
 
 from __future__ import annotations
 
 import argparse
 import json
+import sys
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Tuple
+from typing import Iterable, List, Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Foreground density vs lead time")
-    parser.add_argument("state", type=Path)
-    parser.add_argument("config", type=Path)
-    parser.add_argument("--start", type=str, required=True, help="Window start timestamp (ISO-8601)")
-    parser.add_argument("--stop", type=str, required=True, help="Window stop timestamp (ISO-8601)")
-    parser.add_argument("--onset", type=str, required=True, help="Event onset timestamp (ISO-8601)")
-    parser.add_argument("--bin", type=int, default=5, help="Bin size in minutes")
-    parser.add_argument("--lookback", type=int, default=20, help="Minutes to look back from onset")
-    return parser.parse_args()
+@dataclass
+class LeadBin:
+    label: str
+    window_count: int
+    foreground_count: int
+    density: float
+    midpoint_minutes: float
+
+    def as_dict(self) -> dict:
+        return {
+            "label": self.label,
+            "window_count": self.window_count,
+            "foreground_count": self.foreground_count,
+            "density": round(self.density, 4),
+        }
 
 
 def load_state(path: Path) -> Tuple[np.ndarray, int]:
@@ -61,8 +69,13 @@ def foreground_mask(metrics: np.ndarray, thresholds: Tuple[float | None, float |
     return mask
 
 
-def summarise_bins(times: np.ndarray, fg_mask: np.ndarray, onset: datetime, bins: List[Tuple[int, int]]) -> List[dict]:
-    results: List[dict] = []
+def summarise_bins(
+    times: np.ndarray,
+    fg_mask: np.ndarray,
+    onset: datetime,
+    bins: Iterable[Tuple[int, int]],
+) -> List[LeadBin]:
+    results: List[LeadBin] = []
     for lo, hi in bins:
         bin_start = onset + timedelta(minutes=lo)
         bin_end = onset + timedelta(minutes=hi)
@@ -70,28 +83,99 @@ def summarise_bins(times: np.ndarray, fg_mask: np.ndarray, onset: datetime, bins
         total = int(idx.sum())
         fg = int((fg_mask & idx).sum())
         density = (fg / total) if total else 0.0
-        results.append({"bin": f"{lo}..{hi} min", "windows": total, "foreground": fg, "density": round(density, 4)})
+        midpoint = (lo + hi) / 2.0
+        results.append(
+            LeadBin(
+                label=f"{lo}..{hi} min",
+                window_count=total,
+                foreground_count=fg,
+                density=density,
+                midpoint_minutes=midpoint,
+            )
+        )
     return results
 
 
-def main() -> None:
-    args = parse_args()
-    metrics, count = load_state(args.state)
-    thresholds = load_thresholds(args.config)
-    start = datetime.fromisoformat(args.start)
-    stop = datetime.fromisoformat(args.stop)
-    onset = datetime.fromisoformat(args.onset)
-
+def compute_lead_summary(
+    state_path: Path,
+    config_path: Path,
+    start: datetime,
+    stop: datetime,
+    onset: datetime,
+    bin_minutes: int = 5,
+    lookback_minutes: int = 20,
+) -> dict:
+    metrics, count = load_state(state_path)
+    thresholds = load_thresholds(config_path)
     times = build_timeline(count, start, stop)
     fg_mask = foreground_mask(metrics, thresholds)
 
     bins: List[Tuple[int, int]] = []
-    lookback = abs(args.lookback)
-    for offset in range(-lookback, 0, args.bin):
-        bins.append((offset, min(offset + args.bin, 0)))
+    lookback_minutes = abs(lookback_minutes)
+    for offset in range(-lookback_minutes, 0, bin_minutes):
+        bins.append((offset, min(offset + bin_minutes, 0)))
 
-    summary = summarise_bins(times, fg_mask, onset, bins)
-    print(json.dumps(summary, indent=2, default=str))
+    bin_summaries = summarise_bins(times, fg_mask, onset, bins)
+    densities = [bin.density for bin in bin_summaries]
+    monotonic = all(b >= a for a, b in zip(densities, densities[1:]))
+    payload = {
+        "bins": [bin.as_dict() for bin in bin_summaries],
+        "monotonic_increase": monotonic,
+    }
+    return payload
+
+
+def plot_lead_summary(summary: dict, output_path: Path) -> None:
+    bins = summary.get("bins", [])
+    if not bins:
+        return
+    x = [float(item["label"].split("..", 1)[0]) for item in bins]
+    y = [item["density"] for item in summary["bins"]]
+    fig, ax = plt.subplots(figsize=(6, 3))
+    ax.plot(x, y, marker="o")
+    ax.set_xlabel("Minutes before onset")
+    ax.set_ylabel("Foreground density")
+    ax.set_title("Lead-time foreground density")
+    ax.grid(True, linestyle="--", alpha=0.4)
+    ax.set_xlim(min(x), 0)
+    ax.set_ylim(0, max(max(y) * 1.1, 0.01))
+    fig.tight_layout()
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output_path, dpi=200)
+    plt.close(fig)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Foreground density vs lead time")
+    parser.add_argument("state", type=Path)
+    parser.add_argument("config", type=Path)
+    parser.add_argument("--start", type=str, required=True, help="Window start timestamp (ISO-8601)")
+    parser.add_argument("--stop", type=str, required=True, help="Window stop timestamp (ISO-8601)")
+    parser.add_argument("--onset", type=str, required=True, help="Event onset timestamp (ISO-8601)")
+    parser.add_argument("--bin", type=int, default=5, help="Bin size in minutes")
+    parser.add_argument("--lookback", type=int, default=20, help="Minutes to look back from onset")
+    parser.add_argument("--plot", type=Path, help="Optional path for PNG line plot")
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    start = datetime.fromisoformat(args.start)
+    stop = datetime.fromisoformat(args.stop)
+    onset = datetime.fromisoformat(args.onset)
+    summary = compute_lead_summary(
+        state_path=args.state,
+        config_path=args.config,
+        start=start,
+        stop=stop,
+        onset=onset,
+        bin_minutes=args.bin,
+        lookback_minutes=args.lookback,
+    )
+    if args.plot:
+        plot_lead_summary(summary, args.plot)
+    json.dump(summary, sys.stdout, indent=2)
+    sys.stdout.write("\n")
 
 
 if __name__ == "__main__":
