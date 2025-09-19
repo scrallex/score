@@ -48,6 +48,19 @@ def test_cli_ingest_and_summary(tmp_path, monkeypatch):
         str(state_path),
         "--summary-top",
         "2",
+        "--min-token-len",
+        "3",
+        "--alpha-ratio",
+        "0.4",
+        "--drop-numeric",
+        "--min-occ",
+        "1",
+        "--cap-tokens-per-win",
+        "40",
+        "--graph-min-pmi",
+        "0.0",
+        "--theme-min-size",
+        "1",
     ])
 
     assert state_path.exists()

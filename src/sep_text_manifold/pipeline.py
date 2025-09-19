@@ -17,6 +17,14 @@ class AnalysisSettings:
     window_bytes: int
     stride: int
     extensions: Optional[List[str]]
+    min_token_length: int
+    min_alpha_ratio: float
+    drop_numeric: bool
+    min_occurrences: int
+    cap_tokens_per_window: int
+    graph_min_pmi: float
+    graph_max_degree: Optional[int]
+    theme_min_size: int
 
 
 @dataclass
@@ -90,6 +98,14 @@ def analyse_directory(
     stride: int = 1024,
     extensions: Optional[Iterable[str]] = None,
     verbose: bool = False,
+    min_token_length: int = 1,
+    min_alpha_ratio: float = 0.0,
+    drop_numeric: bool = False,
+    min_occurrences: int = 1,
+    cap_tokens_per_window: int = 80,
+    graph_min_pmi: float = 0.0,
+    graph_max_degree: Optional[int] = None,
+    theme_min_size: int = 1,
 ) -> AnalysisResult:
     root = Path(directory)
     if not root.is_dir():
@@ -134,6 +150,10 @@ def analyse_directory(
         signals,
         window_bytes=window_bytes,
         stride=stride,
+        min_token_length=min_token_length,
+        min_alpha_ratio=min_alpha_ratio,
+        drop_numeric=drop_numeric,
+        min_occurrences=min_occurrences,
     )
     if verbose:
         print(f"[stm] strings with profiles: {len(string_profiles)}", flush=True)
@@ -157,12 +177,21 @@ def analyse_directory(
         string_scores[s] = entry
     if verbose:
         print("[stm] computing theme graph", flush=True)
+    occurrence_counts = {s: prof.get("occurrences", 0) for s, prof in string_profiles.items()}
     graph = build_theme_graph(
         {s: prof.get("window_ids", []) for s, prof in string_profiles.items()},
-        max_members_per_window=80,
+        max_members_per_window=cap_tokens_per_window,
+        min_pmi=graph_min_pmi,
+        max_degree=graph_max_degree,
+        occurrence_counts=occurrence_counts,
+        total_windows=len(signals),
     )
     graph_metrics = compute_graph_metrics(graph)
-    themes = [sorted(list(t)) for t in detect_themes(graph)]
+    themes = [
+        sorted(list(t))
+        for t in detect_themes(graph)
+        if len(t) >= theme_min_size
+    ]
     if verbose:
         print(f"[stm] themes detected: {len(themes)}", flush=True)
     for s, entry in string_scores.items():
@@ -181,6 +210,14 @@ def analyse_directory(
         window_bytes=window_bytes,
         stride=stride,
         extensions=ext_list,
+        min_token_length=min_token_length,
+        min_alpha_ratio=min_alpha_ratio,
+        drop_numeric=drop_numeric,
+        min_occurrences=min_occurrences,
+        cap_tokens_per_window=cap_tokens_per_window,
+        graph_min_pmi=graph_min_pmi,
+        graph_max_degree=graph_max_degree,
+        theme_min_size=theme_min_size,
     )
     return AnalysisResult(
         settings=settings,

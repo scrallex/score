@@ -93,6 +93,14 @@ def cmd_ingest(args: argparse.Namespace) -> None:
         stride=stride,
         extensions=args.extensions,
         verbose=args.verbose,
+        min_token_length=args.min_token_len,
+        min_alpha_ratio=args.alpha_ratio,
+        drop_numeric=args.drop_numeric,
+        min_occurrences=args.min_occ,
+        cap_tokens_per_window=args.cap_tokens_per_win,
+        graph_min_pmi=args.graph_min_pmi,
+        graph_max_degree=args.graph_max_degree,
+        theme_min_size=args.theme_min_size,
     )
     summary = result.summary(top=args.summary_top)
     state = result.to_state(
@@ -176,6 +184,14 @@ def main(argv: Optional[List[str]] = None) -> None:
     p_ingest.add_argument("--store-occurrences", action="store_true", help="Persist raw string occurrences in the output state")
     p_ingest.add_argument("--store-profiles", action="store_true", help="Persist aggregated string profiles in the output state")
     p_ingest.add_argument("--summary-top", dest="summary_top", type=int, default=10, help="Number of top items to include in the summary output")
+    p_ingest.add_argument("--min-token-len", dest="min_token_len", type=int, default=1, help="Minimum token length to include in scoring")
+    p_ingest.add_argument("--alpha-ratio", dest="alpha_ratio", type=float, default=0.0, help="Minimum alphabetic ratio required for tokens")
+    p_ingest.add_argument("--drop-numeric", action="store_true", help="Exclude purely numeric tokens")
+    p_ingest.add_argument("--min-occ", dest="min_occ", type=int, default=1, help="Minimum occurrences per token to retain")
+    p_ingest.add_argument("--cap-tokens-per-win", dest="cap_tokens_per_win", type=int, default=80, help="Maximum tokens per window considered for graph edges")
+    p_ingest.add_argument("--graph-min-pmi", dest="graph_min_pmi", type=float, default=0.0, help="Minimum PMI required for graph edges")
+    p_ingest.add_argument("--graph-max-degree", dest="graph_max_degree", type=int, help="Maximum degree allowed per node in the theme graph")
+    p_ingest.add_argument("--theme-min-size", dest="theme_min_size", type=int, default=1, help="Minimum number of members required for a theme")
     p_ingest.add_argument("--verbose", action="store_true", help="Print progress information during analysis")
     p_ingest.set_defaults(func=cmd_ingest)
     # Strings command

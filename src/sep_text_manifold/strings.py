@@ -71,6 +71,10 @@ def aggregate_string_metrics(
     window_bytes: int,
     stride: int,
     aggregated_fields: Optional[Iterable[str]] = None,
+    min_token_length: int = 1,
+    min_alpha_ratio: float = 0.0,
+    drop_numeric: bool = False,
+    min_occurrences: int = 1,
 ) -> Dict[str, Dict[str, object]]:
     """Aggregate manifold metrics over occurrences of each string.
 
@@ -91,6 +95,16 @@ def aggregate_string_metrics(
     aggregated_fields:
         Optional list of metric field names to aggregate.  Defaults to
         ``["coherence", "stability", "entropy", "rupture"]``.
+    min_token_length:
+        Minimum length (in characters) a token must have to be included.
+    min_alpha_ratio:
+        Minimum fraction of alphabetic characters required for a token to
+        be included.  ``0.0`` disables the check.
+    drop_numeric:
+        When ``True`` excludes tokens that are purely numeric.
+    min_occurrences:
+        Minimum number of occurrences required for a token to be kept in
+        the final result.
 
     Returns
     -------
@@ -121,9 +135,25 @@ def aggregate_string_metrics(
     metric_samples: DefaultDict[str, Dict[str, List[float]]] = defaultdict(lambda: defaultdict(list))
     window_hits: DefaultDict[str, Set[int]] = defaultdict(set)
     occurrence_counts: DefaultDict[str, int] = defaultdict(int)
+    token_filters: Dict[str, bool] = {}
     window_count = len(window_ids)
     for occ in occurrences:
-        occurrence_counts[occ.string] += 1
+        string = occ.string
+        if string not in token_filters:
+            keep = True
+            if len(string) < min_token_length:
+                keep = False
+            if keep and drop_numeric and string.isdigit():
+                keep = False
+            if keep and min_alpha_ratio > 0.0:
+                alpha = sum(1 for ch in string if ch.isalpha())
+                ratio = alpha / len(string) if string else 0.0
+                if ratio < min_alpha_ratio:
+                    keep = False
+            token_filters[string] = keep
+        if not token_filters[string]:
+            continue
+        occurrence_counts[string] += 1
         if window_count == 0:
             continue
         last_cover_idx = bisect_right(window_starts, occ.byte_start) - 1
@@ -133,24 +163,29 @@ def aggregate_string_metrics(
         for idx in range(first_cover_idx, last_cover_idx + 1):
             if window_starts[idx] <= occ.byte_start and window_ends[idx] >= occ.byte_end:
                 wid = window_ids[idx]
-                window_hits[occ.string].add(wid)
+                window_hits[string].add(wid)
                 metrics = window_metrics[idx]
                 for field in aggregated_fields:
                     value = metrics.get(field)
                     if value is not None:
-                        metric_samples[occ.string][field].append(float(value))
+                        metric_samples[string][field].append(float(value))
     result: Dict[str, Dict[str, object]] = {}
     for s, field_values in metric_samples.items():
         metric_means: Dict[str, float] = {}
         for field, values in field_values.items():
             if values:
                 metric_means[field] = sum(values) / len(values)
+        occ_count = occurrence_counts.get(s, 0)
+        if occ_count < min_occurrences:
+            continue
         result[s] = {
             "metrics": metric_means,
-            "occurrences": occurrence_counts.get(s, 0),
+            "occurrences": occ_count,
             "window_ids": sorted(window_hits.get(s, set())),
         }
     for s, count in occurrence_counts.items():
+        if count < min_occurrences:
+            continue
         if s not in result:
             result[s] = {
                 "metrics": {},

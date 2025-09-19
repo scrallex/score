@@ -24,6 +24,10 @@ def build_theme_graph(
     *,
     cooccurrence_threshold: int = 1,
     max_members_per_window: int = 100,
+    min_pmi: float = 0.0,
+    max_degree: Optional[int] = None,
+    occurrence_counts: Optional[Dict[str, int]] = None,
+    total_windows: Optional[int] = None,
 ) -> "Graph":
     """Build an undirected co‑occurrence graph from string window coverage.
 
@@ -60,11 +64,28 @@ def build_theme_graph(
             unique_members = unique_members[:max_members_per_window]
         for u, v in combinations(unique_members, 2):
             edge_weights[(u, v)] += 1
+    total_windows_value = total_windows if total_windows and total_windows > 0 else None
     if nx is not None:
         G = nx.Graph()
         G.add_nodes_from(nodes)
         for (u, v), weight in edge_weights.items():
             if weight >= cooccurrence_threshold:
+                if min_pmi > 0.0 and occurrence_counts and total_windows_value:
+                    occ_u = occurrence_counts.get(u)
+                    occ_v = occurrence_counts.get(v)
+                    if not occ_u or not occ_v:
+                        continue
+                    numerator = weight * total_windows_value
+                    denominator = occ_u * occ_v
+                    if denominator == 0:
+                        continue
+                    pmi = math.log(numerator / denominator)
+                    if pmi < min_pmi:
+                        continue
+                if max_degree is not None and (
+                    G.degree(u) >= max_degree or G.degree(v) >= max_degree
+                ):
+                    continue
                 G.add_edge(u, v, weight=weight)
         return G
     else:
@@ -73,6 +94,21 @@ def build_theme_graph(
             adj.setdefault(node, set())
         for (u, v), weight in edge_weights.items():
             if weight >= cooccurrence_threshold:
+                if min_pmi > 0.0 and occurrence_counts and total_windows_value:
+                    occ_u = occurrence_counts.get(u)
+                    occ_v = occurrence_counts.get(v)
+                    if not occ_u or not occ_v:
+                        continue
+                    numerator = weight * total_windows_value
+                    denominator = occ_u * occ_v
+                    if denominator == 0:
+                        continue
+                    pmi = math.log(numerator / denominator)
+                    if pmi < min_pmi:
+                        continue
+                if max_degree is not None:
+                    if len(adj[u]) >= max_degree or len(adj[v]) >= max_degree:
+                        continue
                 adj[u].add(v)
                 adj[v].add(u)
         return adj
