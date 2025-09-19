@@ -134,6 +134,7 @@ class SeenEngine:
         cfg = router["router"]["foreground"]  # type: ignore[index]
         min_coh = float(cfg.get("min_coh", 0.8))
         max_ent = float(cfg.get("max_ent", 0.35))
+        min_stab = float(cfg.get("min_stab", 0.0))
         foreground: List[Dict[str, object]] = []
         deferred: List[Dict[str, object]] = []
         for wid in candidates:
@@ -149,7 +150,11 @@ class SeenEngine:
                 "rupture": metrics.get("rupture", 0.0),
                 "signature": sig.get("signature"),
             }
-            if item["coherence"] >= min_coh and item["entropy"] <= max_ent:
+            if (
+                item["coherence"] >= min_coh
+                and item["entropy"] <= max_ent
+                and item["stability"] >= min_stab
+            ):
                 foreground.append(item)
             else:
                 deferred.append(item)

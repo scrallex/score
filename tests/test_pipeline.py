@@ -85,3 +85,13 @@ def test_cli_ingest_and_summary(tmp_path, monkeypatch):
         "--top",
         "1",
     ])
+
+    cli.main([
+        "strings",
+        "--input",
+        str(state_path),
+        "--filter",
+        "coh>=P0,ent<=P100",
+        "--top",
+        "1",
+    ])

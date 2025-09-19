@@ -8,7 +8,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
-from .filters import metric_matches, parse_metric_filter
+from .filters import (
+    compute_metric_quantiles,
+    metric_matches,
+    parse_metric_filter,
+    requested_percentiles,
+)
 
 METRIC_KEYS = ("coherence", "stability", "entropy", "rupture")
 
@@ -143,6 +148,12 @@ def propose_from_state(
     seed_vectors = [seed.vector for seed in seed_objects]
     target = centroid(seed_vectors)
     profile_constraints = parse_metric_filter(target_profile)
+    percentile_requests = requested_percentiles(profile_constraints)
+    metric_values: Dict[str, List[float]] = {}
+    for cand in candidates:
+        for key, value in cand.metrics.items():
+            metric_values.setdefault(key, []).append(float(value))
+    quantiles = compute_metric_quantiles(metric_values, percentile_requests)
     exclude_set = set(exclude or ()) | set(seeds)
     proposals: List[Proposal] = []
     for candidate in candidates:
@@ -152,7 +163,7 @@ def propose_from_state(
             continue
         if candidate.patternability < min_patternability:
             continue
-        if not metric_matches(candidate.metrics, profile_constraints):
+        if not metric_matches(candidate.metrics, profile_constraints, quantiles=quantiles):
             continue
         score, diagnostics = compute_score(candidate, target)
         diagnostics.update({key: candidate.metrics.get(key, 0.0) for key in METRIC_KEYS})

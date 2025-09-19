@@ -24,7 +24,13 @@ from .pipeline import analyse_directory, compute_summary
 from .propose import propose as run_proposer, propose_from_state, load_state as load_analysis_state
 from .index_builder import build_indices
 from .similar import cross_corpus_similarity
-from .filters import flatten_metrics, metric_matches, parse_metric_filter
+from .filters import (
+    flatten_metrics,
+    metric_matches,
+    parse_metric_filter,
+    requested_percentiles,
+    compute_metric_quantiles,
+)
 
 
 def _load_state(state_file: Path) -> Dict[str, Any]:
@@ -154,10 +160,17 @@ def cmd_strings(args: argparse.Namespace) -> None:
     except ValueError as exc:
         print(f"Error: {exc}")
         return
+    percentile_requests = requested_percentiles(constraints)
+    metric_values: Dict[str, List[float]] = {}
+    for entry in scores.values():
+        metrics = flatten_metrics(entry)
+        for key, value in metrics.items():
+            metric_values.setdefault(key, []).append(float(value))
+    quantiles = compute_metric_quantiles(metric_values, percentile_requests)
     items: List[Tuple[str, Dict[str, Any], Dict[str, float]]] = []
     for text, entry in scores.items():
         metrics = flatten_metrics(entry)
-        if not metric_matches(metrics, constraints):
+        if not metric_matches(metrics, constraints, quantiles=quantiles):
             continue
         items.append((text, entry, metrics))
     if not items:

@@ -123,3 +123,19 @@ def test_cli_similar_fallback(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "candidate_count" in out
     assert "alpha" in out
+
+
+def test_percentile_profile():
+    source_state = _build_source_state()
+    target_state = _build_target_state()
+
+    result = cross_corpus_similarity(
+        source_state,
+        profile="coh>=P0",
+        min_connector=0.5,
+        min_patternability=0.6,
+        target_state=target_state,
+        k=2,
+    )
+
+    assert result["candidate_count"] == 1

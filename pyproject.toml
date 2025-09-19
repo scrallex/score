@@ -16,6 +16,7 @@ dependencies = [
     "uvicorn>=0.27.0",
     # Optional dependency for community detection and centrality metrics
     "networkx>=3.0",
+    "numpy>=1.23",
 ]
 
 [project.optional-dependencies]

@@ -11,10 +11,12 @@ import numpy as np
 
 from .filters import (
     MetricVector,
+    compute_metric_quantiles,
     flatten_metrics,
     metric_matches,
     metric_vector,
     parse_metric_filter,
+    requested_percentiles,
 )
 
 try:  # Optional dependency – mirrors index builder behaviour
@@ -56,6 +58,14 @@ def select_candidates(
     scores: Mapping[str, Mapping[str, Any]] = state.get("string_scores", {})  # type: ignore[assignment]
     constraints = parse_metric_filter(profile)
 
+    percentile_requests = requested_percentiles(constraints)
+    metric_values: Dict[str, List[float]] = {}
+    for payload in scores.values():
+        metrics = flatten_metrics(payload)
+        for key, value in metrics.items():
+            metric_values.setdefault(key, []).append(float(value))
+    quantiles = compute_metric_quantiles(metric_values, percentile_requests)
+
     ranked: List[Tuple[float, SimilarityCandidate]] = []
     for text, payload in scores.items():
         occurrences = int(payload.get("occurrences", 0))
@@ -66,7 +76,7 @@ def select_candidates(
             continue
         if metrics["connector"] < min_connector:
             continue
-        if not metric_matches(metrics, constraints):
+        if not metric_matches(metrics, constraints, quantiles=quantiles):
             continue
         vector = metric_vector(metrics)
         candidate = SimilarityCandidate(

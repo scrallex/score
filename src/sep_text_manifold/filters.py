@@ -10,7 +10,10 @@ interpret filters consistently.
 from __future__ import annotations
 
 import operator
-from typing import Any, Dict, Mapping, Tuple
+import re
+from typing import Any, Dict, Mapping, Tuple, Iterable, List, DefaultDict
+
+import numpy as np
 
 # Canonical metric keys exposed by the manifold analysis.
 METRIC_FIELDS = {
@@ -54,7 +57,8 @@ COMPARE_OPS = {
 }
 
 
-FilterSpec = Dict[str, Tuple[str, float]]
+ThresholdValue = float | Tuple[str, float]
+FilterSpec = Dict[str, Tuple[str, ThresholdValue]]
 MetricVector = Tuple[float, float, float, float, float]
 
 
@@ -81,7 +85,14 @@ def parse_metric_filter(spec: str | None) -> FilterSpec:
                 if key is None:
                     raise ValueError(f"Unknown metric in filter: '{left.strip()}'")
                 try:
-                    value = float(right)
+                    value_str = right.strip().upper()
+                    value: ThresholdValue
+                    match = re.fullmatch(r"P(\d+(?:\.\d+)?)", value_str)
+                    if match:
+                        percentile = float(match.group(1)) / 100.0
+                        value = ("percentile", percentile)
+                    else:
+                        value = float(value_str)
                 except ValueError as exc:  # pragma: no cover - validation guard
                     raise ValueError(f"Invalid numeric value in filter clause '{clause}'") from exc
                 constraints[key] = (op_token, value)
@@ -91,16 +102,29 @@ def parse_metric_filter(spec: str | None) -> FilterSpec:
     return constraints
 
 
-def metric_matches(metrics: Mapping[str, float], constraints: FilterSpec) -> bool:
+def metric_matches(
+    metrics: Mapping[str, float],
+    constraints: FilterSpec,
+    *,
+    quantiles: Mapping[str, Dict[float, float]] | None = None,
+) -> bool:
     """Return ``True`` if *metrics* satisfy all *constraints*."""
 
     if not constraints:
         return True
-    for key, (op_token, threshold) in constraints.items():
+    for key, (op_token, threshold_spec) in constraints.items():
         comparator = COMPARE_OPS[op_token]
         value = metrics.get(key)
         if value is None:
             return False
+        threshold: float
+        if isinstance(threshold_spec, tuple) and threshold_spec[0] == "percentile":
+            pct = threshold_spec[1]
+            if quantiles is None or key not in quantiles or pct not in quantiles[key]:
+                return False
+            threshold = quantiles[key][pct]
+        else:
+            threshold = float(threshold_spec)
         if not comparator(float(value), threshold):
             return False
     return True
@@ -145,3 +169,30 @@ def metric_vector(payload: Mapping[str, Any]) -> MetricVector:
         metrics["rupture"],
         metrics["lambda_hazard"],
     )
+
+
+def requested_percentiles(constraints: FilterSpec) -> Dict[str, List[float]]:
+    requests: Dict[str, List[float]] = {}
+    for metric, (_, value) in constraints.items():
+        if isinstance(value, tuple) and value[0] == "percentile":
+            requests.setdefault(metric, []).append(value[1])
+    return requests
+
+
+def compute_metric_quantiles(
+    metric_values: Mapping[str, Iterable[float]],
+    requests: Mapping[str, Iterable[float]],
+) -> Dict[str, Dict[float, float]]:
+    lookup: Dict[str, Dict[float, float]] = {}
+    for metric, percentiles in requests.items():
+        values_iter = metric_values.get(metric)
+        if values_iter is None:
+            continue
+        arr = np.asarray([float(v) for v in values_iter if v is not None and not np.isnan(float(v))])
+        if arr.size == 0:
+            continue
+        pct_map: Dict[float, float] = {}
+        for pct in sorted(set(percentiles)):
+            pct_map[pct] = float(np.nanquantile(arr, pct))
+        lookup[metric] = pct_map
+    return lookup
