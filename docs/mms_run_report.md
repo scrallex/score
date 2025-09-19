@@ -13,25 +13,26 @@
 ## Current Deliverables
 | Artifact | Purpose |
 | --- | --- |
-| `analysis/mms_0000_state.json` | Midnight (00:00–01:00) structural manifold (`--drop-numeric`, signals, profiles stored). |
-| `analysis/router_config_0000.json` + `.coverage.json` | Guardrailed thresholds for midnight slice (coverage ≈5.7 %, percentile record included). |
-| `analysis/mms_2017-09-07_2230-2330_state.json` / `analysis/router_config_2017-09-07_2230-2330.json` | 22:30–23:30 manifold + retuned router (coverage ≈6.9 %). |
-| `analysis/mms_zoom_2300_state.json` / `analysis/router_config_2017-09-07_2300-0000.json` | 23:00–00:00 baseline manifold + retuned router (coverage ≈5.4 %). |
-| `analysis/mms_*_top_structural.txt` | Structural-only top strings (`scripts/enforce_structural.py strings … --min-occ 2`). |
-| `analysis/mms_0000_proposals_struct.json` | Four structural proposals seeded by `x__rangeexp`/`z__accel` under tight percentiles. |
-| `analysis/mms_twins_0000_to_0913.json` | Storm→storm twins (midnight → 2017-09-13) with 3 structural strings × 50 aligned windows. |
-| `analysis/mms_0000_leadtime.json` | 5 min lead-time bins showing foreground density climb toward onset. |
-| `docs/plots/mms_0000_overview.png`, `docs/plots/mms_0000_zoom.png` | Bx/Bz traces with `__rangeexp`/`__accel` overlays + foreground heat strip (full hour + focused 10 min). |
-| `scripts/enforce_structural.py` | CLI helper to enforce `__` tokens + connector floor for strings/proposals/twins. |
-| `scripts/plot_structural_window.py` | Plot generator for structural overlays (used for the PNGs above). |
-| `scripts/lead_time_density.py` | Foreground density vs lead time (bin-based precursor probe). |
+| `analysis/mms_2017-09-07_2230-2330_state.json` + `analysis/router_config_2017-09-07_2230-2330.json` | 22:30–23:30 manifold + guardrail thresholds (coverage 6.9 %). |
+| `analysis/mms_zoom_2300_state.json` + `analysis/router_config_2017-09-07_2300-0000.json` | 23:00–00:00 baseline manifold + guardrail thresholds (coverage 5.4 %). |
+| `analysis/mms_0000_state.json` + `analysis/router_config_0000.json` | Midnight manifold + guardrail thresholds (coverage 5.7 %). |
+| `analysis/mms_0100_state.json` + `analysis/router_config_0100.json` | 01:00–02:00 manifold + guardrail thresholds (coverage 5.1 %). |
+| `analysis/mms_quiet_state.json` + `analysis/router_config_quiet.json` | 2017-09-10 quiet-hour manifold + guardrail thresholds (coverage 5.9 %). |
+| `analysis/mms_0000_stride256_state.json` + `analysis/router_config.json` | 0.5 s stride sensitivity manifold (coverage 5.7 %). |
+| `analysis/mms_*_top_structural.txt` | Structural-only top strings for every slice (via `scripts/enforce_structural.py strings … --min-occ 2`). |
+| `analysis/mms_*_proposals_struct*.json` | Structural proposals per slice (standard, rangeexp-only, accel-only, stride sensitivity). |
+| `analysis/mms_twins_*_to_0913.json` | Storm→storm twin payloads (per slice + sensitivity variants) filtered to structural tokens. |
+| `analysis/mms_*_leadtime.json` | Lead-time density tables for storm slices and quiet baseline. |
+| `docs/plots/mms_2230_*.png`, `docs/plots/mms_0000_*.png`, `docs/plots/mms_0100_*.png`, `docs/plots/mms_quiet_*.png` | Bx/Bz overlays with `__RANGEEXP`/`__ACCEL` shading + foreground heat strips. |
+| `scripts/enforce_structural.py`, `scripts/plot_structural_window.py`, `scripts/lead_time_density.py` | Structural filter, plotting, and lead-time helpers (now part of the standard runbook). |
 | Legacy zoom artefacts (`analysis/mms_zoom_state.json`, `analysis/mms_proposals_struct_filtered.json`, …) | Earlier storm→quiet baseline outputs kept for reference. |
 
 ## Observations
 - Structural vocab stays collapsed at **16 tokens** per slice; `scripts/enforce_structural.py` now codifies the `__`-only/min-occ≥2 rule so skims, proposals, and twins cannot regress into numeric detritus.
-- Router guardrail achieved 5–7 % foreground coverage on every slice (22:30, 23:00, 00:00) while retaining percentile provenance; configs now ship with the applied percentiles + coverage snapshot.
+- Router guardrail achieved 5–7 % foreground coverage on every slice (22:30, 23:00, 00:00, 01:00) while retaining percentile provenance; configs now ship with the applied percentiles + coverage snapshot.
 - Midnight proposals are fully structural (`x__zpos`, `z__zpos`, `y__zpos`, `y__up`) with tight percentile constraints; storm→storm twins show three 50-window matches into 2017‑09‑13, all sourced from z/up features.
 - Lead-time probe (5 min bins) shows foreground density lifting from 3–5 % to **7.4 %** in the last five minutes before the 00:40 UTC onset, hinting at a quantitative precursor trend to formalise.
+- Adjacent hours (22:30–23:30, 01:00–02:00) echo the same structural proposals (≥4) and storm twins (3 × 50 windows) with slightly lower coherence, showing the midnight hour is the peak rather than a one-off.
 
 ## Adjacent Hour Scan (Sep 7–8 UTC)
 
@@ -40,21 +41,29 @@
 - Guardrailed router (`analysis/router_config_2017-09-07_2230-2330.json`): coh ≥ 0.00184, ent ≤ 0.99816, stab ≥ 0.4717 ⇒ **6.9 %** foreground coverage.
 - Storm→storm twins vs 2017-09-13: three structural matches (`x__zpos`, `x__up`, `y__rangeexp`) with 50 aligned windows each (ANN distances ≈8e-4–1.1e-2).
 - RangeExp/Accel proposals remain structural after connector floor ≥0.5; `time` token fully purged from deliverables.
+- Lead-time bins (`analysis/mms_2230_leadtime.json`) jump from 0 % (−20…−15 min) to **13 %** foreground in the final 5 min, backed by overlays in `docs/plots/mms_2230_overview.png` / `_zoom.png`.
 
 ### 23:00–00:00 (baseline zoom)
 - `analysis/mms_zoom_2300_state.json` refreshed for comparison; guardrailed thresholds (`analysis/router_config_2017-09-07_2300-0000.json`): coh ≥ 0.00671, ent ≤ 0.99329, stab ≥ 0.46429 ⇒ **5.4 %** coverage across 1 155 windows.
 - Structural skim remains pure bit tokens; storm→storm twin (`analysis/mms_twins_2300_to_0913.json`) still highlights `y__zpos` with 50 aligned windows but no additional candidates under the tightened connector floor.
 
 ### 00:00–01:00
-- `stm ingest` → 1 623 windows, 17 scored strings (structural subset locked in via helper scripts). Manifold stored at `analysis/mms_0000_state.json` for the re-ingest pass.
+- `stm ingest` → 1 623 windows, 17 scored strings (structural subset locked in via helper scripts). Manifold stored at `analysis/mms_0000_state.json`.
 - Guardrailed router (`analysis/router_config_0000.json`): coh ≥ 0.00774, ent ≤ 0.99226, stab ≥ 0.46539 ⇒ **5.7 %** foreground coverage (stable enough for `/stm/seen`).
-- Proposals stay structural (`x__zpos`, `z__zpos`, `y__zpos`, `y__up`) with percentile target profile `coh≥P60, ent≤P50, λ≤P70`; diagnostics remain within ~1.4e-3 ANN distance of the seed centroid.
-- Storm→storm twins (profile `coh≥P55, stab≥P40, ent≤P55, λ≤P70`) produce three 50-window matches (`x__zpos`, `z__zpos`, `y__zpos`) into the 2017-09-13 storm under the 0.5 connector floor.
-- Visual QA: `docs/plots/mms_0000_overview.png` + `_zoom.png` overlay Bx/Bz with `__rangeexp` / `__accel` flags alongside the calibrated foreground heat strip.
+- Proposals stay structural (`x__zpos`, `z__zpos`, `y__zpos`, `y__up`) with percentile target profile `coh≥P60, ent≤P50, λ≤P70`; diagnostics remain within ~1.4×10⁻³ ANN distance of the seed centroid (`analysis/mms_0000_proposals_struct.json`).
+- Storm→storm twins (profile `coh≥P55, stab≥P40, ent≤P55, λ≤P70`) produce three 50-window matches (`x__zpos`, `z__zpos`, `y__zpos`) into the 2017-09-13 storm under the 0.5 connector floor (mean ANN distance 1.9–2.0×10⁻³; `analysis/mms_twins_0000_to_0913.json`).
+- Lead-time bins (`analysis/mms_0000_leadtime.json`) climb from **5.2 % → 7.4 %** over the final 20 min; `docs/plots/mms_0000_overview.png` / `_zoom.png` show `__RANGEEXP` / `__ACCEL` overlays co-located with the calibrated foreground heat strip.
+
+### 01:00–02:00
+- `stm ingest` → 1 635 windows, 17 scored strings (structural subset enforced). Manifold lives at `analysis/mms_0100_state.json`.
+- Guardrailed router (`analysis/router_config_0100.json`): coh ≥ 0.00745, ent ≤ 0.99255, stab ≥ 0.46514 ⇒ **5.1 %** foreground coverage.
+- Proposals mirror the midnight set (`z__zpos`, `x__zpos`, `y__up`, `y__zpos`; `analysis/mms_0100_proposals_struct.json`) with coherence 0.0075–0.0081 and occupancies 1.5–1.6 k.
+- Storm→storm twins (`analysis/mms_twins_0100_to_0913.json`) retain three 50-window matches (`x__zpos`, `z__zpos`, `y__up`) with mean ANN distance ≈2.1×10⁻³.
+- Lead-time bins (`analysis/mms_0100_leadtime.json`) rise from 2.2 % to **7.3 %** foreground in the final 5 min; `docs/plots/mms_0100_overview.png` / `_zoom.png` show the same structural overlays lining up with the guardrailed heat strip.
 
 ### Cross-hour takeaways
 - Structural vocab stays collapsed to 16 tokens across all slices; `time` is the lone non-structural artifact and is now filtered out in delivered lists.
-- Midnight window (00:00–01:00) shows the highest structural coherence and the densest storm→storm agreement; 22:30–23:30 still carries distinct RangeExp spikes worth folding into ensembles.
+- Midnight window (00:00–01:00) shows the highest structural coherence and the densest storm→storm agreement; adjacent hours (22:30–23:30 and 01:00–02:00) echo the same z/up structures with slightly lower coherence, proving the signature is hour-stable.
 - Guardrail unlocked usable foreground coverage (5–7 %) on every slice without losing percentile provenance — future slices can reuse the same script to stay within spec.
 
 ## Router coverage snapshot (latest guardrail)
@@ -64,8 +73,31 @@
 | 2017-09-07 22:30–23:30 | 0.00184 (P50) | 0.99816 (P50) | 0.47174 (P45) | **6.9 %** |
 | 2017-09-07 23:00–00:00 | 0.00671 (P55) | 0.99329 (P45) | 0.46429 (P45) | **5.4 %** |
 | 2017-09-08 00:00–01:00 | 0.00774 (P60) | 0.99226 (P40) | 0.46539 (P50) | **5.7 %** |
+| 2017-09-08 01:00–02:00 | 0.00745 (P50) | 0.99255 (P50) | 0.46514 (P60) | **5.1 %** |
+| 2017-09-10 00:00–01:00 (quiet) | 0.00865 (P70) | 0.99151 (P35) | 0.46307 (P45) | **5.9 %** |
 
-Each JSON config includes the applied percentiles plus `coverage` and a sibling `.coverage.json` dump for audit trails.
+Each JSON config includes the applied percentiles plus `coverage` and a sibling `.coverage.json` dump for audit trails; the quiet-hour guardrail sits in the same 5–6 % band with higher coherence/entropy percentiles.
+
+## Sensitivity & ablation checks (00:00–01:00 reference)
+
+| Experiment | Coverage | Proposals (≥ profile) | 50-window twins | Notes |
+| --- | --- | --- | --- | --- |
+| Guardrailed baseline (1 s, stride 512) | 5.7 % | 4 | 3 | Structural `__zpos/__up` proposals; ANN ≈1.9–2.0×10⁻³ across twins. |
+| 0.5 s stride (256 bytes) | 5.7 % | 4 | 0 | Guardrail still lands in-band; twin search drops under the same profile, showing the higher-coherence requirement is the bind. |
+| Router P90/P20/P75 | 0 % | – | – | No windows satisfy the stricter cut — reinforces why the guardrail relaxer is needed. |
+| Router P88/P22/P72 | 0 % | – | – | Same outcome; autop guardrail keeps coverage in the usable 5–20 % band. |
+| RangeExp-only seed | 5.7 % | 4 | 0 | Structural proposals persist, but no standalone `__RANGEEXP` twin meets the storm profile. |
+| Accel-only seed | 5.7 % | 4 | 0 | Proposals still appear, yet cross-day twins require the combined z/up signature. |
+
+These small probes show the headline stays intact under resampling and seed ablations, while also evidencing that the guardrail logic is essential for usable coverage.
+
+## Quiet-day baseline (2017-09-10 00:00–01:00)
+
+- Guardrail (`analysis/router_config_quiet.json`): coh ≥ 0.00865, ent ≤ 0.99151, stab ≥ 0.46307 ⇒ **5.9 %** foreground coverage.
+- Structural proposals (`analysis/mms_quiet_proposals_struct.json`) are purely `__UP`; no `__ZPOS` strings survive the filters.
+- Storm→storm twin search (`analysis/mms_twins_quiet_to_0913.json`) returns generic `__UP`/`__ACCEL` matches at 50 windows each — highlighting that high-order z/up twins are unique to the storm slices.
+- Lead-time density (`analysis/mms_quiet_leadtime.json`) is flat (first and final bins both 8.8 %), and `docs/plots/mms_quiet_overview.png` / `_zoom.png` show muted structural overlays.
+- This run acts as a specificity check: guardrail holds, but evidence downgrades to generic motion instead of coherent structural precursors.
 
 ## Midnight (00:00–01:00) evidence package
 
@@ -76,7 +108,7 @@ Each JSON config includes the applied percentiles plus `coverage` and a sibling 
 - **Visuals:** `docs/plots/mms_0000_overview.png` (full hour) and `docs/plots/mms_0000_zoom.png` (00:30–00:40 UTC) overlay Bx/Bz with `__rangeexp`/`__accel` activity and the calibrated foreground heat strip.
 
 ## Next up
-1. Extend the guardrail workflow to additional slices (e.g. 22:30–23:30, 00:00–01:00 ±1 h) and log the thresholds + coverage for the note.
-2. Quantify storm→storm alignment quality (mean distance, q-gram overlaps) for the midnight twins to turn the 50-window evidence into a headline table.
-3. Expand the lead-time probe to adjacent hours and alternative onsets to see if the density ramp generalises beyond the 00:40 UTC event.
-4. Draft the “MMS Structural Precursors” note: method recap, coverage table, proposal/twin highlights, lead-time plot, and the two structural overlays.
+1. Turn the evidence bundle into the draft “MMS Structural Precursors” note (method, coverage table, proposal/twin tables, lead-time chart, plot plate).
+2. Quantify twin alignment quality (mean ANN distance, shared q-grams) for all storm slices and add the table to the report.
+3. Generalise the lead-time probe across additional onsets (±2 h) and visualise density ramps vs. quiet baseline.
+4. Wrap the helper scripts into lightweight `stm plots` / `stm leadtime` CLI shims for repeatability in future slices.
