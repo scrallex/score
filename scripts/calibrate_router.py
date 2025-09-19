@@ -67,7 +67,7 @@ def choose_thresholds(metrics: np.ndarray) -> Tuple[Dict[str, float], Dict[str, 
 
     coh_qs = [0.75, 0.70, 0.65, 0.60, 0.55, 0.50]
     ent_qs = [0.35, 0.40, 0.45, 0.50, 0.55]
-    stab_qs: list[float | None] = [0.60, None, 0.55, 0.50]
+    stab_qs: list[float | None] = [0.60, None, 0.55, 0.50, 0.45]
 
     in_range: list[Tuple[Dict[str, float], Dict[str, int | None], float]] = []
     candidates: list[Tuple[Dict[str, float], Dict[str, int | None], float]] = []
