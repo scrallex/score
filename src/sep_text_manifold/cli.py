@@ -18,9 +18,10 @@ import argparse
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Mapping, Optional
 
 from .pipeline import analyse_directory, compute_summary
+from .propose import propose as run_proposer, propose_from_state, load_state as load_analysis_state
 
 
 def _load_state(state_file: Path) -> Dict[str, Any]:
@@ -81,6 +82,26 @@ def _print_summary(summary: Dict[str, Any]) -> None:
             print(f"  {name}: {value:.3f}")
 
 
+def _collect_seeds(args: argparse.Namespace) -> List[str]:
+    seeds: List[str] = []
+    if getattr(args, "seeds", None):
+        seeds.extend(s.strip() for s in args.seeds.split(",") if s.strip())
+    seed_file = getattr(args, "seed_file", None)
+    if seed_file:
+        with Path(seed_file).open("r", encoding="utf-8") as handle:
+            for line in handle:
+                token = line.strip()
+                if token:
+                    seeds.append(token)
+    unique_seeds = []
+    for s in seeds:
+        if s not in unique_seeds:
+            unique_seeds.append(s)
+    if not unique_seeds:
+        raise ValueError("No seeds provided. Use --seeds or --seed-file.")
+    return unique_seeds
+
+
 def cmd_ingest(args: argparse.Namespace) -> None:
     """Ingest a directory of text files and analyse it."""
     directory = args.directory
@@ -101,6 +122,7 @@ def cmd_ingest(args: argparse.Namespace) -> None:
         graph_min_pmi=args.graph_min_pmi,
         graph_max_degree=args.graph_max_degree,
         theme_min_size=args.theme_min_size,
+        log_file=args.log_file,
     )
     summary = result.summary(top=args.summary_top)
     state = result.to_state(
@@ -170,6 +192,97 @@ def cmd_summary(args: argparse.Namespace) -> None:
     _print_summary(summary)
 
 
+def cmd_propose(args: argparse.Namespace) -> None:
+    try:
+        seeds = _collect_seeds(args)
+    except ValueError as exc:
+        print(f"Error: {exc}")
+        return
+    result = run_proposer(
+        args.input,
+        seeds=seeds,
+        k=args.k,
+        min_connector=args.min_connector,
+        min_patternability=args.min_patternability,
+        target_profile=args.target_profile,
+    )
+    proposals = result["proposals"]
+    if args.output:
+        Path(args.output).write_text(json.dumps(result, indent=2), encoding="utf-8")
+    print(f"Generated {len(proposals)} proposals (showing up to {args.top}).")
+    for idx, item in enumerate(proposals[: args.top], start=1):
+        print(
+            f"{idx:3d}. {item['string']:<24} score={item['score']:.3f}"
+            f" pattern={item['patternability']:.3f} connector={item['connector']:.3f}"
+            f" occ={item['occurrences']}"
+        )
+
+
+def _top_strings_for_theme(
+    state: Mapping[str, Any],
+    theme_index: int,
+    *,
+    metric: str = "connector",
+    limit: int = 5,
+) -> List[str]:
+    theme_members: List[List[str]] = state.get("themes", [])  # type: ignore[assignment]
+    if theme_index < 0 or theme_index >= len(theme_members):
+        raise ValueError(f"Theme index {theme_index} out of range")
+    members = theme_members[theme_index]
+    scores = state.get("string_scores", {})
+    ranked: List[Tuple[float, str]] = []
+    for text in members:
+        payload = scores.get(text)
+        if not payload:
+            continue
+        ranked.append((float(payload.get(metric, 0.0)), text))
+    ranked.sort(reverse=True)
+    return [text for _, text in ranked[:limit]]
+
+
+def cmd_discover(args: argparse.Namespace) -> None:
+    state = load_analysis_state(args.input)
+    seeds: List[str]
+    if args.seeds or args.seed_file:
+        try:
+            seeds = _collect_seeds(args)
+        except ValueError as exc:
+            print(f"Error: {exc}")
+            return
+    elif args.mode == "cross-theme" and args.theme_a is not None and args.theme_b is not None:
+        theme_seed_count = args.theme_seed_count
+        theme_a_seeds = _top_strings_for_theme(
+            state, args.theme_a, metric=args.theme_metric, limit=theme_seed_count
+        )
+        theme_b_seeds = _top_strings_for_theme(
+            state, args.theme_b, metric=args.theme_metric, limit=theme_seed_count
+        )
+        seeds = theme_a_seeds + theme_b_seeds
+    else:
+        raise ValueError(
+            "Discover mode requires --seeds/--seed-file or --theme-a/--theme-b with mode cross-theme."
+        )
+    result = propose_from_state(
+        state,
+        seeds=seeds,
+        k=args.k,
+        min_connector=args.min_connector,
+        min_patternability=args.min_patternability,
+        target_profile=args.target_profile,
+    )
+    proposals = result["proposals"]
+    if args.output:
+        Path(args.output).write_text(json.dumps(result, indent=2), encoding="utf-8")
+    print(f"Seeds: {', '.join(seeds)}")
+    print(f"Generated {len(proposals)} proposals (showing up to {args.top}).")
+    for idx, item in enumerate(proposals[: args.top], start=1):
+        print(
+            f"{idx:3d}. {item['string']:<24} score={item['score']:.3f}"
+            f" pattern={item['patternability']:.3f} connector={item['connector']:.3f}"
+            f" occ={item['occurrences']}"
+        )
+
+
 def main(argv: Optional[List[str]] = None) -> None:
     parser = argparse.ArgumentParser(prog="stm", description="Sep Text Manifold CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -192,6 +305,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     p_ingest.add_argument("--graph-min-pmi", dest="graph_min_pmi", type=float, default=0.0, help="Minimum PMI required for graph edges")
     p_ingest.add_argument("--graph-max-degree", dest="graph_max_degree", type=int, help="Maximum degree allowed per node in the theme graph")
     p_ingest.add_argument("--theme-min-size", dest="theme_min_size", type=int, default=1, help="Minimum number of members required for a theme")
+    p_ingest.add_argument("--log-file", dest="log_file", help="Optional path to append-only manifold log")
     p_ingest.add_argument("--verbose", action="store_true", help="Print progress information during analysis")
     p_ingest.set_defaults(func=cmd_ingest)
     # Strings command
@@ -209,6 +323,35 @@ def main(argv: Optional[List[str]] = None) -> None:
     p_summary.add_argument("--input", default="stm_state.json", help="Path to analysis state JSON file")
     p_summary.add_argument("--top", type=int, help="Number of top strings/connectors to display")
     p_summary.set_defaults(func=cmd_summary)
+    # Propose command
+    p_propose = subparsers.add_parser("propose", help="Generate bridge-string proposals")
+    p_propose.add_argument("--input", default="stm_state.json", help="Path to analysis state JSON file")
+    p_propose.add_argument("--seeds", help="Comma-separated list of seed strings")
+    p_propose.add_argument("--seed-file", help="File containing one seed string per line")
+    p_propose.add_argument("--k", type=int, default=25, help="Number of proposals to compute")
+    p_propose.add_argument("--top", type=int, default=10, help="Number of proposals to display")
+    p_propose.add_argument("--min-connector", type=float, default=0.0, help="Minimum connector score filter")
+    p_propose.add_argument("--min-patternability", type=float, default=0.0, help="Minimum patternability filter")
+    p_propose.add_argument("--target-profile", help="Target metric profile constraints, e.g. coh>=0.7,ent<=0.3")
+    p_propose.add_argument("--output", help="Optional path to write proposals JSON")
+    p_propose.set_defaults(func=cmd_propose)
+    # Discover command
+    p_discover = subparsers.add_parser("discover", help="Assistive discovery workflow built on bridge proposals")
+    p_discover.add_argument("--input", default="stm_state.json", help="Path to analysis state JSON file")
+    p_discover.add_argument("--mode", choices=("cross-theme", "custom"), default="cross-theme", help="Discovery strategy")
+    p_discover.add_argument("--theme-a", type=int, help="First theme index (0-based) for cross-theme mode")
+    p_discover.add_argument("--theme-b", type=int, help="Second theme index (0-based) for cross-theme mode")
+    p_discover.add_argument("--theme-seed-count", type=int, default=5, help="Number of strings to sample from each theme")
+    p_discover.add_argument("--theme-metric", choices=("connector", "patternability"), default="connector", help="Ranking metric for theme seed selection")
+    p_discover.add_argument("--seeds", help="Comma-separated seeds (overrides theme selection)")
+    p_discover.add_argument("--seed-file", help="File containing seed strings (overrides theme selection)")
+    p_discover.add_argument("--k", type=int, default=25, help="Number of proposals to compute")
+    p_discover.add_argument("--top", type=int, default=10, help="Number of proposals to display")
+    p_discover.add_argument("--min-connector", type=float, default=0.0, help="Minimum connector score filter")
+    p_discover.add_argument("--min-patternability", type=float, default=0.0, help="Minimum patternability filter")
+    p_discover.add_argument("--target-profile", help="Target metric profile constraints, e.g. coh>=0.7,ent<=0.3")
+    p_discover.add_argument("--output", help="Optional path to write discovery JSON")
+    p_discover.set_defaults(func=cmd_discover)
     args = parser.parse_args(argv)
     args.func(args)
 

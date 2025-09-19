@@ -11,10 +11,12 @@ packages and start the server with ``uvicorn sep_text_manifold.api:app``.
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+
+from .propose import propose_from_state, load_state as load_analysis_state
 
 
 class Metrics(BaseModel):
@@ -35,7 +37,17 @@ class ThemeOut(BaseModel):
     members: List[str]
 
 
-# In‑memory stores – these should be replaced by a proper database or
+class DiscoverRequest(BaseModel):
+    seeds: List[str]
+    k: int = 25
+    min_connector: float = 0.0
+    min_patternability: float = 0.0
+    target_profile: Optional[str] = None
+    state_path: Optional[str] = None
+    state: Optional[Dict[str, Any]] = None
+
+
+# In-memory stores – these should be replaced by a proper database or
 # state management layer in a production system.
 _string_metrics: Dict[str, Metrics] = {}
 _themes: List[List[str]] = []
@@ -91,3 +103,40 @@ def load_data(strings: Dict[str, Dict[str, float]], themes: List[List[str]]) -> 
     _string_metrics = {s: Metrics(**m) for s, m in strings.items()}
     _themes = themes
     return {"status": "loaded", "strings": len(_string_metrics), "themes": len(_themes)}
+
+
+@app.post("/discover")
+def discover_strings(request: DiscoverRequest) -> Dict[str, Any]:
+    """Generate bridge-string proposals from a loaded or supplied state."""
+    if request.state is not None:
+        state = request.state
+    elif request.state_path:
+        state = load_analysis_state(request.state_path)
+    elif _string_metrics:
+        state = {
+            "string_scores": {
+                text: {
+                    "metrics": metric.dict(),
+                    "occurrences": 0,
+                    "window_ids": [],
+                    "patternability": 0.0,
+                    "connector": 0.0,
+                }
+                for text, metric in _string_metrics.items()
+            },
+            "themes": _themes,
+        }
+    else:
+        raise HTTPException(status_code=400, detail="State not provided and in-memory store is empty")
+    try:
+        result = propose_from_state(
+            state,
+            seeds=request.seeds,
+            k=request.k,
+            min_connector=request.min_connector,
+            min_patternability=request.min_patternability,
+            target_profile=request.target_profile,
+        )
+    except ValueError as exc:  # pragma: no cover - guarded by validation
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return result

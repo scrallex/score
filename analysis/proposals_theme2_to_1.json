@@ -1,0 +1,718 @@
+{
+  "target": {
+    "seeds": [
+      "liveyaml",
+      "websocketsvc",
+      "promotionstep"
+    ],
+    "vector": [
+      0.014115773799883028,
+      0.4840288799359731,
+      0.9858842262001168,
+      0.5159711200640269
+    ],
+    "constraints": {}
+  },
+  "proposals": [
+    {
+      "string": "study",
+      "score": 0.7660187571983003,
+      "metrics": {
+        "coherence": 0.012565507010498966,
+        "stability": 0.4840475318438937,
+        "entropy": 0.987434492989501,
+        "rupture": 0.5159524681561063
+      },
+      "patternability": 0.46277391781996224,
+      "connector": 0.5225129474307402,
+      "occurrences": 3,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.002192566994158421,
+        "pattern_component": 0.9934652824356679,
+        "connector": 0.5225129474307402,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.012565507010498966,
+        "stability": 0.4840475318438937,
+        "entropy": 0.987434492989501,
+        "rupture": 0.5159524681561063,
+        "occurrences": 3,
+        "patternability": 0.46277391781996224
+      }
+    },
+    {
+      "string": "determine",
+      "score": 0.7563329511147032,
+      "metrics": {
+        "coherence": 0.009423307531096695,
+        "stability": 0.4867334065844626,
+        "entropy": 0.9905766924689033,
+        "rupture": 0.5132665934155374
+      },
+      "patternability": 0.46256096112072187,
+      "connector": 0.5194274020749501,
+      "occurrences": 3,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.007659465265420072,
+        "pattern_component": 0.9775377506595588,
+        "connector": 0.5194274020749501,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.009423307531096695,
+        "stability": 0.4867334065844626,
+        "entropy": 0.9905766924689033,
+        "rupture": 0.5132665934155374,
+        "occurrences": 3,
+        "patternability": 0.46256096112072187
+      }
+    },
+    {
+      "string": "http_api",
+      "score": 0.755959367955874,
+      "metrics": {
+        "coherence": 0.009302782797009893,
+        "stability": 0.4807715785618362,
+        "entropy": 0.9906972172029901,
+        "rupture": 0.5192284214381638
+      },
+      "patternability": 0.4617990253752021,
+      "connector": 0.5211173565045735,
+      "occurrences": 3,
+      "themes": [
+        0
+      ],
+      "diagnostics": {
+        "distance": 0.008218867882584859,
+        "pattern_component": 0.9759367152273477,
+        "connector": 0.5211173565045735,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.009302782797009893,
+        "stability": 0.4807715785618362,
+        "entropy": 0.9906972172029901,
+        "rupture": 0.5192284214381638,
+        "occurrences": 3,
+        "patternability": 0.4617990253752021
+      }
+    },
+    {
+      "string": "eval",
+      "score": 0.7556087715271557,
+      "metrics": {
+        "coherence": 0.01616777798413664,
+        "stability": 0.48087840312538155,
+        "entropy": 0.9838322220158634,
+        "rupture": 0.5191215968746185
+      },
+      "patternability": 0.4630068837476854,
+      "connector": 0.5225357686892658,
+      "occurrences": 4,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.005317184462903107,
+        "pattern_component": 0.9842989034905228,
+        "connector": 0.5225357686892658,
+        "novelty": 0.383224293337255,
+        "coherence": 0.01616777798413664,
+        "stability": 0.48087840312538155,
+        "entropy": 0.9838322220158634,
+        "rupture": 0.5191215968746185,
+        "occurrences": 4,
+        "patternability": 0.4630068837476854
+      }
+    },
+    {
+      "string": "orchestrates",
+      "score": 0.7551777999879016,
+      "metrics": {
+        "coherence": 0.010424801464060126,
+        "stability": 0.4890530256785903,
+        "entropy": 0.9895751985359399,
+        "rupture": 0.5109469743214097
+      },
+      "patternability": 0.4630235987168903,
+      "connector": 0.5216373394218685,
+      "occurrences": 3,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.008816497856503942,
+        "pattern_component": 0.9742320555125096,
+        "connector": 0.5216373394218685,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.010424801464060126,
+        "stability": 0.4890530256785903,
+        "entropy": 0.9895751985359399,
+        "rupture": 0.5109469743214097,
+        "occurrences": 3,
+        "patternability": 0.4630235987168903
+      }
+    },
+    {
+      "string": "convert",
+      "score": 0.7547483459855804,
+      "metrics": {
+        "coherence": 0.008121515262887291,
+        "stability": 0.4830505025841371,
+        "entropy": 0.9918784847371128,
+        "rupture": 0.5169494974158629
+      },
+      "patternability": 0.46187671384170276,
+      "connector": 0.519019213710263,
+      "occurrences": 3,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.008589337302834643,
+        "pattern_component": 0.9748792986237103,
+        "connector": 0.519019213710263,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.008121515262887291,
+        "stability": 0.4830505025841371,
+        "entropy": 0.9918784847371128,
+        "rupture": 0.5169494974158629,
+        "occurrences": 3,
+        "patternability": 0.46187671384170276
+      }
+    },
+    {
+      "string": "yml",
+      "score": 0.7542345190562819,
+      "metrics": {
+        "coherence": 0.00824235935807364,
+        "stability": 0.4812395718878444,
+        "entropy": 0.9917576406419264,
+        "rupture": 0.5187604281121556
+      },
+      "patternability": 0.4616726946640597,
+      "connector": 0.5204685711943001,
+      "occurrences": 3,
+      "themes": [
+        0
+      ],
+      "diagnostics": {
+        "distance": 0.009195350628726636,
+        "pattern_component": 0.9731545092155109,
+        "connector": 0.5204685711943001,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.00824235935807364,
+        "stability": 0.4812395718878444,
+        "entropy": 0.9917576406419264,
+        "rupture": 0.5187604281121556,
+        "occurrences": 3,
+        "patternability": 0.4616726946640597
+      }
+    },
+    {
+      "string": "api_port",
+      "score": 0.7541356664687952,
+      "metrics": {
+        "coherence": 0.011780074427603518,
+        "stability": 0.47765840556708583,
+        "entropy": 0.9882199255723965,
+        "rupture": 0.5223415944329142
+      },
+      "patternability": 0.46184314603122867,
+      "connector": 0.5222217540008854,
+      "occurrences": 3,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.009595669360947865,
+        "pattern_component": 0.9720184957073976,
+        "connector": 0.5222217540008854,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.011780074427603518,
+        "stability": 0.47765840556708583,
+        "entropy": 0.9882199255723965,
+        "rupture": 0.5223415944329142,
+        "occurrences": 3,
+        "patternability": 0.46184314603122867
+      }
+    },
+    {
+      "string": "faster",
+      "score": 0.7538435112809194,
+      "metrics": {
+        "coherence": 0.008733498998502323,
+        "stability": 0.4879135636674399,
+        "entropy": 0.9912665010014976,
+        "rupture": 0.5120864363325601
+      },
+      "patternability": 0.4625876140919596,
+      "connector": 0.5201638691702434,
+      "occurrences": 3,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.009387188048729038,
+        "pattern_component": 0.9726097870916102,
+        "connector": 0.5201638691702434,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.008733498998502323,
+        "stability": 0.4879135636674399,
+        "entropy": 0.9912665010014976,
+        "rupture": 0.5120864363325601,
+        "occurrences": 3,
+        "patternability": 0.4625876140919596
+      }
+    },
+    {
+      "string": "hyd",
+      "score": 0.7538202361186592,
+      "metrics": {
+        "coherence": 0.016231458996885675,
+        "stability": 0.4799627640092785,
+        "entropy": 0.9837685410031143,
+        "rupture": 0.5200372359907215
+      },
+      "patternability": 0.4629041401264972,
+      "connector": 0.5227606243821523,
+      "occurrences": 4,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.006482194471339989,
+        "pattern_component": 0.9809243723698642,
+        "connector": 0.5227606243821523,
+        "novelty": 0.383224293337255,
+        "coherence": 0.016231458996885675,
+        "stability": 0.4799627640092785,
+        "entropy": 0.9837685410031143,
+        "rupture": 0.5200372359907215,
+        "occurrences": 4,
+        "patternability": 0.4629041401264972
+      }
+    },
+    {
+      "string": "flows",
+      "score": 0.7538076931500968,
+      "metrics": {
+        "coherence": 0.009773628643297325,
+        "stability": 0.4839000122085215,
+        "entropy": 0.9902263713567027,
+        "rupture": 0.5160999877914785
+      },
+      "patternability": 0.46226974785529185,
+      "connector": 0.5209241965777232,
+      "occurrences": 4,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.006143424363014445,
+        "pattern_component": 0.9819032548658028,
+        "connector": 0.5209241965777232,
+        "novelty": 0.383224293337255,
+        "coherence": 0.009773628643297325,
+        "stability": 0.4839000122085215,
+        "entropy": 0.9902263713567027,
+        "rupture": 0.5160999877914785,
+        "occurrences": 4,
+        "patternability": 0.46226974785529185
+      }
+    },
+    {
+      "string": "cnd",
+      "score": 0.7536802376250147,
+      "metrics": {
+        "coherence": 0.016859847041725606,
+        "stability": 0.48029849835184957,
+        "entropy": 0.9831401529582744,
+        "rupture": 0.5197015016481504
+      },
+      "patternability": 0.46305524191796327,
+      "connector": 0.5226482344364755,
+      "occurrences": 4,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.006549150283779427,
+        "pattern_component": 0.9807311332608796,
+        "connector": 0.5226482344364755,
+        "novelty": 0.383224293337255,
+        "coherence": 0.016859847041725606,
+        "stability": 0.48029849835184957,
+        "entropy": 0.9831401529582744,
+        "rupture": 0.5197015016481504,
+        "occurrences": 4,
+        "patternability": 0.46305524191796327
+      }
+    },
+    {
+      "string": "here",
+      "score": 0.753441478650834,
+      "metrics": {
+        "coherence": 0.007463446542763115,
+        "stability": 0.4847190005290359,
+        "entropy": 0.9925365534572369,
+        "rupture": 0.5152809994709641
+      },
+      "patternability": 0.4619695723944093,
+      "connector": 0.5191936700276927,
+      "occurrences": 3,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.009458300520578831,
+        "pattern_component": 0.9724080182055735,
+        "connector": 0.5191936700276927,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.007463446542763115,
+        "stability": 0.4847190005290359,
+        "entropy": 0.9925365534572369,
+        "rupture": 0.5152809994709641,
+        "occurrences": 3,
+        "patternability": 0.4619695723944093
+      }
+    },
+    {
+      "string": "rewrite",
+      "score": 0.7533678650845769,
+      "metrics": {
+        "coherence": 0.008768379624714643,
+        "stability": 0.47975420176616607,
+        "entropy": 0.9912316203752853,
+        "rupture": 0.5202457982338339
+      },
+      "patternability": 0.46157962837342864,
+      "connector": 0.5201092774033845,
+      "occurrences": 3,
+      "themes": [
+        0
+      ],
+      "diagnostics": {
+        "distance": 0.009681683523029446,
+        "pattern_component": 0.9717747531529105,
+        "connector": 0.5201092774033845,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.008768379624714643,
+        "stability": 0.47975420176616607,
+        "entropy": 0.9912316203752853,
+        "rupture": 0.5202457982338339,
+        "occurrences": 3,
+        "patternability": 0.46157962837342864
+      }
+    },
+    {
+      "string": "tighten",
+      "score": 0.7532440963426038,
+      "metrics": {
+        "coherence": 0.007719896931299042,
+        "stability": 0.48709966223090384,
+        "entropy": 0.9922801030687008,
+        "rupture": 0.5129003377690962
+      },
+      "patternability": 0.46231007038358224,
+      "connector": 0.5215228584549474,
+      "occurrences": 3,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.01003363790665658,
+        "pattern_component": 0.9707786748666524,
+        "connector": 0.5215228584549474,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.007719896931299042,
+        "stability": 0.48709966223090384,
+        "entropy": 0.9922801030687008,
+        "rupture": 0.5129003377690962,
+        "occurrences": 3,
+        "patternability": 0.46231007038358224
+      }
+    },
+    {
+      "string": "expects",
+      "score": 0.7530477798897238,
+      "metrics": {
+        "coherence": 0.007260727466261867,
+        "stability": 0.4850038660318236,
+        "entropy": 0.9927392725337381,
+        "rupture": 0.5149961339681765
+      },
+      "patternability": 0.4619697039781974,
+      "connector": 0.5196154476201491,
+      "occurrences": 3,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.009792063942110985,
+        "pattern_component": 0.971462141771306,
+        "connector": 0.5196154476201491,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.007260727466261867,
+        "stability": 0.4850038660318236,
+        "entropy": 0.9927392725337381,
+        "rupture": 0.5149961339681765,
+        "occurrences": 3,
+        "patternability": 0.4619697039781974
+      }
+    },
+    {
+      "string": "layout",
+      "score": 0.7528859392544488,
+      "metrics": {
+        "coherence": 0.007982378420141286,
+        "stability": 0.48754730802099866,
+        "entropy": 0.9920176215798587,
+        "rupture": 0.5124526919790013
+      },
+      "patternability": 0.46241138297130074,
+      "connector": 0.5201535287025917,
+      "occurrences": 3,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.009999787505115786,
+        "pattern_component": 0.9708743872985646,
+        "connector": 0.5201535287025917,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.007982378420141286,
+        "stability": 0.48754730802099866,
+        "entropy": 0.9920176215798587,
+        "rupture": 0.5124526919790013,
+        "occurrences": 3,
+        "patternability": 0.46241138297130074
+      }
+    },
+    {
+      "string": "powerful",
+      "score": 0.7528112383275675,
+      "metrics": {
+        "coherence": 0.008467075244069588,
+        "stability": 0.48801530134700694,
+        "entropy": 0.9915329247559304,
+        "rupture": 0.5119846986529931
+      },
+      "patternability": 0.462553897152417,
+      "connector": 0.5187511640089579,
+      "occurrences": 3,
+      "themes": [
+        0
+      ],
+      "diagnostics": {
+        "distance": 0.009777458876497312,
+        "pattern_component": 0.9715034936280352,
+        "connector": 0.5187511640089579,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.008467075244069588,
+        "stability": 0.48801530134700694,
+        "entropy": 0.9915329247559304,
+        "rupture": 0.5119846986529931,
+        "occurrences": 3,
+        "patternability": 0.462553897152417
+      }
+    },
+    {
+      "string": "flowchart",
+      "score": 0.7527705974680898,
+      "metrics": {
+        "coherence": 0.014719059811020244,
+        "stability": 0.4791386888047857,
+        "entropy": 0.9852809401889797,
+        "rupture": 0.5208613111952143
+      },
+      "patternability": 0.4625385047403278,
+      "connector": 0.5218301926160396,
+      "occurrences": 4,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.006968202538786819,
+        "pattern_component": 0.9795234466957994,
+        "connector": 0.5218301926160396,
+        "novelty": 0.383224293337255,
+        "coherence": 0.014719059811020244,
+        "stability": 0.4791386888047857,
+        "entropy": 0.9852809401889797,
+        "rupture": 0.5208613111952143,
+        "occurrences": 4,
+        "patternability": 0.4625385047403278
+      }
+    },
+    {
+      "string": "creates",
+      "score": 0.7527246669152873,
+      "metrics": {
+        "coherence": 0.008820138564001564,
+        "stability": 0.4883205143857079,
+        "entropy": 0.9911798614359985,
+        "rupture": 0.5116794856142921
+      },
+      "patternability": 0.46265327581465243,
+      "connector": 0.5177471826671611,
+      "occurrences": 3,
+      "themes": [
+        0
+      ],
+      "diagnostics": {
+        "distance": 0.009639696966363681,
+        "pattern_component": 0.9718937172466875,
+        "connector": 0.5177471826671611,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.008820138564001564,
+        "stability": 0.4883205143857079,
+        "entropy": 0.9911798614359985,
+        "rupture": 0.5116794856142921,
+        "occurrences": 3,
+        "patternability": 0.46265327581465243
+      }
+    },
+    {
+      "string": "assert",
+      "score": 0.7527008850960716,
+      "metrics": {
+        "coherence": 0.006725394495300574,
+        "stability": 0.4852073413909575,
+        "entropy": 0.9932746055046994,
+        "rupture": 0.5147926586090424
+      },
+      "patternability": 0.4619018506672315,
+      "connector": 0.5225582828071809,
+      "occurrences": 3,
+      "themes": [
+        2
+      ],
+      "diagnostics": {
+        "distance": 0.010583617308508958,
+        "pattern_component": 0.9692262411353756,
+        "connector": 0.5225582828071809,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.006725394495300574,
+        "stability": 0.4852073413909575,
+        "entropy": 0.9932746055046994,
+        "rupture": 0.5147926586090424,
+        "occurrences": 3,
+        "patternability": 0.4619018506672315
+      }
+    },
+    {
+      "string": "hydrates",
+      "score": 0.7526811137449612,
+      "metrics": {
+        "coherence": 0.007448613091755023,
+        "stability": 0.4872827900541245,
+        "entropy": 0.9925513869082451,
+        "rupture": 0.5127172099458756
+      },
+      "patternability": 0.4622856264677567,
+      "connector": 0.5220178738387163,
+      "occurrences": 3,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.010491802796947274,
+        "pattern_component": 0.969485061752519,
+        "connector": 0.5220178738387163,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.007448613091755023,
+        "stability": 0.4872827900541245,
+        "entropy": 0.9925513869082451,
+        "rupture": 0.5127172099458756,
+        "occurrences": 3,
+        "patternability": 0.4622856264677567
+      }
+    },
+    {
+      "string": "seed",
+      "score": 0.7525399417761325,
+      "metrics": {
+        "coherence": 0.00727586026435358,
+        "stability": 0.4865706262971554,
+        "entropy": 0.9927241397356464,
+        "rupture": 0.5134293737028446
+      },
+      "patternability": 0.4621670548736852,
+      "connector": 0.5206555662532256,
+      "occurrences": 3,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.010319388716208293,
+        "pattern_component": 0.9699714623103709,
+        "connector": 0.5206555662532256,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.00727586026435358,
+        "stability": 0.4865706262971554,
+        "entropy": 0.9927241397356464,
+        "rupture": 0.5134293737028446,
+        "occurrences": 3,
+        "patternability": 0.4621670548736852
+      }
+    },
+    {
+      "string": "dependency",
+      "score": 0.7523669619080852,
+      "metrics": {
+        "coherence": 0.0068696597676704,
+        "stability": 0.4839254466284133,
+        "entropy": 0.9931303402323296,
+        "rupture": 0.5160745533715867
+      },
+      "patternability": 0.461767646746266,
+      "connector": 0.5197125675546346,
+      "occurrences": 3,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.010248596686077801,
+        "pattern_component": 0.97017131638588,
+        "connector": 0.5197125675546346,
+        "novelty": 0.41905978419640516,
+        "coherence": 0.0068696597676704,
+        "stability": 0.4839254466284133,
+        "entropy": 0.9931303402323296,
+        "rupture": 0.5160745533715867,
+        "occurrences": 3,
+        "patternability": 0.461767646746266
+      }
+    },
+    {
+      "string": "allocatorlite",
+      "score": 0.7523284333704371,
+      "metrics": {
+        "coherence": 0.009078266816883021,
+        "stability": 0.48534977414235136,
+        "entropy": 0.9909217331831169,
+        "rupture": 0.5146502258576486
+      },
+      "patternability": 0.46232894131705676,
+      "connector": 0.5224475315500614,
+      "occurrences": 4,
+      "themes": [
+        1
+      ],
+      "diagnostics": {
+        "distance": 0.007364949165909829,
+        "pattern_component": 0.9783827816451462,
+        "connector": 0.5224475315500614,
+        "novelty": 0.383224293337255,
+        "coherence": 0.009078266816883021,
+        "stability": 0.48534977414235136,
+        "entropy": 0.9909217331831169,
+        "rupture": 0.5146502258576486,
+        "occurrences": 4,
+        "patternability": 0.46232894131705676
+      }
+    }
+  ]
+}

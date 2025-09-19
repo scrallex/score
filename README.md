@@ -37,6 +37,8 @@ stm ingest /path/to/text/data --window-bytes 2048 --stride 1024 --summary-top 15
 stm summary
 stm strings --top 50
 stm themes
+stm propose --seeds signature,manifold_builder --min-connector 0.35 --top 10
+stm discover --theme-a 0 --theme-b 2 --min-connector 0.3 --top 10
 ```
 
 For details on the commands and available options run `stm --help`.
@@ -49,6 +51,7 @@ For details on the commands and available options run `stm --help`.
 - `docs/` – design notes and integration guidelines.
 - `tests/` – pytest-based regression suite covering the pipeline and
   CLI.
+- `cpp/` – optional pybind11-ready scaffolding for the native hot loop.
 
 ## Contributing
 

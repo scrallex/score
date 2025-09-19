@@ -15,6 +15,12 @@ from __future__ import annotations
 import math
 from typing import Dict, Iterable, List
 
+try:  # pragma: no cover - optional native backend
+    from .native import analyze_bits as native_analyze_bits, HAVE_NATIVE
+except ImportError:  # pragma: no cover - optional native backend
+    native_analyze_bits = None  # type: ignore
+    HAVE_NATIVE = False
+
 
 def bytes_to_bits(data: bytes) -> List[int]:
     """Convert a sequence of bytes into a list of bits (0 or 1).
@@ -100,6 +106,18 @@ def encode_window(window: bytes) -> Dict[str, float]:
     produce a single metrics dictionary for a window of data.
     """
     bits = bytes_to_bits(window)
+    if HAVE_NATIVE and native_analyze_bits is not None:
+        try:
+            native = native_analyze_bits(bits)
+            return {
+                "coherence": native.get("coherence", 0.0),
+                "stability": native.get("stability", 0.0),
+                "entropy": native.get("entropy", 0.0),
+                "rupture": native.get("rupture", 0.0),
+                "lambda_hazard": native.get("lambda_hazard", native.get("rupture", 0.0)),
+            }
+        except Exception:  # pragma: no cover - safety fallback
+            pass
     return compute_metrics(bits)
 
 

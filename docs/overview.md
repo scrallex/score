@@ -45,8 +45,9 @@ This repository now includes an executable pipeline
 (`sep_text_manifold.pipeline.analyse_directory`) and a CLI (`stm`) that
 run these steps end-to-end on a directory of text files.  The pipeline
 produces manifold windows, aggregated string profiles, connector
-scores and theme assignments which can be inspected via
-`stm summary`, `stm strings` and `stm themes`.  The actual quantum
+scores, theme assignments, bridge-string proposals (`stm propose`,
+`stm discover`) and can be surfaced through a lightweight demo API.
+The actual quantum
 algorithms are not reimplemented here; instead, you should port or
 wrap the QFH and QBSA implementations from the core SEP repositories
 (see `integration_with_sep.md`).

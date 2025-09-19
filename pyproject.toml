@@ -22,6 +22,12 @@ dependencies = [
 test = [
     "pytest>=7.0",
 ]
+demo = [
+    "flask>=3.0",
+]
+native = [
+    "pybind11>=2.11",
+]
 
 [project.scripts]
 stm = "sep_text_manifold.cli:main"

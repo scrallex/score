@@ -9,6 +9,7 @@ from .manifold import build_manifold
 from .scoring import connector_score, patternability_score
 from .strings import StringOccurrence, aggregate_string_metrics, extract_strings
 from .themes import build_theme_graph, compute_graph_metrics, detect_themes
+from .binary_log import BinaryLogWriter, ManifoldRecord
 
 
 @dataclass
@@ -25,6 +26,7 @@ class AnalysisSettings:
     graph_min_pmi: float
     graph_max_degree: Optional[int]
     theme_min_size: int
+    log_file: Optional[str]
 
 
 @dataclass
@@ -106,6 +108,7 @@ def analyse_directory(
     graph_min_pmi: float = 0.0,
     graph_max_degree: Optional[int] = None,
     theme_min_size: int = 1,
+    log_file: Optional[str] = None,
 ) -> AnalysisResult:
     root = Path(directory)
     if not root.is_dir():
@@ -144,6 +147,37 @@ def analyse_directory(
     signals = build_manifold(bytes(corpus_bytes), window_bytes=window_bytes, stride=stride)
     if verbose:
         print(f"[stm] manifold windows: {len(signals)}", flush=True)
+    if log_file:
+        if verbose:
+            print(f"[stm] writing manifold log to {log_file}", flush=True)
+        with BinaryLogWriter(log_file) as writer:
+            for sig in signals:
+                metrics = sig.get("metrics", {})
+                coherence = float(metrics.get("coherence", 0.0))
+                stability = float(metrics.get("stability", 0.0))
+                entropy = float(metrics.get("entropy", 0.0))
+                rupture = float(metrics.get("rupture", 0.0))
+                lambda_hazard = float(sig.get("lambda_hazard", metrics.get("lambda_hazard", rupture)))
+                sig_c = int(round(max(0.0, min(1.0, coherence)) * 1000))
+                sig_s = int(round(max(0.0, min(1.0, stability)) * 1000))
+                sig_e = int(round(max(0.0, min(1.0, entropy)) * 1000))
+                record = ManifoldRecord(
+                    file_id=0,
+                    window_index=int(sig.get("id", 0)),
+                    byte_start=int(sig.get("window_start", sig.get("index", 0) - window_bytes)),
+                    window_bytes=window_bytes,
+                    stride_bytes=stride,
+                    coherence=coherence,
+                    stability=stability,
+                    entropy=entropy,
+                    rupture=rupture,
+                    lambda_hazard=lambda_hazard,
+                    sig_c=sig_c,
+                    sig_s=sig_s,
+                    sig_e=sig_e,
+                )
+                writer.append(record)
+    if verbose:
         print("[stm] aggregating string metrics", flush=True)
     string_profiles = aggregate_string_metrics(
         tokenised_occurrences,
@@ -218,6 +252,7 @@ def analyse_directory(
         graph_min_pmi=graph_min_pmi,
         graph_max_degree=graph_max_degree,
         theme_min_size=theme_min_size,
+        log_file=log_file,
     )
     return AnalysisResult(
         settings=settings,
