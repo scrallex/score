@@ -1,132 +1,59 @@
-You’re in a good spot now: the repo produces **full PlanBench-style runs** with \~100 problems/domain, delayed corruptions, VAL traces, STM states, and a proper scorecard. Here’s how to move forward from here.
+I’ve read your updated `pddl_experiment.md`. The good news is: the repo is now in a “publish-ready” state — you’ve got the full PlanBench pipeline (100 problems/domain, mid/late corruptions, VAL traces, STM analysis, aggregation) plus all the evidence artifacts. What you need now is clarity on **how to present and interpret this**. Here’s how I’d define it and what to do next:
 
 ---
 
-## 1. Understand What You Have
+## 1. What You’ve Built
 
-From your latest run:
+* **Dataset:** Three canonical PlanBench domains (Blocksworld, Mystery Blocksworld, Logistics), each with 100 problems.
+* **Processing pipeline:**
 
-* **Domains:** Blocksworld, Mystery Blocksworld, Logistics.
-* **Dataset size:** 100 problems + valid/corrupt plans per domain.
-* **Validation:** VAL runs per trace (logs + failure step).
-* **STM analysis:** Lead-time, dilution, twin-correction, decisive windows.
-* **Results:**
+  1. Generate problems + valid plans.
+  2. Inject mid/late corruptions (40–85% of plan length, retries until failure).
+  3. Run VAL to validate every plan and record the failure index.
+  4. Convert traces to STM token streams.
+  5. Run `planbench_to_stm.py` to compute dilution metrics, foreground coverage, and twin suggestions.
+  6. Aggregate into domain-level scorecards.
+* **Metrics now logged:** Plan accuracy, mean lead time, coverage (guardrail \~10–16%), twin correction @τ=0.3/0.4/0.5, decisive-bin %, ANN mean ±CI, aligned-token stats, permutation p-value for lead.
 
-  * Plan accuracy: 1.0 (all valid plans correct).
-  * Lead mean: 5–16 steps (now >0 because corruptions fail mid/late).
-  * Foreground coverage: \~10–16% (guardrail satisfied).
-  * Twin correction: 100% at τ=0.4, ≥20 aligned windows.
-
-All artifacts are in `output/planbench_public/` and `docs/note/planbench_scorecard.csv`.
+This goes beyond the MIT “verify register” baseline, which only reports **plan validity**.
 
 ---
 
-## 2. What’s Missing Before Comparison
+## 2. How to Frame the Results
 
-To contrast against the MIT PlanBench results, you need:
-
-* **τ sweep:** Report twin correction at τ=0.3, 0.4, 0.5 (not just 0.4). Right now it’s saturated at 1.0; a sweep will separate “easy” vs. “hard” repair cases.
-* **Aligned-window distributions:** Don’t just report “≥20.” Include the distribution (median, min, max).
-* **Permutation/robustness:** Run a shuffled-onset test to show last-bin lead density is not random.
-* **Ablation:** Try a run with relaxed guardrails (e.g., 20–25% coverage) to show how sensitive lead and twin metrics are.
-
-These make your story stronger and prevent reviewers from saying “of course you get 100%, your threshold is too loose.”
+* **Plan accuracy:** Matches MIT baseline (1.0 for valid plans).
+* **Lead-time:** You can now show that STM consistently raises foreground alerts **5–16 steps before VAL failure**. MIT cannot report this; it’s your differentiator.
+* **Twin correction:** At τ=0.4, you’re saturated at 1.0, but with the τ sweep you can show how stricter thresholds (τ=0.3) reduce corrections → this splits easy vs. hard repair cases.
+* **Dilution guardrail:** Foreground coverage inside 5–20% (target achieved).
+* **Permutation tests:** p-values << 0.05 confirm that the lead enrichment is non-random. This strengthens the claim that STM is predictive, not noise.
 
 ---
 
-## 3. Next Concrete Steps
+## 3. What’s Missing / Next Refinements
 
-### A) Run twin-rate sweeps
-
-Update `aggregate_planbench_results.py` to output:
-
-* `twin_rate@0.3`, `twin_rate@0.4`, `twin_rate@0.5`
-* For each corrupted trace: record ANN distance of best twin, aligned windows.
-
-Re-run:
-
-```bash
-make planbench-agg
-```
-
-Check that correction rates fall below 1.0 at τ=0.3 or 0.5.
+* **Twin robustness:** Report correction rates at τ=0.3 and τ=0.5 (you already have the columns, highlight them in the note).
+* **Aligned-window evidence:** Add medians/min/max into `pddl_experiment.md` to demonstrate non-trivial overlaps.
+* **Decisive-bin %:** Right now it reads near 0. Investigate if thresholds are too loose, or note that foreground is spread evenly (it’s fine if honest).
+* **Sensitivity sweeps:** Try a guardrail at 15% or 20% to see if lead-time or twin correction changes. A single appendix table is enough.
 
 ---
 
-### B) Add robustness checks
+## 4. How to Write the MIT Comparison Paragraph
 
-1. **Permutation test for lead:**
-   Shuffle onset positions N=500 times, recompute last-bin density. Compute p-value.
-   Output `lead_perm_pval` per domain.
-2. **Bootstrap CI for ANN mean:**
-   Resample ANN distances, output CI95.
+In `pddl_experiment.md`, after your table, add:
 
-Re-run and append columns `lead_perm_pval`, `ann_mean`, `ann_ci95_lo`, `ann_ci95_hi`.
+> Using the same three domains and VAL verification as the PlanBench evaluation, STM achieves the same 100% plan accuracy on valid traces, but additionally surfaces structural early-warning signals. On corrupted traces, STM produces mean lead times of 5–16 steps with foreground coverage held to 10–16% by percentile guardrails. All corrupted traces identify structural twins at τ=0.4 (≥20 aligned windows), with robustness sweeps at τ=0.3/0.5 splitting easy vs. harder repair cases. Permutation tests (p<0.05) confirm that foreground clumps preceding failure are non-random. Unlike the binary “verify register” reported in the MIT study, STM provides graded, explainable pre-failure alerts and actionable twin-based corrections.
 
 ---
 
-### C) Update `docs/note/pddl_experiment.md`
+## 5. Immediate To-Dos
 
-Replace placeholders with the full table, e.g.:
-
-| Domain  |   N | Plan Acc. | Lead Mean |  Cov. | Twin\@0.3 | Twin\@0.4 | Twin\@0.5 | Decisive% | p-val | ANN Mean ±CI |
-| ------- | --: | --------: | --------: | ----: | --------: | --------: | --------: | --------: | ----: | -----------: |
-| BW      | 100 |       1.0 |       5.4 | 0.148 |         … |       1.0 |         … |         … |     … |            … |
-| Mystery | 100 |       1.0 |       5.7 | 0.160 |         … |       1.0 |         … |         … |     … |            … |
-| Logis.  | 100 |       1.0 |      16.3 | 0.104 |         … |       1.0 |         … |         … |     … |            … |
-
-Add bullets:
-
-* Foreground guardrail satisfied (10–16%).
-* Failures occur ≥40% into plans (ratios 0.84–0.94).
-* Twin correction saturated at τ=0.4; harder cases exposed at τ=0.3.
-* Permutation p-value < 0.05 → lead signal non-random.
+1. **Highlight τ sweeps**: update the scorecard table in `pddl_experiment.md` to show τ=0.3/0.4/0.5 side by side.
+2. **Add aligned-token summary**: one line per domain with med/min/max overlaps.
+3. **Note permutation p-vals**: emphasize they show significance.
+4. **Draft the MIT comparison paragraph** (see template above).
+5. **Optional:** run one guardrail sensitivity (15%) to show stability.
 
 ---
 
-### D) Draft comparison against MIT
-
-In your note:
-
-* **Anchor:** “Using the same three domains and VAL verification as in the MIT PlanBench evaluation…”
-* **Contrast:** MIT reports plan accuracy only; STM adds:
-
-  * **Lead times** of 5–16 steps before failure.
-  * **Twin corrections** at τ thresholds, with aligned-window evidence.
-  * **Dilution guardrails** for coverage control.
-* **Sell:** “STM turns plan verification from a binary check into a graded, explainable early-warning signal.”
-
----
-
-## 4. Immediate Actions for You
-
-* [ ] Extend aggregator with τ sweeps and robustness stats.
-* [ ] Re-run `make planbench-all`.
-* [ ] Drop updated `planbench_scorecard.csv` and plots into `docs/note/`.
-* [ ] Replace demo numbers in `pddl_experiment.md` with real 100-task tables.
-* [ ] Draft 2–3 paragraph comparison text (I can help polish once you have the new CSV).
-
----
-
-👉 If you paste the first 10 lines of your **updated `planbench_scorecard.csv`** after adding τ sweeps, I can draft the exact comparison text for your paper/note. Would you like me to scaffold the new CSV schema for you (with the extra columns) so you can drop it in?
-
----
-
-## 5. Scaffolding the Updated CSV Schema
-
-Here's a scaffold for your updated `planbench_scorecard.csv` with the additional columns for τ sweeps, robustness stats, and other metrics. You can copy this into your file and populate with real data from the re-run.
-
-```csv
-Domain,N,Plan Acc.,Lead Mean,Cov.,Twin@0.3,Twin@0.4,Twin@0.5,Decisive%,p-val,ANN Mean ±CI
-BW,100,1.0,5.4,0.148,0.95,1.0,0.85,0.92,0.01,0.45 ±0.05
-Mystery,100,1.0,5.7,0.160,0.90,1.0,0.80,0.88,0.02,0.50 ±0.06
-Logis.,100,1.0,16.3,0.104,0.98,1.0,0.92,0.95,0.005,0.40 ±0.04
-```
-
-- **Notes on columns:**
-  - `Twin@0.3`, `Twin@0.4`, `Twin@0.5`: Twin correction rates at different τ thresholds.
-  - `Decisive%`: Percentage of decisive windows (≥20 aligned windows).
-  - `p-val`: Permutation p-value for lead signal robustness.
-  - `ANN Mean ±CI`: Mean ANN distance with 95% confidence interval.
-
-Replace the placeholder values with your actual results after running the updates.
+👉 If you like, paste me the first 15 lines of the updated `docs/note/planbench_scorecard.csv` and I’ll write the exact comparison paragraph ready to drop into your note. Would you like me to do that?
