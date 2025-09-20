@@ -461,15 +461,18 @@ async function analyzeText() {
       <div><dt>Repetition Ratio</dt><dd>${fmtPercent(metrics.repetition_ratio ?? 0, 1)}</dd></div>
     `;
 
-    const patterns = result.structural_patterns || [];
-    if (patterns.length) {
-      patternsCard.style.display = 'block';
-      patternList.innerHTML = patterns
-        .map(
-          (pattern) => `
+   const patterns = result.structural_patterns || [];
+   if (patterns.length) {
+     patternsCard.style.display = 'block';
+     patternList.innerHTML = patterns
+       .map(
+         (pattern) => `
             <li>
-              <span class="pattern-sig">${pattern.signature}</span>
-              <span class="pattern-stats">${fmtInteger(pattern.count)} hits · coh ${fmtNumber(pattern.avg_coherence, 4)} · stab ${fmtNumber(pattern.avg_stability, 4)}</span>
+              <div class="pattern-header">
+                <span class="pattern-sig">${pattern.signature}</span>
+                <span class="pattern-stats">${fmtInteger(pattern.count)} hits · coh ${fmtNumber(pattern.avg_coherence, 4)} · stab ${fmtNumber(pattern.avg_stability, 4)}</span>
+              </div>
+              ${pattern.sample_snippet ? `<div class="pattern-snippet">${pattern.sample_snippet}</div>` : ''}
             </li>
           `,
         )
@@ -483,7 +486,7 @@ async function analyzeText() {
         .map(
           (sequence) => `
             <li>
-              <span class="seq-token">"${sequence.token}"</span>
+              <span class="seq-token">"${sequence.phrase}"</span>
               <span class="seq-stats">${fmtInteger(sequence.frequency)} hits${
                 sequence.periodicity ? ` · period ${fmtInteger(sequence.periodicity)}` : ''
               }</span>

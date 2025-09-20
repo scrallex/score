@@ -14,6 +14,7 @@ import asyncio
 import csv
 import io
 import math
+import re
 from itertools import cycle
 from typing import AsyncIterator
 
@@ -432,7 +433,6 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
         raise HTTPException(status_code=400, detail="Unable to extract structural tokens from the provided text")
 
     token_stats: Dict[str, Dict[str, Any]] = {}
-    lines: List[str] = []
     for occ in occurrences:
         token = occ.string
         if len(token) < 2:
@@ -440,18 +440,18 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
         stats = token_stats.setdefault(token, {"count": 0, "positions": []})
         stats["count"] += 1
         stats["positions"].append(int(occ.byte_start))
-        lines.append(f"{token}:{occ.byte_start}:{occ.byte_end}")
 
-    if len(lines) < 10:
-        raise HTTPException(status_code=400, detail="Text too short for structural analysis (need ≥10 tokens)")
+    data_bytes = text_content.encode("utf-8")
+    if not data_bytes:
+        raise HTTPException(status_code=400, detail="Text is empty after encoding")
 
-    corpus_bytes = "\n".join(lines).encode("utf-8")
-    window_bytes = max(64, min(256, len(corpus_bytes) // 4 or 64))
-    stride = max(1, window_bytes // 2)
+    # Window sizing tuned for text content
+    window_bytes = max(128, min(512, len(data_bytes) // 6 or 128))
+    stride = max(32, window_bytes // 2)
 
     try:
         signals = build_manifold(
-            corpus_bytes,
+            data_bytes,
             window_bytes=window_bytes,
             stride=stride,
             max_signals=1024,
@@ -469,14 +469,30 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
         stability = float(metrics.get("stability", signal.get("stability", 0.0)))
         if coherence <= 0.01 or stability <= 0.45:
             continue
+        start = int(signal.get("window_start", signal.get("index", 0) - window_bytes))
+        end = int(signal.get("window_end", signal.get("index", 0)))
+        start = max(0, start)
+        end = min(len(text_content), max(start + 1, end))
+        snippet = text_content[start:end].strip()
+        if len(snippet) > 240:
+            snippet = snippet[:240] + "…"
         entry = pattern_scores.setdefault(
             signature,
-            {"signature": signature, "count": 0, "sum_coherence": 0.0, "sum_stability": 0.0, "positions": []},
+            {
+                "signature": signature,
+                "count": 0,
+                "sum_coherence": 0.0,
+                "sum_stability": 0.0,
+                "positions": [],
+                "snippets": [],
+            },
         )
         entry["count"] += 1
         entry["sum_coherence"] += coherence
         entry["sum_stability"] += stability
         entry["positions"].append(int(signal.get("window_start", 0)))
+        if snippet and len(entry["snippets"]) < 3:
+            entry["snippets"].append(snippet)
 
     top_patterns: List[Dict[str, Any]] = []
     for signature, stats in pattern_scores.items():
@@ -488,15 +504,34 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
                 "avg_coherence": round(stats["sum_coherence"] / count, 4),
                 "avg_stability": round(stats["sum_stability"] / count, 4),
                 "positions": stats["positions"][:5],
+                "sample_snippet": stats["snippets"][0] if stats["snippets"] else "",
             }
         )
     top_patterns.sort(key=lambda item: item["avg_coherence"] * item["count"], reverse=True)
     top_patterns = top_patterns[:10]
 
+    # Phrase-level repeating sequences (2-5 word n-grams)
+    phrase_stats: Dict[str, Dict[str, Any]] = {}
+    word_pattern = re.compile(r"\b\w+\b")
+    words: List[str] = []
+    word_positions: List[int] = []
+    for match in word_pattern.finditer(text_content):
+        words.append(match.group())
+        word_positions.append(match.start())
+
+    max_ngram = min(5, len(words))
+    for n in range(2, max_ngram + 1):
+        for i in range(len(words) - n + 1):
+            phrase = " ".join(words[i : i + n]).lower()
+            start_pos = word_positions[i]
+            stats = phrase_stats.setdefault(phrase, {"count": 0, "positions": []})
+            stats["count"] += 1
+            stats["positions"].append(start_pos)
+
     repeating_sequences: List[Dict[str, Any]] = []
-    for token, stats in token_stats.items():
+    for phrase, stats in phrase_stats.items():
         freq = stats["count"]
-        if freq < 3:
+        if freq < 2:
             continue
         positions = sorted(stats["positions"])
         gaps = [positions[i + 1] - positions[i] for i in range(len(positions) - 1)]
@@ -508,13 +543,29 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
                 periodicity = avg_gap
         repeating_sequences.append(
             {
-                "token": token,
+                "phrase": phrase,
                 "frequency": freq,
                 "periodicity": periodicity,
                 "positions": positions[:5],
             }
         )
+
     repeating_sequences.sort(key=lambda item: item["frequency"], reverse=True)
+    if not repeating_sequences:
+        # Fallback to single tokens if no phrases repeat
+        for token, stats in token_stats.items():
+            if stats["count"] < 2:
+                continue
+            positions = sorted(stats["positions"])
+            repeating_sequences.append(
+                {
+                    "phrase": token,
+                    "frequency": stats["count"],
+                    "periodicity": None,
+                    "positions": positions[:5],
+                }
+            )
+        repeating_sequences.sort(key=lambda item: item["frequency"], reverse=True)
     repeating_sequences = repeating_sequences[:10]
 
     structural_coverage = len(pattern_scores) / max(len(signals), 1)
@@ -526,6 +577,7 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
         "unique_tokens": len(token_stats),
         "structural_coverage": round(structural_coverage, 4),
         "repetition_ratio": round(repetition_ratio, 4),
+        "structural_signatures": len(pattern_scores),
     }
 
     interpretation = _interpret_text_patterns(text_metrics, top_patterns, repeating_sequences)
@@ -574,10 +626,12 @@ def _interpret_text_patterns(
             f"Lead structural signature {lead['signature']} appears {lead['count']} times with coherence {lead['avg_coherence']:.3f}."
         )
 
-    periodic_tokens = [item for item in repeating if item.get("periodicity")]
-    if periodic_tokens:
+    periodic_phrases = [item for item in repeating if item.get("periodicity")]
+    if periodic_phrases:
         insights.append(
-            f"Detected {len(periodic_tokens)} tokens with regular spacing – indicates rhythmic or tabular structure."
+            f"Detected {len(periodic_phrases)} repeating phrases with regular spacing – indicates templated structure."
         )
+    elif repeating:
+        insights.append("Multiple repeating phrases detected across the text.")
 
     return insights

@@ -1,0 +1,57 @@
+Nothing is stored server-side—analysis runs live via the quantum manifold.
+
+Summary
+Total Tokens
+3,483
+Unique Tokens
+911
+Structural Coverage
+4.1%
+Repetition Ratio
+78.8%
+Structural Signatures
+c0.01_s0.52_e0.99
+17 hits · coh 0.0126 · stab 0.5199
+c0.01_s0.51_e0.99
+13 hits · coh 0.0121 · stab 0.5105
+c0.01_s0.5_e0.99
+10 hits · coh 0.0127 · stab 0.5017
+c0.01_s0.49_e0.99
+10 hits · coh 0.0118 · stab 0.4918
+c0.03_s0.55_e0.97
+3 hits · coh 0.0293 · stab 0.5501
+c0.02_s0.52_e0.98
+4 hits · coh 0.0177 · stab 0.5213
+c0.01_s0.53_e0.99
+4 hits · coh 0.0134 · stab 0.5288
+c0.02_s0.53_e0.98
+3 hits · coh 0.0176 · stab 0.5326
+c0.02_s0.5_e0.98
+3 hits · coh 0.0162 · stab 0.5022
+c0.02_s0.54_e0.98
+2 hits · coh 0.0191 · stab 0.5445
+Repeating Sequences
+"the"
+172 hits
+"and"
+89 hits
+"to"
+56 hits
+"demo"
+52 hits
+"api"
+45 hits
+"docker"
+35 hits
+"nginx"
+32 hits
+"you"
+31 hits
+"is"
+30 hits
+"it"
+30 hits
+Interpretation
+Low structural coherence – content appears loosely organized.
+Significant repetition detected – likely templated or formulaic content.
+Lead structural signature c0.01_s0.52_e0.99 appears 17 times with coherence 0.013.

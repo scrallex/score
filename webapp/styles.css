@@ -286,8 +286,8 @@ tbody tr:last-child td {
 .pattern-list li,
 .sequence-list li {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
   padding: 10px 0;
   border-bottom: 1px solid rgba(124, 140, 255, 0.12);
 }
@@ -308,7 +308,19 @@ tbody tr:last-child td {
 .seq-stats {
   color: var(--text-secondary);
   font-size: 0.85rem;
-  text-align: right;
+}
+
+.pattern-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pattern-snippet {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  line-height: 1.4;
 }
 
 .interpretation-list li {
