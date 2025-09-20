@@ -537,7 +537,9 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
                 "sum_stability": 0.0,
                 "positions": [],
                 "snippets": [],
+                "contexts": [],
                 "spans": [],
+                "bounds": [],
             },
         )
         entry["count"] += 1
@@ -546,8 +548,14 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
         entry["positions"].append(start)
         if snippet and len(entry["snippets"]) < 3:
             entry["snippets"].append(snippet)
-        if len(entry["spans"]) < 5:
+        if len(entry["spans"]) < 50:
             entry["spans"].append({"start": start, "end": end})
+        context_window = 80
+        context_slice = text_content[max(0, start - context_window) : min(len(text_content), end + context_window)].strip()
+        if context_slice and len(entry["contexts"]) < 5:
+            entry["contexts"].append(context_slice)
+        if len(entry["bounds"]) < 500:
+            entry["bounds"].append((start, end))
 
     top_patterns: List[Dict[str, Any]] = []
     for signature, stats in pattern_scores.items():
@@ -561,6 +569,8 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
                 "positions": stats["positions"][:5],
                 "spans": stats["spans"][:5],
                 "sample_snippet": stats["snippets"][0] if stats["snippets"] else "",
+                "sample_contexts": stats.get("contexts", []),
+                "top_phrases": [],
             }
         )
     top_patterns.sort(key=lambda item: item["avg_coherence"] * item["count"], reverse=True)
@@ -580,9 +590,38 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
         for i in range(len(words) - n + 1):
             phrase = " ".join(words[i : i + n]).lower()
             start_pos = word_positions[i]
-            stats = phrase_stats.setdefault(phrase, {"count": 0, "positions": []})
+            end_pos = word_positions[i + n - 1] + len(words[i + n - 1])
+            stats = phrase_stats.setdefault(
+                phrase,
+                {
+                    "count": 0,
+                    "positions": [],
+                    "bounds": [],
+                    "occurrences": [],
+                    "display": None,
+                },
+            )
             stats["count"] += 1
             stats["positions"].append(start_pos)
+            stats["bounds"].append((start_pos, end_pos))
+            snippet_original = text_content[start_pos:end_pos]
+            if stats["display"] is None:
+                stats["display"] = snippet_original.strip()
+            if len(stats["occurrences"]) < 8:
+                context_radius = 80
+                context_start = max(0, start_pos - context_radius)
+                context_end = min(len(text_content), end_pos + context_radius)
+                context_slice = text_content[context_start:context_end].strip()
+                if len(context_slice) > 220:
+                    context_slice = context_slice[:220] + "…"
+                stats["occurrences"].append(
+                    {
+                        "start": start_pos,
+                        "end": end_pos,
+                        "snippet": snippet_original.strip(),
+                        "context": context_slice,
+                    }
+                )
 
     repeating_sequences: List[Dict[str, Any]] = []
     for phrase, stats in phrase_stats.items():
@@ -597,12 +636,18 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
             variance = sum((gap - avg_gap) ** 2 for gap in gaps) / len(gaps)
             if avg_gap > 0 and variance < avg_gap:
                 periodicity = avg_gap
+        bounds_sorted = sorted(stats["bounds"], key=lambda item: item[0])
+        occurrences_preview = stats["occurrences"]
+        display_text = (stats.get("display") or phrase).strip() or phrase
         repeating_sequences.append(
             {
-                "phrase": phrase,
+                "phrase": display_text,
+                "normalized_phrase": phrase,
                 "frequency": freq,
                 "periodicity": periodicity,
-                "positions": positions[:5],
+                "positions": positions[:25],
+                "bounds": [{"start": start, "end": end} for start, end in bounds_sorted[:25]],
+                "examples": occurrences_preview[:5],
             }
         )
 
@@ -616,13 +661,85 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
             repeating_sequences.append(
                 {
                     "phrase": token,
+                    "normalized_phrase": token.lower(),
                     "frequency": stats["count"],
                     "periodicity": None,
-                    "positions": positions[:5],
+                    "positions": positions[:25],
+                    "bounds": [
+                        {
+                            "start": start,
+                            "end": start + len(token),
+                        }
+                        for start in positions[:25]
+                    ],
+                    "examples": [
+                        {
+                            "start": start,
+                            "end": start + len(token),
+                            "snippet": token,
+                            "context": text_content[max(0, start - 40) : min(len(text_content), start + len(token) + 40)].strip(),
+                        }
+                        for start in positions[:5]
+                    ],
                 }
             )
         repeating_sequences.sort(key=lambda item: item["frequency"], reverse=True)
     repeating_sequences = repeating_sequences[:10]
+
+    top_signature_set = {item["signature"] for item in top_patterns}
+    pattern_bounds_lookup: Dict[str, List[tuple[int, int]]] = {
+        signature: pattern_scores.get(signature, {}).get("bounds", [])
+        for signature in top_signature_set
+    }
+    pattern_phrase_links: Dict[str, Counter[str]] = {
+        signature: Counter() for signature in top_signature_set
+    }
+
+    for sequence in repeating_sequences:
+        normalized = sequence.get("normalized_phrase")
+        stats = phrase_stats.get(normalized) if normalized else None
+        related: Counter[str] = Counter()
+        if stats and stats.get("bounds"):
+            intervals = stats["bounds"]
+        else:
+            intervals = []
+            for bound in sequence.get("bounds") or []:
+                if isinstance(bound, dict):
+                    start = int(bound.get("start", 0))
+                    end = int(bound.get("end", 0))
+                    intervals.append((start, end))
+        for start, end in intervals:
+            for signature, span_bounds in pattern_bounds_lookup.items():
+                for span_start, span_end in span_bounds:
+                    if start < span_end and end > span_start:
+                        related[signature] += 1
+                        break
+        sequence["related_signatures"] = [
+            {"signature": signature, "hits": count}
+            for signature, count in related.most_common(5)
+        ]
+        for signature, count in related.items():
+            counter = pattern_phrase_links.get(signature)
+            if counter is not None and normalized:
+                counter[normalized] += count
+
+    pattern_lookup = {item["signature"]: item for item in top_patterns}
+    for signature, counter in pattern_phrase_links.items():
+        pattern = pattern_lookup.get(signature)
+        if not pattern:
+            continue
+        phrases_summary = []
+        for normalized_phrase, count in counter.most_common(5):
+            display_source = phrase_stats.get(normalized_phrase, {}).get("display")
+            display_phrase = (display_source or normalized_phrase).strip() or normalized_phrase
+            phrases_summary.append(
+                {
+                    "phrase": display_phrase,
+                    "normalized_phrase": normalized_phrase,
+                    "hits": count,
+                }
+            )
+        pattern["top_phrases"] = phrases_summary
 
     structural_coverage = len(pattern_scores) / max(len(signals), 1)
     repeated_tokens = sum(stats["count"] for stats in token_stats.values() if stats["count"] > 1)

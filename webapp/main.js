@@ -103,24 +103,40 @@ function buildTextHighlights(text, patterns, sequences) {
   });
 
   sequences.forEach((sequence, idx) => {
-    const positions = Array.isArray(sequence?.positions) ? sequence.positions : [];
-    const phrase = String(sequence?.phrase ?? '');
-    if (!phrase) {
+    const phraseLabel = typeof sequence?.phrase === 'string' ? sequence.phrase : '';
+    const color = phrasePalette[idx % phrasePalette.length];
+    const bounds = Array.isArray(sequence?.bounds) ? sequence.bounds : [];
+    if (bounds.length) {
+      bounds.forEach((bound) => {
+        const start = Math.max(0, Math.min(textLength, Number(bound?.start ?? 0)));
+        const end = Math.max(start, Math.min(textLength, Number(bound?.end ?? start)));
+        if (end > start) {
+          segments.push({
+            start,
+            end,
+            color,
+            tooltip: phraseLabel ? `Phrase "${phraseLabel}"` : 'Repeating phrase',
+            type: 'phrase',
+          });
+        }
+      });
       return;
     }
-    const color = phrasePalette[idx % phrasePalette.length];
+
+    const positions = Array.isArray(sequence?.positions) ? sequence.positions : [];
+    const fallbackLength = phraseLabel.length || String(sequence?.normalized_phrase ?? '').length;
+    if (!positions.length || fallbackLength === 0) {
+      return;
+    }
     positions.forEach((pos) => {
       const start = Math.max(0, Math.min(textLength, Number(pos)));
-      let end = start + phrase.length;
-      if (end > textLength) {
-        end = textLength;
-      }
+      const end = Math.max(start, Math.min(textLength, start + fallbackLength));
       if (end > start) {
         segments.push({
           start,
           end,
           color,
-          tooltip: `Phrase "${phrase}"`,
+          tooltip: phraseLabel ? `Phrase "${phraseLabel}"` : 'Repeating phrase',
           type: 'phrase',
         });
       }
@@ -615,6 +631,25 @@ async function analyzeText() {
         .map((pattern) => {
           const signature = escapeHtml(pattern.signature ?? '');
           const snippet = pattern.sample_snippet ? `<div class="pattern-snippet">${escapeHtml(pattern.sample_snippet)}</div>` : '';
+          const phrases = Array.isArray(pattern.top_phrases) ? pattern.top_phrases : [];
+          const phraseList = phrases.length
+            ? `<ul class="pattern-phrases">${phrases
+                .map(
+                  (item) => `
+                    <li>
+                      <span class="phr-label">${escapeHtml(item.phrase ?? '')}</span>
+                      <span class="phr-hits">${fmtInteger(item.hits)} hits</span>
+                    </li>
+                  `,
+                )
+                .join('')}</ul>`
+            : '';
+          const contexts = Array.isArray(pattern.sample_contexts) ? pattern.sample_contexts : [];
+          const contextList = contexts.length
+            ? `<ul class="pattern-contexts">${contexts
+                .map((ctx) => `<li>${escapeHtml(ctx)}</li>`)
+                .join('')}</ul>`
+            : '';
           return `
             <li>
               <div class="pattern-header">
@@ -622,6 +657,8 @@ async function analyzeText() {
                 <span class="pattern-stats">${fmtInteger(pattern.count)} hits · coh ${fmtNumber(pattern.avg_coherence, 4)} · stab ${fmtNumber(pattern.avg_stability, 4)}</span>
               </div>
               ${snippet}
+              ${phraseList}
+              ${contextList}
             </li>
           `;
         })
@@ -632,14 +669,37 @@ async function analyzeText() {
     if (sequences.length) {
       repeatingCard.hidden = false;
       repeatingList.innerHTML = sequences
-        .map((sequence) => `
+        .map((sequence) => {
+          const phraseLabel = escapeHtml(sequence.phrase ?? '');
+          const periodicityLabel = sequence.periodicity ? ` · period ${fmtInteger(sequence.periodicity)}` : '';
+          const related = Array.isArray(sequence.related_signatures)
+            ? sequence.related_signatures
+            : [];
+          const relatedHtml = related.length
+            ? `<div class="seq-related">${related
+                .map((item) => `${escapeHtml(item.signature)} (${fmtInteger(item.hits)})`)
+                .join(' · ')}</div>`
+            : '';
+          const examples = Array.isArray(sequence.examples) ? sequence.examples : [];
+          const exampleHtml = examples.length
+            ? `<ul class="seq-examples">${examples
+                .map((example) => {
+                  const context = example?.context || example?.snippet || '';
+                  return `<li>${escapeHtml(context)}</li>`;
+                })
+                .join('')}</ul>`
+            : '';
+          return `
             <li>
-              <span class="seq-token">"${escapeHtml(sequence.phrase ?? '')}"</span>
-              <span class="seq-stats">${fmtInteger(sequence.frequency)} hits${
-                sequence.periodicity ? ` · period ${fmtInteger(sequence.periodicity)}` : ''
-              }</span>
+              <div class="sequence-head">
+                <span class="seq-token">"${phraseLabel}"</span>
+                <span class="seq-stats">${fmtInteger(sequence.frequency)} hits${periodicityLabel}</span>
+              </div>
+              ${relatedHtml}
+              ${exampleHtml}
             </li>
-          `)
+          `;
+        })
         .join('');
     }
 
