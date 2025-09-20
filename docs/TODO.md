@@ -1,181 +1,166 @@
-Perfect—now that you’ve bootstrapped seeds, run `planbench_to_stm.py`, and produced a demo scorecard, here’s a **tight, no-mystery checklist** to get from your toy run → a legitimate PlanBench-style experiment you can compare against the MIT evaluation.
+Great progress. You’ve got the full loop wired; now make it **real** and **publishable**. Here’s exactly what to do next—no fluff.
 
 ---
 
-## A) Data you still need (and how to structure it)
+## 0) Fix the “lead = 0” issue first (must-do)
 
-You already created toy PDDL & traces. Now build a **100-task/domain** pack mirroring the MIT setup:
+Your injector is working, but the corrupted plans still fail immediately. Ensure failures occur **after** a mid-plan prefix:
+
+* **Change the injector policy:**
+
+  * Pick a cut index **t ∼ Uniform\[0.4, 0.85] × |plan|**.
+  * Delete/swap **exactly one** action at `t`.
+  * **Verify with VAL** that:
+
+    1. actions `≤ t-1` still apply;
+    2. failure appears **after** the cut (> `t`).
+  * If VAL says “valid” or failure is at the first action, **resample `t`** (retry up to N=8).
+* **Write this into `inject_plan_corruption.py`:**
+
+  * Add `--min_frac 0.4 --max_frac 0.85 --max_retries 8`.
+  * Print `failed_at_step` to the trace JSON.
+
+**Acceptance:** For each domain, ≥70% corrupted traces fail **after** step 40% of plan. Your lead bins should start showing >0.
+
+---
+
+## 1) Scale the dataset (match MIT’s PlanBench regime)
+
+Aim for **\~100 tasks/domain** to mirror the paper (Blocksworld, Mystery BW, Logistics). Folder shape stays the same:
 
 ```
-data/planbench_public/
-  blocksworld/
-    domain.pddl
-    problems/            # ~100 files
-      p_0001.pddl ... p_0100.pddl
-    plans_valid/         # planner outputs (one per problem)
-      p_0001.plan ... p_0100.plan
-    plans_corrupt/
-      p_0001_corrupt.plan ... p_0100_corrupt.plan    # delayed failures (mid/late)
-    logs_val/
-      p_0001.plan.val.txt ... (VAL stdout/stderr)
-    traces/
-      p_0001.trace.json ...                          # per-spec JSON, see §C.3
-  mystery_bw/  ... (same shape)
-  logistics/   ... (same shape)
+data/planbench_public/<domain>/
+  domain.pddl
+  problems/ p_0001..p_0100.pddl
+  plans_valid/ *.plan
+  plans_corrupt/ *.plan
+  logs_val/ *.val.txt
+  traces/ *.trace.json
 ```
 
-**Where to get problems**
+**Plan generation tips:**
 
-* Blocksworld, Mystery Blocksworld, Logistics PDDL problem sets (publicly available in many PDDL suites; pick any canonical set with \~100 tasks each).
-* If you don’t have ready packs, **upscale your generator** to emit 100 per domain with varied difficulty (object counts, goals, etc.). Keep the domains aligned with the names above so your scripts don’t need changes.
-
----
-
-## B) Valid & corrupted plans (so you get non-zero lead)
-
-* **Valid plans**: use any planner (Fast Downward, Pyperplan, LPG, etc.) to produce `.plan` files for each problem.
-* **Corrupted plans**: start from the valid plan and inject errors **after a prefix of k steps** (so failure isn’t immediate). Examples:
-
-  * **Delete** an action at position *t* (where *t* is 40–80% into the plan).
-  * **Swap** two adjacent actions at *t*.
-  * **Insert** an extra action that violates a precondition later.
-* Keep **at least half** of corruptions failing **after mid-plan**; you’ll otherwise get lead=0.
-
-> Rule of thumb: aim for 30–50% of corrupted traces failing in the last third of the sequence so your lead-time metric can show lift.
+* If you don’t have ready problems, upscale your generator (vary object counts/goals).
+* Use any planner for valid plans (Fast Downward/LPG/Pyperplan).
+* Run `val_to_trace.py` again for all (valid+corrupt) to create unified STM-ready traces.
 
 ---
 
-## C) VAL integration (objective step-wise labels)
+## 2) Re-run STM at scale (one command)
 
-1. **Install VAL** on your box (Ubuntu):
+Add/verify these Make targets (or run the equivalents by hand):
 
-   ```bash
-   sudo apt-get update
-   sudo apt-get install -y cmake g++ flex bison     # build prereqs
-   # If a package exists for your distro: sudo apt-get install -y val
-   # Otherwise build from source (VAL’s README); produce a `val` binary in PATH.
-   ```
-2. **Validate** every plan:
+```make
+planbench-corrupt:
+\tpython scripts/inject_plan_corruption.py --root data/planbench_public \
+\t  --domains blocksworld,mystery_bw,logistics \
+\t  --min_frac 0.4 --max_frac 0.85 --max_retries 8
 
-   ```bash
-   val -v domain.pddl problems/p_0001.pddl plans_valid/p_0001.plan \
-     > logs_val/p_0001.plan.val.txt 2>&1
-   ```
-3. **Per-trace JSON** (your `planbench_to_stm.py` likes per-trace inputs). Store at `traces/p_0001.trace.json`:
-
-   ```json
-   {
-     "domain": "blocksworld",
-     "problem_file": "problems/p_0001.pddl",
-     "plan_file": "plans_valid/p_0001.plan",
-     "valid": true,
-     "val_log": "logs_val/p_0001.plan.val.txt",
-     "actions": ["(pick-up b)", "(stack b c)", "..."]
-   }
-   ```
-
-   Do the same for `plans_corrupt/*` with `"valid": false`.
-
-> TIP: add a Python helper `scripts/val_to_trace.py` that takes (domain, problem, plan) → runs VAL → writes the `.trace.json` (populates `actions[]` from the `.plan`, sets `valid` from VAL outcome, and records any failed step position).
-
----
-
-## D) Run your STM pipeline at scale
-
-1. **Build STM states + lead/twin/dilution per plan**
-
-   ```bash
-   PYTHONPATH=src .venv/bin/python scripts/planbench_to_stm.py \
-     --input-root data/planbench_public \
-     --domains blocksworld,mystery_bw,logistics \
-     --out-root output/planbench_public \
-     --plots
-   ```
-
-2. **Aggregate to a scorecard**
-
-   ```bash
-   PYTHONPATH=src .venv/bin/python scripts/aggregate_planbench_results.py \
-     --in-root output/planbench_public \
-     --out docs/note/planbench_scorecard.csv
-   ```
-
-The aggregator should compute for each domain (and split valid/corrupt):
-
-* **Plan accuracy** (valid problems solved).
-* **Mean lead-time** (bins) for corrupted traces (non-zero if failure isn’t immediate).
-* **Twin correction rate** (% of corrupted traces where a twin within distance ≤ τ would fix the trajectory; start τ=0.4).
-* **Coverage** (foreground fraction) and optional **decisive-bin %** (PD<0.3 & SD<0.4).
-
----
-
-## E) Guardrail & thresholds (avoid degenerate coverage)
-
-* After your per-domain calibrate step, target **foreground coverage** in **5–20%** band. If coverage=1.0, your thresholds are too loose; tighten using higher coherence percentile or lower entropy percentile.
-* For **twins**: fix a threshold τ (e.g., 0.4) and a minimum **aligned windows** count (e.g., ≥20) so that twin suggestions are meaningful. Log both τ and alignment lengths in your results.
-
----
-
-## F) Documentation updates
-
-* **docs/note/pddl\_experiment.md**:
-
-  * Replace “demo” with **public set** results; show a table per domain:
-
-    | Domain      |   N | Plan Acc. | Mean Lead (bins) | Twin Corr. | Cov. (%) | Decisive-bin (%) |
-    | ----------- | --: | --------: | ---------------: | ---------: | -------: | ---------------: |
-    | Blocksworld | 100 |         … |                … |          … |        … |                … |
-    | Mystery BW  | 100 |         … |                … |          … |        … |                … |
-    | Logistics   | 100 |         … |                … |          … |        … |                … |
-
-  * Add short paragraphs: (1) why lead>0 now (delayed corruptions), (2) what τ you used for twins, (3) coverage kept in guardrail band.
-
-* Keep **planbench\_scorecard.csv** in version control and cite the file path beside each table (so reviewers can click and verify).
-
----
-
-## G) Makefile (one-liners)
-
-Add targets so you/reviewers can reproduce:
-
-```makefile
 planbench-val:
-\tpython scripts/val_to_trace.py --root data/planbench_public --domains blocksworld,mystery_bw,logistics --out traces
+\tpython scripts/val_to_trace.py --root data/planbench_public \
+\t  --domains blocksworld,mystery_bw,logistics --out traces
 
 planbench-stm:
-\tPYTHONPATH=src .venv/bin/python scripts/planbench_to_stm.py --input-root data/planbench_public --domains blocksworld,mystery_bw,logistics --out-root output/planbench_public --plots
+\tPYTHONPATH=src .venv/bin/python scripts/planbench_to_stm.py \
+\t  --input-root data/planbench_public \
+\t  --domains blocksworld,mystery_bw,logistics \
+\t  --out-root output/planbench_public --plots
 
 planbench-agg:
-\tPYTHONPATH=src .venv/bin/python scripts/aggregate_planbench_results.py --in-root output/planbench_public --out docs/note/planbench_scorecard.csv
+\tPYTHONPATH=src .venv/bin/python scripts/aggregate_planbench_results.py \
+\t  --in-root output/planbench_public \
+\t  --out docs/note/planbench_scorecard.csv
 
-planbench-all: planbench-val planbench-stm planbench-agg
+planbench-all: planbench-corrupt planbench-val planbench-stm planbench-agg
 ```
 
----
-
-## H) Quick QA before you write the comparison section
-
-* **Lead ≈ 0**? Then your corrupted plans still fail too early; push the injection deeper in the sequence.
-* **Coverage too high/low?** Re-run calibration to hit 5–20%.
-* **Twin rate suspiciously 100%?** Increase alignment requirement or lower τ; you want non-trivial matches.
-* **Plots**: eyeball a few dilution/lead plots per domain to confirm pre-failure clumps are visible.
+**Acceptance:** `docs/note/planbench_scorecard.csv` contains \~300 rows (3 domains × \~100 tasks) aggregated to domain-level metrics.
 
 ---
 
-## I) “Against MIT” comparison: the safe narrative template
+## 3) Guardrail calibration (avoid coverage=1.0)
 
-> “Using the same three domains (Blocksworld, Mystery BW, Logistics) and VAL verification procedure described in the PlanBench evaluation, we processed 100 tasks per domain with STM. On corrupted trajectories, STM flagged **foreground clumps** ahead of failure with a mean lead of **L** bins while keeping foreground coverage in the **5–20%** guardrail. Across domains, STM recovered **T%** of corrupted sequences via structural twins (ANN threshold τ=0.4; aligned windows ≥20). Plan accuracy tracked MIT’s base rates, while STM additionally provides **pre-failure lead** and **twin-based corrections** the verify-register setup does not quantify.”
+After `planbench_to_stm.py`, run your calibrator (or integrate it) to hit **5–20% foreground** per domain:
 
-Swap in your actual numbers once you run the public sets.
+* If coverage >20%: raise coherence percentile (e.g., P90→P92) and/or lower entropy percentile (P20→P18).
+* If coverage <5%: relax the cuts (P90→P85, P20→P25).
+* Re-run STM only if the thresholds are part of state; otherwise store thresholds and re-aggregate.
+
+**Add to the aggregator:** record **coverage**, **decisive-bin %** (PD<0.3 & SD<0.4), and the final percentiles used.
 
 ---
 
-## J) If you want me to generate helpers
+## 4) Metrics you must aggregate (and how)
 
-Say the word and I’ll draft:
+Update `aggregate_planbench_results.py` to compute per domain:
 
-* `scripts/val_to_trace.py` (domain/problem/plan → VAL run → `.trace.json`).
-* `scripts/aggregate_planbench_results.py` (walks `output/planbench_public` → CSV).
-* A tiny **corrupt-plan** tool that injects delayed errors at positions 40–80% of the plan.
+* **Plan Accuracy**: % of valid traces that a planner solved (truth from VAL).
+* **Lead Mean** *(bins or steps)*: average lead for corrupted traces (non-zero now).
+* **Lead Coverage**: fraction of windows flagged as foreground in the last-bin horizon.
+* **Twin Correction Rate**: % of corrupted traces where a twin within **τ=0.4** and **aligned windows ≥20** exists; include sensitivity columns for τ∈{0.3, 0.4, 0.5}.
+* **Decisive-bin %**: fraction of bins where PD<0.3 & SD<0.4 (confidence signal).
+* **Mean ANN distance** for matched twins (±95% bootstrap CI, optional).
 
-You’re **one good dataset run** away from a credible comparison. The structure is in place—now feed it real PDDL sets, run VAL, and publish the scorecard.
+**Acceptance:** `planbench_scorecard.csv` has columns:
+`domain, n_traces, plan_accuracy, lead_mean, lead_coverage, twin_rate@0.4, twin_rate@0.3, twin_rate@0.5, decisive_pct, ann_mean, ann_ci95_lo, ann_ci95_hi`.
+
+---
+
+## 5) Visual quick-checks (catch regressions fast)
+
+* Plot **lead histograms** per domain (shouldn’t spike at zero).
+* Spot-check **dilution plots** on random corrupted traces; pre-failure clumps should be visible.
+* Print **failed\_at\_step** distribution from trace JSON; should concentrate beyond 40% of plan length.
+
+---
+
+## 6) Write the comparison section (safe template)
+
+Once you have real numbers (≥100/domain):
+
+**Table:** (copy into `docs/note/pddl_experiment.md`)
+
+| Domain      |   N | Plan Acc. | Lead Mean (steps) | Twin Corr. @0.4 | Foreground Cov. | Decisive-bin % |
+| ----------- | --: | --------: | ----------------: | --------------: | --------------: | -------------: |
+| Blocksworld | 100 |         … |                 … |               … |               … |              … |
+| Mystery BW  | 100 |         … |                 … |               … |               … |              … |
+| Logistics   | 100 |         … |                 … |               … |               … |              … |
+
+**Narrative bullets:**
+
+* *Using the same three domains and the VAL verification procedure as the MIT evaluation,* STM produces **lead > 0** for corrupted plans by injecting mid/late failures; foreground is kept in the **5–20%** guardrail.
+* *Twin-based correction:* **T%** of corrupted traces have a structural twin within τ=0.4 with ≥20 aligned windows, suggesting actionable repair paths.
+* *Confidence:* **Decisive-bin %** indicates concentrated predictive mass (low dilution) before failure.
+
+Finish with a short contrast: the verify-register approach reports plan accuracy; STM adds **lead-time** and **twin repair** signals and keeps explainable evidence (bit-tokens, signatures, ANN distance).
+
+---
+
+## 7) Optional (but nice) polish
+
+* **Permutation test** for last-bin lead vs shuffled onset (p-value).
+* **CI/Make step** that runs a 10-trace smoke (one per domain) on push.
+* **HTML report** generator: parse `planbench_scorecard.csv` + a few plots → single page.
+
+---
+
+## 8) Success criteria (so you know when you’re done)
+
+* Each domain has **≥100 traces** (valid+corrupt).
+* **Lead Mean > 0** for corrupted traces.
+* Foreground **coverage ∈ \[5%, 20%]** after calibration.
+* **Twin correction rate** reported at τ=0.4 and sensible under τ sweeps.
+* `docs/note/pddl_experiment.md` updated with the final table and a 3-paragraph comparison.
+
+---
+
+### One-liner to run the full thing (once scaled)
+
+```bash
+make planbench-all && \
+python scripts/aggregate_planbench_results.py --in-root output/planbench_public \
+  --out docs/note/planbench_scorecard.csv && \
+sed -n '1,200p' docs/note/planbench_scorecard.csv
+```
+
+Ping me with the new CSV and I’ll help craft the exact comparison text to drop into the note.

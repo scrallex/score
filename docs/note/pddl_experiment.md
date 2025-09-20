@@ -34,7 +34,7 @@
 ## Testing
 - Unit coverage added in `tests/test_dilution.py`
 - CLI regression now exercises `stm dilution` to ensure state files contain dilution summaries when `--store-signals` is used
-- Minimal three-domain PlanBench-style run captured in `docs/note/planbench_scorecard_demo.csv`
+- Minimal three-domain PlanBench-style run captured in `docs/note/planbench_scorecard.csv`
 
 ## Current Results Snapshot
 
@@ -43,11 +43,31 @@
 - **Lead-time coverage:** STM flagged every corrupted trace before or at the failure step (coverage = 1.0). Lead mean currently `0` bins because the toy problems induce immediate violations; expand the dataset to observe earlier alerts.
 - **Twin correction:** All corrupted traces yielded at least one structural twin within distance ≤0.4 (correction rate = 1.0 in this seed set).
 - **Artifacts:**
-  - `output/planbench_demo_full/gold_state.json` / `invalid_state.json`
-  - `output/planbench_demo_full/invalid/metrics/summary.json`
-  - `docs/note/planbench_scorecard_demo.csv`
+  - `output/planbench_public/gold_state.json` / `invalid_state.json`
+  - `output/planbench_public/invalid/metrics/summary.json`
+  - `docs/note/planbench_scorecard.csv`
 
-> These figures are preliminary and drawn from handcrafted mini traces to validate the tooling. Scale to the full PlanBench splits (100 problems/domain) for publication-ready comparisons.
+```
+# 1. Generate plan traces directly from VAL
+PYTHONPATH=src scripts/val_to_trace.py domain.pddl problem.pddl plan.txt \
+  --output traces/plan.trace.json
+
+# 2. Inject a delayed-plan error (40–80% window)
+scripts/inject_plan_corruption.py plan.txt --output plan.corrupt.txt --seed 7
+
+# 3. Run STM lead/twin analysis across all traces
+PYTHONPATH=src .venv/bin/python scripts/planbench_to_stm.py \
+  --valid traces/plan.trace.json \
+  --invalid traces/plan.corrupt.trace.json \
+  --output output/planbench_public
+
+# 4. Aggregate per-domain metrics for reporting
+scripts/aggregate_planbench_results.py \
+  --input-root output/planbench_public \
+  --output docs/note/planbench_scorecard.csv
+```
+
+> These figures remain preliminary and drawn from handcrafted mini traces to validate the tooling. Scale to the full PlanBench splits (100 problems/domain) for publication-ready comparisons.
 
 ## Deliverables Checklist
 - [x] Dilution metrics module with CLI inspection and streaming router integration
