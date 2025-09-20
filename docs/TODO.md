@@ -1,161 +1,148 @@
-Structural Context Co‑processor Case Study – Work Plan
+You don’t need the whole PlanBench stack in your head—here’s exactly what to grab and how to run a **PlanBench-style** experiment with your **QBSA/QFH manifold** using the `score` repo.
 
-Overview
-The scrallex/score repository contains your QFH/QBSA-based “structural manifold” engine. You now want to turn this into a practical, licensable demonstration: a co‑processor that takes a raw data stream, builds a live manifold (context), and returns an enriched context object. This should be packaged into a demo that can run on your droplet and be compelling to investors. The “verify register” video describes a system that compares incoming data against a reference register to identify matches; your manifold does something analogous by comparing the current window’s signature against historical patterns. Both systems try to find “where have I seen this pattern before?” and use that to verify or enrich the current context.
+---
 
-Below is a complete, actionable outline to get from the current repo to a finished case study and demo.
+## 1) What data do I actually need?
 
-1. Align Concepts: Scoring Repo vs. Verify Register Video
+PlanBench is just a standardized way to evaluate planning methods. In the MIT paper they evaluate on **three domains**: **Blocksworld**, **Mystery Blocksworld**, and **Logistics**, and then verify plans with the **VAL** plan validator (they also reason over **state→action→state** chains) . Concretely you need:
 
-Video’s verify register: A table of known patterns; incoming data is hashed/checked against this “register” to verify authenticity or classify it quickly. It’s often used in streaming verification or deduplication systems.
+1. **PDDL domain files** (one per domain).
+2. **PDDL problem files** (many per domain; different object counts/difficulties).
+3. **Plans** (action sequences) for each problem: both **valid** and some **corrupted/invalid** ones (to test early detection & correction).
+4. **Trace/feedback per plan** (ideally VAL output: which action was applicable, where it failed, etc.).
 
-Your scoring repo: Builds a manifold from live data via QFH/QBSA, computes coherence, stability, entropy and repetition signatures, and uses these to classify current windows and find structural twins. In effect, the manifold is a “register,” and its signatures are analogous to the verify register’s hashes.
+   * In the paper they use VAL to verify every step, and they structure reasoning as ⟨s₀, a₁, s₁⟩, … chains; we can mirror that mechanically with your STM pipeline .
 
-Key similarity: Both maintain a reference sheet of patterns and use it to identify or classify new streams quickly.
+> If you only have (1) and (2), you can generate (3) using any classical planner (or a trivial hand-written plan for tiny problems), and generate (4) by running VAL on (domain, problem, plan) as the paper does .
 
-Key difference: The scoring engine goes beyond hash matching; it tracks continuous metrics (coherence, entropy, rupture) and can produce lead‑time alerts and propose next strings. Your case study should explain how these extra metrics allow richer decisions than a simple verify register.
+---
 
-2. High‑Level Product Vision
+## 2) Where do I find these?
 
-Service: A containerized API server exposing /enrich (structural context co‑processor).
+* **Domains/problems (PDDL):** start with small, known instances of **Blocksworld**, **Mystery Blocksworld**, **Logistics** (the paper’s evaluation is exactly those three) .
 
-Input: Raw text/telemetry/log strings.
+  * Any public PDDL set for these domains works; the goal is parity with those domains, not the exact same seed set.
+* **Plans:**
 
-Process:
+  * **Valid**: produce via any off-the-shelf planner (or include the ground-truth plans bundled with the problems if you have them).
+  * **Invalid (corrupted)**: clone a valid plan and introduce 1–2 controlled defects (e.g., drop a required pick-up, swap action order) to create predictable failures; VAL will annotate where they fail .
+* **Trace/feedback:** run **VAL** on each (domain, problem, plan) to log per-step applicability/failures—the paper’s pipeline relies on VAL for objective verification and error typing; we exploit the same signal in STM .
 
-Bit‑encode the input into structural features (UP/ACCEL/RANGEEXP/ZPOS).
+> TL;DR minimal starter pack per domain:
+> `domain.pddl`, a folder of `problem_*.pddl`, a folder of `plan_*.txt` (valid) + `plan_*.corrupt.txt` (invalid), and one VAL log or JSON per plan.
 
-Compute QFH/QBSA metrics and repetition signature.
+---
 
-Compare against the stored manifold (the “register”) using ANN and signature postings.
+## 3) What format should the “trace” be for `scripts/planbench_to_stm.py`?
 
-Compute dilution metrics (Path Dilution, Signal Dilution, Semantic Dilution).
+Your new script already expects **per-trace inputs** and writes **STM states + lead-time + dilution + twin summaries**. If you don’t have a strict schema yet, use this **minimal JSON** per plan (easy to generate):
 
-Surface high‑coherence foreground tokens and propose tangent themes.
+```json
+{
+  "domain": "blocksworld",
+  "problem_file": "problems/p_0003.pddl",
+  "plan_file": "plans/p_0003_valid.txt",
+  "valid": true,
+  "val_log": "logs/p_0003_valid.val.txt",
+  "actions": ["(pick-up b)", "(stack b c)", "(pick-up a)", "(stack a b)"]
+}
+```
 
-Output: JSON containing the original context, top structural tokens with significance scores, tangent themes, dilution/confidence scores, and warnings on ambiguous tokens.
+…and the same for invalid/corrupted plans with `"valid": false` and their VAL log. Group these per domain in folders, e.g.:
 
-Demonstration: Provide a CLI and web UI for uploading text, getting enriched context, and visualizing the manifold (plots of coherence, stability, rupture over time).
+```
+data/planbench/blocksworld/
+  domain.pddl
+  problems/*.pddl
+  plans/*.txt
+  plans_corrupt/*.txt
+  logs/*.val.txt
+  traces/*.json           # one JSON per plan (as above)
+```
 
-3. Step‑by‑Step Implementation Plan
-A. Repository Refactoring & Packaging
+Do the same for `mystery_bw/` and `logistics/`.
 
-Create a single stm package inside the repo with clear modules:
+---
 
-adapters/: Preprocessing adapters (MMS, THEMIS, generic CSV).
+## 4) How to run it with your repo
 
-core/: Existing kernel wrapper, bit‑encoding, QFH/QBSA logic.
+Once the folders above exist:
 
-manifold/: Data structures for signals, ANN index, signature postings.
+```bash
+# 1) Build STM states + lead/dilution/twin summaries per plan
+python scripts/planbench_to_stm.py \
+  --input-root data/planbench \
+  --domains blocksworld,mystery_bw,logistics \
+  --out-root output \
+  --plots  # if matplotlib available
 
-router/: Percentile calibration, dilution metrics, retention policy.
+# 2) (Optional) aggregate to a single results CSV/JSON
+python scripts/aggregate_planbench_results.py \
+  --in-root output \
+  --out docs/note/planbench_scorecard.csv
+```
 
-api/: FastAPI routes (/enrich, /seen, /propose, /lead, /onsets, /dilution).
+What you should see under `output/` now (as your script’s commit message implies):
 
-cli/: Command‑line entrypoints (stm ingest, stm report, stm stream, stm onsets, etc.).
+* **Per-trace STM states** (JSON)
+* **Lead-time** metrics (JSON)
+* **Dilution plots** (PNGs)
+* **Twin-correction summaries** (JSON) aggregated in `output/{gold,invalid}/…`
 
-Add setup/pyproject to make the package pip‑installable.
+---
 
-Write a Dockerfile that:
+## 5) What numbers do we compare to?
 
-Installs Python, compile dependencies (pybind11, CDFlib), and the native C++ kernel.
+The MIT PDDL-INSTRUCT paper reports **plan validity (accuracy)** across the **three domains** using PlanBench, and explicitly evaluates with **VAL** (100 tasks per domain) . For an apples-to-apples narrative:
 
-Copies the package and configuration files.
+* **Primary metric to mirror:** **Plan Accuracy** (% of problems with a valid plan), per domain.
+* **Your STM extras:**
 
-Sets up CMD ["stm", "stream", "--config", "/config/default.yaml"].
+  * **Lead-time** (minutes/steps before failure/goal that your foreground density signals “high-coherence” regime).
+  * **Twin-correction rate** (fraction of corrupted cases where your twin suggestion would have repaired the sequence).
+  * **Dilution indicators** (median PD/SD in decisive bins).
 
-B. Adapter & Preprocessing Enhancements
+Create a table like:
 
-Finalize bit‑encoding for generic text and telemetry:
+| Domain      | #Problems | Plan Accuracy | Mean Lead-time (bins) | Twin Correction Rate | Decisive-bin % (PD<.3 & SD<.4) |
+| ----------- | --------: | ------------: | --------------------: | -------------------: | -----------------------------: |
+| Blocksworld |       100 |             … |                     … |                    … |                              … |
+| Mystery BW  |       100 |             … |                     … |                    … |                              … |
+| Logistics   |       100 |             … |                     … |                    … |                              … |
 
-Map delta, acceleration, range expansion, and z‑position to bit flags per channel.
+Then write the comparison paragraph: *“Under the same PlanBench domains and VAL verification setup described in the MIT study (Fig. 1; Secs. 5–7), STM attains plan accuracy X/Y/Z and produces lead-time of L bins with twin-correction rate T%…”* .
 
-Implement an adapter to process CSV/HDF5/CDF into these bit tokens.
+---
 
-Write a generic text adapter that tokenizes by whitespace and phrase; produce structural tokens (e.g., n‑grams) and semantic tokens (original words).
+## 6) If you don’t have ready-made PlanBench problems
 
-C. Manifold & Router Improvements
+You can still **bootstrap a small working set** to prove the pipeline:
 
-Implement Dilution metrics:
+1. **Blocksworld mini (5–10 problems):** hand-craft 3–5 tiny `problem_*.pddl`.
+2. **Valid plans:** write short 2–6 action sequences.
+3. **Corrupted plans:** delete or swap one action to make an invalid sequence.
+4. Run **VAL** on each (domain, problem, plan) to produce the logs.
+5. Create **trace JSON** entries per the schema above.
+6. Run the two commands in §4 to generate STM outputs.
+7. Once that works end-to-end, scale to Mystery BW and Logistics.
 
-Path Dilution from entropy of next‑signature distribution.
+This gets you **plots and lead/twin summaries today**, without waiting for full PlanBench mirrors.
 
-Signal Dilution from diversity of structural tokens in the foreground.
+---
 
-Semantic Dilution from mutual information between structural signatures and semantic tokens.
+## 7) Quick glossary (to de-confuse terms)
 
-Add significance scoring:
+* **PlanBench**: a benchmark suite + methodology to test planning; the paper uses it to evaluate three domains and measure plan accuracy **with VAL** .
+* **Trace** (in our STM context): everything for a single plan attempt—domain, problem, action list, **VAL feedback** (per step), and our computed STM metrics (coherence, stability, entropy, rupture, dilution, lead-time, twins).
+* **VAL**: a standard plan validator; the MIT experiments use it for stepwise verification and error typing; STM reuses the same signal to label foreground bins and twin corrections .
 
-Weighted combination of recency and popularity (connector centrality) for each token.
+---
 
-Implement retention policy:
+## 8) Your next moves
 
-Drop oldest structural tokens if they no longer improve PD/SD; keep novel ones longer.
+* **A.** Make the three domain folders with the minimal pack (domain.pddl, problems, valid & corrupted plans, VAL logs, simple trace JSONs).
+* **B.** Run `planbench_to_stm.py` + aggregation as shown.
+* **C.** Drop the aggregated CSV into your note; add a short “against MIT” comparison paragraph (same domains, same verifier).
+* **D.** If the numbers look promising, scale the dataset (100 tasks each) and re-run.
 
-D. API & CLI Endpoints
-
-/enrich (POST):
-
-Accept { context_string, config: { recency_weight, top_k_foreground, top_k_tangents } }.
-
-Return structural summary (context certainty = 1‑PD, signal clarity = 1‑SD, semantic clarity = 1‑SeD), top foreground tokens, tangent themes, and warnings for high SeD.
-
-/seen (POST): existing; return foreground & deferred windows given a trigger token.
-
-/propose (POST): existing; propose new strings based on seeds and filters.
-
-/lead (POST): return lead‑time bins given state and onset time.
-
-/dilution (POST): return PD/SD/SeD for current window and list top candidate signatures/tokens.
-
-CLI enhancements:
-
-stm report generates the full case‑study report, including dilution plots.
-
-stm onsets autolabel supports mission rules and writes onsets; optionally runs stm lead in one step.
-
-E. Multi‑Mission Validation & Case‑Study
-
-Run the pipeline on MMS (the baseline, already done).
-
-Run on THEMIS (with new adapter) and produce a cross‑mission scorecard.
-
-Run on a generic text corpus (e.g., doc files or open‑source code) to illustrate portability.
-
-Write a technical note comparing results across missions: number of twins, lead‑time improvement, PD/SD trends.
-
-F. Demo & Presentation Assets
-
-Create “STM_OnePager.md” summarizing key metrics, results and investor talking points.
-
-Update “Demo_Runbook.md”: live streaming and batch demonstration steps, referencing the new endpoints.
-
-Finish “SUITE.md”: position STM alongside other SEP applications (text manifold, market signals).
-
-Ensure all evidence (plots, tables, JSON) is packaged in docs/note/ and ready for export.
-
-4. Licensing & Go‑to‑Market
-
-Prepare the pilot SOW using docs/Pilot_SOW_Template.md: describe scope, success metrics (twins count, PD/SD improvement, lead‑time uplift), deliverables, timeline, and pricing.
-
-Define licensing tiers: pilot (evaluation only), enterprise license (perpetual on‑prem deployment), OEM (royalty per unit).
-
-Draft an investor summary that highlights the unique selling points (structural twins, percentile guardrail, early‑warning lead‑time, explainable tokens) and the potential market segments.
-
-Chris’s outreach: Use the templates in docs/Outreach_Templates.md to contact relevant mission ops leads, predictive maintenance managers, and AI tool vendors. Provide the one‑pager and offer a pilot SOW.
-
-5. Final Deliverables for the Coding Bot
-
-To transform the scrallex/score repo into the described case study and product, supply your coding bot with:
-
-This outline as the high‑level blueprint.
-
-A list of todos (bullet‑point tasks), each clearly described with expected input/outputs.
-
-A minimal API specification for /enrich, /dilution, /onsets/autolabel, and enhanced /stream usage.
-
-Pointers to key files in the repository that need to be modified (e.g. src/sep_text_manifold/, docs/TOOL_QUICKSTART.md) and new files to be added (stm_adapters/nasa_themis.py, stm_stream/router.py, etc.).
-
-Testing requirements: ensure the kernel litmus test remains, include unit tests for PD/SD/SeD, and integration tests for /enrich and streaming health.
-
-By following the steps above, you will create a stand‑alone, data‑agnostic structural context co‑processor that demonstrates clear value using the existing scoring engine, while being packaged for licensing and pilot engagements.
+If you want, paste me one tiny Blocksworld `domain.pddl` + a single `problem.pddl` + one valid `plan.txt` and I’ll give you the exact **trace JSON** and `VAL` invocation string to match your script’s expectations so you can run the full loop immediately.

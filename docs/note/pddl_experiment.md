@@ -34,6 +34,20 @@
 ## Testing
 - Unit coverage added in `tests/test_dilution.py`
 - CLI regression now exercises `stm dilution` to ensure state files contain dilution summaries when `--store-signals` is used
+- Minimal three-domain PlanBench-style run captured in `docs/note/planbench_scorecard_demo.csv`
+
+## Current Results Snapshot
+
+- **Domains covered:** Blocksworld, Mystery Blocksworld, Logistics (1 valid + 1 corrupted trace each)
+- **Plan accuracy:** 100% per domain on the valid traces (baseline sanity check)
+- **Lead-time coverage:** STM flagged every corrupted trace before or at the failure step (coverage = 1.0). Lead mean currently `0` bins because the toy problems induce immediate violations; expand the dataset to observe earlier alerts.
+- **Twin correction:** All corrupted traces yielded at least one structural twin within distance ≤0.4 (correction rate = 1.0 in this seed set).
+- **Artifacts:**
+  - `output/planbench_demo_full/gold_state.json` / `invalid_state.json`
+  - `output/planbench_demo_full/invalid/metrics/summary.json`
+  - `docs/note/planbench_scorecard_demo.csv`
+
+> These figures are preliminary and drawn from handcrafted mini traces to validate the tooling. Scale to the full PlanBench splits (100 problems/domain) for publication-ready comparisons.
 
 ## Deliverables Checklist
 - [x] Dilution metrics module with CLI inspection and streaming router integration
