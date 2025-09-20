@@ -144,7 +144,8 @@ def generate_blocksworld(root: Path, count: int) -> None:
 
         goal_atoms = [f"(on {blocks[i]} {blocks[i+1]})" for i in range(n_blocks - 1)]
 
-        problem = f"""(define (problem bw-{idx:04d})
+        name = f"bw_{idx:04d}"
+        problem = f"""(define (problem {name})
   (:domain blocksworld)
   (:objects {objects})
   (:init
@@ -155,8 +156,8 @@ def generate_blocksworld(root: Path, count: int) -> None:
       {'\n      '.join(goal_atoms)}
     )
   )
-)"""
-        write_file(domain_dir / "problems" / f"p{idx:04d}.pddl", problem)
+ )"""
+        write_file(domain_dir / "problems" / f"{name}.pddl", problem)
 
         plan_steps: List[str] = []
         for i in range(n_blocks - 2, -1, -1):
@@ -164,7 +165,7 @@ def generate_blocksworld(root: Path, count: int) -> None:
             target = blocks[i + 1]
             plan_steps.append(f"(pick-up {block})")
             plan_steps.append(f"(stack {block} {target})")
-        write_file(domain_dir / "plans_valid" / f"p{idx:04d}.txt", "\n".join(plan_steps))
+        write_file(domain_dir / "plans_valid" / f"{name}.txt", "\n".join(plan_steps))
 
 
 def generate_mystery(root: Path, count: int) -> None:
@@ -187,7 +188,8 @@ def generate_mystery(root: Path, count: int) -> None:
 
         goal_atoms = [f"(rel {things[i]} {things[i+1]})" for i in range(n_things - 1)]
 
-        problem = f"""(define (problem mystery-{idx:04d})
+        name = f"mystery_{idx:04d}"
+        problem = f"""(define (problem {name})
   (:domain mystery-bw)
   (:objects {objects})
   (:init
@@ -198,8 +200,8 @@ def generate_mystery(root: Path, count: int) -> None:
       {'\n      '.join(goal_atoms)}
     )
   )
-)"""
-        write_file(domain_dir / "problems" / f"p{idx:04d}.pddl", problem)
+ )"""
+        write_file(domain_dir / "problems" / f"{name}.pddl", problem)
 
         plan_steps: List[str] = []
         for i in range(n_things - 2, -1, -1):
@@ -207,7 +209,7 @@ def generate_mystery(root: Path, count: int) -> None:
             target = things[i + 1]
             plan_steps.append(f"(lift {thing})")
             plan_steps.append(f"(bind {thing} {target})")
-        write_file(domain_dir / "plans_valid" / f"p{idx:04d}.txt", "\n".join(plan_steps))
+        write_file(domain_dir / "plans_valid" / f"{name}.txt", "\n".join(plan_steps))
 
 
 def generate_logistics(root: Path, count: int) -> None:
@@ -231,7 +233,8 @@ def generate_logistics(root: Path, count: int) -> None:
 
         goal_atoms = [f"(at {pkg} airportB)" for pkg in packages]
 
-        problem = f"""(define (problem logistics-{idx:04d})
+        name = f"logistics_{idx:04d}"
+        problem = f"""(define (problem {name})
   (:domain logistics-mini)
   (:objects {objects})
   (:init
@@ -242,8 +245,8 @@ def generate_logistics(root: Path, count: int) -> None:
       {'\n      '.join(goal_atoms)}
     )
   )
-)"""
-        write_file(domain_dir / "problems" / f"p{idx:04d}.pddl", problem)
+ )"""
+        write_file(domain_dir / "problems" / f"{name}.pddl", problem)
 
         plan_steps: List[str] = []
         for pkg in packages:
@@ -255,7 +258,7 @@ def generate_logistics(root: Path, count: int) -> None:
             plan_steps.append(f"(unload-plane {pkg} plane1 airportB)")
             plan_steps.append("(fly plane1 airportB airportA)")
             plan_steps.append("(drive truck1 airportA loc0)")
-        write_file(domain_dir / "plans_valid" / f"p{idx:04d}.txt", "\n".join(plan_steps))
+        write_file(domain_dir / "plans_valid" / f"{name}.txt", "\n".join(plan_steps))
 
 
 def main() -> None:
