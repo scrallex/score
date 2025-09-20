@@ -1,0 +1,558 @@
+{
+  "domain": "data/planbench_public/blocksworld/domain.pddl",
+  "problem": "data/planbench_public/blocksworld/problems/bw_0058.pddl",
+  "plan": "data/planbench_public/blocksworld/plans_valid/bw_0058.txt",
+  "initial_state": [
+    "clear b1",
+    "clear b2",
+    "clear b3",
+    "clear b4",
+    "clear b5",
+    "clear b6",
+    "clear b7",
+    "handempty",
+    "on-table b1",
+    "on-table b2",
+    "on-table b3",
+    "on-table b4",
+    "on-table b5",
+    "on-table b6",
+    "on-table b7"
+  ],
+  "status": "valid",
+  "exit_code": 0,
+  "validator_output": "Checking plan: data/planbench_public/blocksworld/plans_valid/bw_0058.txt\nPlan to validate:\n\nPlan size: 12\n1:\n(pick-up b6)\n \n2:\n(stack b6 b7)\n \n3:\n(pick-up b5)\n \n4:\n(stack b5 b6)\n \n5:\n(pick-up b4)\n \n6:\n(stack b4 b5)\n \n7:\n(pick-up b3)\n \n8:\n(stack b3 b4)\n \n9:\n(pick-up b2)\n \n10:\n(stack b2 b3)\n \n11:\n(pick-up b1)\n \n12:\n(stack b1 b2)\n \n\nPlan Validation details\n-----------------------\n\nChecking next happening (time 1)\nDeleting (on-table b6)\nDeleting (clear b6)\nDeleting (handempty)\nAdding (holding b6)\n\nChecking next happening (time 2)\nDeleting (holding b6)\nDeleting (clear b7)\nAdding (on b6 b7)\nAdding (clear b6)\nAdding (handempty)\n\nChecking next happening (time 3)\nDeleting (on-table b5)\nDeleting (clear b5)\nDeleting (handempty)\nAdding (holding b5)\n\nChecking next happening (time 4)\nDeleting (holding b5)\nDeleting (clear b6)\nAdding (on b5 b6)\nAdding (clear b5)\nAdding (handempty)\n\nChecking next happening (time 5)\nDeleting (on-table b4)\nDeleting (clear b4)\nDeleting (handempty)\nAdding (holding b4)\n\nChecking next happening (time 6)\nDeleting (holding b4)\nDeleting (clear b5)\nAdding (on b4 b5)\nAdding (clear b4)\nAdding (handempty)\n\nChecking next happening (time 7)\nDeleting (on-table b3)\nDeleting (clear b3)\nDeleting (handempty)\nAdding (holding b3)\n\nChecking next happening (time 8)\nDeleting (holding b3)\nDeleting (clear b4)\nAdding (on b3 b4)\nAdding (clear b3)\nAdding (handempty)\n\nChecking next happening (time 9)\nDeleting (on-table b2)\nDeleting (clear b2)\nDeleting (handempty)\nAdding (holding b2)\n\nChecking next happening (time 10)\nDeleting (holding b2)\nDeleting (clear b3)\nAdding (on b2 b3)\nAdding (clear b2)\nAdding (handempty)\n\nChecking next happening (time 11)\nDeleting (on-table b1)\nDeleting (clear b1)\nDeleting (handempty)\nAdding (holding b1)\n\nChecking next happening (time 12)\nDeleting (holding b1)\nDeleting (clear b2)\nAdding (on b1 b2)\nAdding (clear b1)\nAdding (handempty)\nPlan executed successfully - checking goal\nPlan valid\nFinal value: 12 \n\nSuccessful plans:\nValue: 12\n data/planbench_public/blocksworld/plans_valid/bw_0058.txt 12 \n\n",
+  "transitions": [
+    {
+      "step": 0,
+      "time": 1.0,
+      "action": "(pick-up b6)",
+      "state": [
+        "clear b1",
+        "clear b2",
+        "clear b3",
+        "clear b4",
+        "clear b5",
+        "clear b6",
+        "clear b7",
+        "handempty",
+        "on-table b1",
+        "on-table b2",
+        "on-table b3",
+        "on-table b4",
+        "on-table b5",
+        "on-table b6",
+        "on-table b7"
+      ],
+      "effects": {
+        "del": [
+          "on-table b6",
+          "clear b6",
+          "handempty"
+        ],
+        "add": [
+          "holding b6"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "clear b1",
+        "clear b2",
+        "clear b3",
+        "clear b4",
+        "clear b5",
+        "clear b7",
+        "holding b6",
+        "on-table b1",
+        "on-table b2",
+        "on-table b3",
+        "on-table b4",
+        "on-table b5",
+        "on-table b7"
+      ],
+      "errors": []
+    },
+    {
+      "step": 1,
+      "time": 2.0,
+      "action": "(stack b6 b7)",
+      "state": [
+        "clear b1",
+        "clear b2",
+        "clear b3",
+        "clear b4",
+        "clear b5",
+        "clear b7",
+        "holding b6",
+        "on-table b1",
+        "on-table b2",
+        "on-table b3",
+        "on-table b4",
+        "on-table b5",
+        "on-table b7"
+      ],
+      "effects": {
+        "del": [
+          "holding b6",
+          "clear b7"
+        ],
+        "add": [
+          "on b6 b7",
+          "clear b6",
+          "handempty"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "clear b1",
+        "clear b2",
+        "clear b3",
+        "clear b4",
+        "clear b5",
+        "clear b6",
+        "handempty",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b2",
+        "on-table b3",
+        "on-table b4",
+        "on-table b5",
+        "on-table b7"
+      ],
+      "errors": []
+    },
+    {
+      "step": 2,
+      "time": 3.0,
+      "action": "(pick-up b5)",
+      "state": [
+        "clear b1",
+        "clear b2",
+        "clear b3",
+        "clear b4",
+        "clear b5",
+        "clear b6",
+        "handempty",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b2",
+        "on-table b3",
+        "on-table b4",
+        "on-table b5",
+        "on-table b7"
+      ],
+      "effects": {
+        "del": [
+          "on-table b5",
+          "clear b5",
+          "handempty"
+        ],
+        "add": [
+          "holding b5"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "clear b1",
+        "clear b2",
+        "clear b3",
+        "clear b4",
+        "clear b6",
+        "holding b5",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b2",
+        "on-table b3",
+        "on-table b4",
+        "on-table b7"
+      ],
+      "errors": []
+    },
+    {
+      "step": 3,
+      "time": 4.0,
+      "action": "(stack b5 b6)",
+      "state": [
+        "clear b1",
+        "clear b2",
+        "clear b3",
+        "clear b4",
+        "clear b6",
+        "holding b5",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b2",
+        "on-table b3",
+        "on-table b4",
+        "on-table b7"
+      ],
+      "effects": {
+        "del": [
+          "holding b5",
+          "clear b6"
+        ],
+        "add": [
+          "on b5 b6",
+          "clear b5",
+          "handempty"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "clear b1",
+        "clear b2",
+        "clear b3",
+        "clear b4",
+        "clear b5",
+        "handempty",
+        "on b5 b6",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b2",
+        "on-table b3",
+        "on-table b4",
+        "on-table b7"
+      ],
+      "errors": []
+    },
+    {
+      "step": 4,
+      "time": 5.0,
+      "action": "(pick-up b4)",
+      "state": [
+        "clear b1",
+        "clear b2",
+        "clear b3",
+        "clear b4",
+        "clear b5",
+        "handempty",
+        "on b5 b6",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b2",
+        "on-table b3",
+        "on-table b4",
+        "on-table b7"
+      ],
+      "effects": {
+        "del": [
+          "on-table b4",
+          "clear b4",
+          "handempty"
+        ],
+        "add": [
+          "holding b4"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "clear b1",
+        "clear b2",
+        "clear b3",
+        "clear b5",
+        "holding b4",
+        "on b5 b6",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b2",
+        "on-table b3",
+        "on-table b7"
+      ],
+      "errors": []
+    },
+    {
+      "step": 5,
+      "time": 6.0,
+      "action": "(stack b4 b5)",
+      "state": [
+        "clear b1",
+        "clear b2",
+        "clear b3",
+        "clear b5",
+        "holding b4",
+        "on b5 b6",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b2",
+        "on-table b3",
+        "on-table b7"
+      ],
+      "effects": {
+        "del": [
+          "holding b4",
+          "clear b5"
+        ],
+        "add": [
+          "on b4 b5",
+          "clear b4",
+          "handempty"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "clear b1",
+        "clear b2",
+        "clear b3",
+        "clear b4",
+        "handempty",
+        "on b4 b5",
+        "on b5 b6",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b2",
+        "on-table b3",
+        "on-table b7"
+      ],
+      "errors": []
+    },
+    {
+      "step": 6,
+      "time": 7.0,
+      "action": "(pick-up b3)",
+      "state": [
+        "clear b1",
+        "clear b2",
+        "clear b3",
+        "clear b4",
+        "handempty",
+        "on b4 b5",
+        "on b5 b6",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b2",
+        "on-table b3",
+        "on-table b7"
+      ],
+      "effects": {
+        "del": [
+          "on-table b3",
+          "clear b3",
+          "handempty"
+        ],
+        "add": [
+          "holding b3"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "clear b1",
+        "clear b2",
+        "clear b4",
+        "holding b3",
+        "on b4 b5",
+        "on b5 b6",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b2",
+        "on-table b7"
+      ],
+      "errors": []
+    },
+    {
+      "step": 7,
+      "time": 8.0,
+      "action": "(stack b3 b4)",
+      "state": [
+        "clear b1",
+        "clear b2",
+        "clear b4",
+        "holding b3",
+        "on b4 b5",
+        "on b5 b6",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b2",
+        "on-table b7"
+      ],
+      "effects": {
+        "del": [
+          "holding b3",
+          "clear b4"
+        ],
+        "add": [
+          "on b3 b4",
+          "clear b3",
+          "handempty"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "clear b1",
+        "clear b2",
+        "clear b3",
+        "handempty",
+        "on b3 b4",
+        "on b4 b5",
+        "on b5 b6",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b2",
+        "on-table b7"
+      ],
+      "errors": []
+    },
+    {
+      "step": 8,
+      "time": 9.0,
+      "action": "(pick-up b2)",
+      "state": [
+        "clear b1",
+        "clear b2",
+        "clear b3",
+        "handempty",
+        "on b3 b4",
+        "on b4 b5",
+        "on b5 b6",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b2",
+        "on-table b7"
+      ],
+      "effects": {
+        "del": [
+          "on-table b2",
+          "clear b2",
+          "handempty"
+        ],
+        "add": [
+          "holding b2"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "clear b1",
+        "clear b3",
+        "holding b2",
+        "on b3 b4",
+        "on b4 b5",
+        "on b5 b6",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b7"
+      ],
+      "errors": []
+    },
+    {
+      "step": 9,
+      "time": 10.0,
+      "action": "(stack b2 b3)",
+      "state": [
+        "clear b1",
+        "clear b3",
+        "holding b2",
+        "on b3 b4",
+        "on b4 b5",
+        "on b5 b6",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b7"
+      ],
+      "effects": {
+        "del": [
+          "holding b2",
+          "clear b3"
+        ],
+        "add": [
+          "on b2 b3",
+          "clear b2",
+          "handempty"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "clear b1",
+        "clear b2",
+        "handempty",
+        "on b2 b3",
+        "on b3 b4",
+        "on b4 b5",
+        "on b5 b6",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b7"
+      ],
+      "errors": []
+    },
+    {
+      "step": 10,
+      "time": 11.0,
+      "action": "(pick-up b1)",
+      "state": [
+        "clear b1",
+        "clear b2",
+        "handempty",
+        "on b2 b3",
+        "on b3 b4",
+        "on b4 b5",
+        "on b5 b6",
+        "on b6 b7",
+        "on-table b1",
+        "on-table b7"
+      ],
+      "effects": {
+        "del": [
+          "on-table b1",
+          "clear b1",
+          "handempty"
+        ],
+        "add": [
+          "holding b1"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "clear b2",
+        "holding b1",
+        "on b2 b3",
+        "on b3 b4",
+        "on b4 b5",
+        "on b5 b6",
+        "on b6 b7",
+        "on-table b7"
+      ],
+      "errors": []
+    },
+    {
+      "step": 11,
+      "time": 12.0,
+      "action": "(stack b1 b2)",
+      "state": [
+        "clear b2",
+        "holding b1",
+        "on b2 b3",
+        "on b3 b4",
+        "on b4 b5",
+        "on b5 b6",
+        "on b6 b7",
+        "on-table b7"
+      ],
+      "effects": {
+        "del": [
+          "holding b1",
+          "clear b2"
+        ],
+        "add": [
+          "on b1 b2",
+          "clear b1",
+          "handempty"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "clear b1",
+        "handempty",
+        "on b1 b2",
+        "on b2 b3",
+        "on b3 b4",
+        "on b4 b5",
+        "on b5 b6",
+        "on b6 b7",
+        "on-table b7"
+      ],
+      "errors": []
+    }
+  ],
+  "errors": [],
+  "failed_at_step": null,
+  "plan_type": "valid"
+}

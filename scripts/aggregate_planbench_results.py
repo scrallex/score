@@ -84,6 +84,29 @@ def bootstrap_ci(values: Sequence[float], *, iterations: int = 1000, seed: int =
     return mean_val, samples[lo_idx], samples[min(hi_idx, iterations - 1)]
 
 
+def permutation_p_value(
+    *,
+    window_count: int,
+    alerts_count: int,
+    failure_index: int,
+    observed_lead: float,
+    iterations: int = 500,
+) -> float:
+    if window_count <= 0 or alerts_count <= 0:
+        return 1.0
+    rng = random.Random(1337)
+    hits = 0
+    for _ in range(iterations):
+        sample = rng.sample(range(window_count), min(alerts_count, window_count))
+        sample_leads = [max(0, failure_index - idx) for idx in sample]
+        if not sample_leads:
+            continue
+        sim_lead = min(sample_leads)
+        if sim_lead <= observed_lead:
+            hits += 1
+    return hits / iterations if iterations else 1.0
+
+
 def aggregate(input_root: Path, *, trace_root: Optional[Path], traces_dir: str) -> List[Dict[str, object]]:
     metrics_summary_path = input_root / "invalid" / "metrics" / "summary.json"
     if not metrics_summary_path.exists():
@@ -133,6 +156,10 @@ def aggregate(input_root: Path, *, trace_root: Optional[Path], traces_dir: str) 
         twin_min_distances: List[float] = []
         twin_counts = {0.3: 0, 0.4: 0, 0.5: 0}
         decisive_values: List[float] = []
+        aligned_counts: List[int] = []
+        perm_pvals: List[float] = []
+        path_cuts: List[float] = []
+        signal_cuts: List[float] = []
 
         for trace_name in corrupt_traces:
             lead_record = lead_records.get(trace_name)
@@ -144,13 +171,30 @@ def aggregate(input_root: Path, *, trace_root: Optional[Path], traces_dir: str) 
                 if leads:
                     lead_max_vals.append(max(leads))
                     lead_min_vals.append(min(leads))
+                    window_count = int(lead_record.get("window_count", len(leads)))
+                    failure_index = int(lead_record.get("failure_index", window_count - 1))
+                    alerts_count = len(lead_record.get("alerts", []))
+                    observed_lead = min(leads)
+                    perm_pvals.append(
+                        permutation_p_value(
+                            window_count=window_count,
+                            alerts_count=alerts_count,
+                            failure_index=failure_index,
+                            observed_lead=observed_lead,
+                        )
+                    )
+                path_cuts.append(float(lead_record.get("path_cut", path_threshold)))
+                signal_cuts.append(float(lead_record.get("signal_cut", signal_threshold)))
             twin_record = twin_records.get(trace_name)
             if twin_record:
                 suggestions = []
                 for detail in twin_record.get("details", []):
                     for suggestion in detail.get("suggestions", []):
                         distance = float(suggestion.get("distance", 1.0))
+                        aligned_tokens = int(suggestion.get("aligned_tokens", 0))
                         suggestions.append(distance)
+                        if aligned_tokens:
+                            aligned_counts.append(aligned_tokens)
                 if suggestions:
                     best = min(suggestions)
                     twin_min_distances.append(best)
@@ -171,6 +215,12 @@ def aggregate(input_root: Path, *, trace_root: Optional[Path], traces_dir: str) 
         twin_rates = {tau: (twin_counts[tau] / len(corrupt_traces) if corrupt_traces else 0.0) for tau in twin_counts}
         decisive_pct = float(statistics.mean(decisive_values)) if decisive_values else 0.0
         ann_mean, ann_lo, ann_hi = bootstrap_ci(twin_min_distances)
+        aligned_mean = float(statistics.mean(aligned_counts)) if aligned_counts else 0.0
+        aligned_min = min(aligned_counts) if aligned_counts else 0
+        aligned_max = max(aligned_counts) if aligned_counts else 0
+        perm_mean = float(statistics.mean(perm_pvals)) if perm_pvals else 1.0
+        path_cut_mean = float(statistics.mean(path_cuts)) if path_cuts else path_threshold
+        signal_cut_mean = float(statistics.mean(signal_cuts)) if signal_cuts else signal_threshold
 
         results.append(
             {
@@ -188,8 +238,12 @@ def aggregate(input_root: Path, *, trace_root: Optional[Path], traces_dir: str) 
                 "ann_mean": ann_mean,
                 "ann_ci95_lo": ann_lo,
                 "ann_ci95_hi": ann_hi,
-                "path_threshold": path_threshold,
-                "signal_threshold": signal_threshold,
+                "aligned_mean": aligned_mean,
+                "aligned_min": aligned_min,
+                "aligned_max": aligned_max,
+                "lead_perm_pval": perm_mean,
+                "path_threshold": path_cut_mean,
+                "signal_threshold": signal_cut_mean,
             }
         )
 

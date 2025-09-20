@@ -1,0 +1,7 @@
+(lift t3)
+(bind t3 t4)
+(lift t2)
+(bind t2 t3)
+(bind t1 t2)
+(lift t1)
+(bind t1 t2)

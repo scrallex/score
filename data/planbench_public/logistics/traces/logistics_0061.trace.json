@@ -1,0 +1,853 @@
+{
+  "domain": "data/planbench_public/logistics/domain.pddl",
+  "problem": "data/planbench_public/logistics/problems/logistics_0061.pddl",
+  "plan": "data/planbench_public/logistics/plans_valid/logistics_0061.txt",
+  "initial_state": [
+    "airport airportA",
+    "airport airportB",
+    "at pkg1 loc0",
+    "at pkg2 loc0",
+    "at pkg3 loc0",
+    "at-vehicle plane1 airportA",
+    "at-vehicle truck1 loc0"
+  ],
+  "status": "valid",
+  "exit_code": 0,
+  "validator_output": "Checking plan: data/planbench_public/logistics/plans_valid/logistics_0061.txt\nPlan to validate:\n\nPlan size: 24\n1:\n(load-truck pkg1 truck1 loc0)\n \n2:\n(drive truck1 loc0 airporta)\n \n3:\n(unload-truck pkg1 truck1 airporta)\n \n4:\n(load-plane pkg1 plane1 airporta)\n \n5:\n(fly plane1 airporta airportb)\n \n6:\n(unload-plane pkg1 plane1 airportb)\n \n7:\n(fly plane1 airportb airporta)\n \n8:\n(drive truck1 airporta loc0)\n \n9:\n(load-truck pkg2 truck1 loc0)\n \n10:\n(drive truck1 loc0 airporta)\n \n11:\n(unload-truck pkg2 truck1 airporta)\n \n12:\n(load-plane pkg2 plane1 airporta)\n \n13:\n(fly plane1 airporta airportb)\n \n14:\n(unload-plane pkg2 plane1 airportb)\n \n15:\n(fly plane1 airportb airporta)\n \n16:\n(drive truck1 airporta loc0)\n \n17:\n(load-truck pkg3 truck1 loc0)\n \n18:\n(drive truck1 loc0 airporta)\n \n19:\n(unload-truck pkg3 truck1 airporta)\n \n20:\n(load-plane pkg3 plane1 airporta)\n \n21:\n(fly plane1 airporta airportb)\n \n22:\n(unload-plane pkg3 plane1 airportb)\n \n23:\n(fly plane1 airportb airporta)\n \n24:\n(drive truck1 airporta loc0)\n \n\nPlan Validation details\n-----------------------\n\nChecking next happening (time 1)\nDeleting (at pkg1 loc0)\nAdding (in pkg1 truck1)\n\nChecking next happening (time 2)\nDeleting (at-vehicle truck1 loc0)\nAdding (at-vehicle truck1 airporta)\n\nChecking next happening (time 3)\nDeleting (in pkg1 truck1)\nAdding (at pkg1 airporta)\n\nChecking next happening (time 4)\nDeleting (at pkg1 airporta)\nAdding (in pkg1 plane1)\n\nChecking next happening (time 5)\nDeleting (at-vehicle plane1 airporta)\nAdding (at-vehicle plane1 airportb)\n\nChecking next happening (time 6)\nDeleting (in pkg1 plane1)\nAdding (at pkg1 airportb)\n\nChecking next happening (time 7)\nDeleting (at-vehicle plane1 airportb)\nAdding (at-vehicle plane1 airporta)\n\nChecking next happening (time 8)\nDeleting (at-vehicle truck1 airporta)\nAdding (at-vehicle truck1 loc0)\n\nChecking next happening (time 9)\nDeleting (at pkg2 loc0)\nAdding (in pkg2 truck1)\n\nChecking next happening (time 10)\nDeleting (at-vehicle truck1 loc0)\nAdding (at-vehicle truck1 airporta)\n\nChecking next happening (time 11)\nDeleting (in pkg2 truck1)\nAdding (at pkg2 airporta)\n\nChecking next happening (time 12)\nDeleting (at pkg2 airporta)\nAdding (in pkg2 plane1)\n\nChecking next happening (time 13)\nDeleting (at-vehicle plane1 airporta)\nAdding (at-vehicle plane1 airportb)\n\nChecking next happening (time 14)\nDeleting (in pkg2 plane1)\nAdding (at pkg2 airportb)\n\nChecking next happening (time 15)\nDeleting (at-vehicle plane1 airportb)\nAdding (at-vehicle plane1 airporta)\n\nChecking next happening (time 16)\nDeleting (at-vehicle truck1 airporta)\nAdding (at-vehicle truck1 loc0)\n\nChecking next happening (time 17)\nDeleting (at pkg3 loc0)\nAdding (in pkg3 truck1)\n\nChecking next happening (time 18)\nDeleting (at-vehicle truck1 loc0)\nAdding (at-vehicle truck1 airporta)\n\nChecking next happening (time 19)\nDeleting (in pkg3 truck1)\nAdding (at pkg3 airporta)\n\nChecking next happening (time 20)\nDeleting (at pkg3 airporta)\nAdding (in pkg3 plane1)\n\nChecking next happening (time 21)\nDeleting (at-vehicle plane1 airporta)\nAdding (at-vehicle plane1 airportb)\n\nChecking next happening (time 22)\nDeleting (in pkg3 plane1)\nAdding (at pkg3 airportb)\n\nChecking next happening (time 23)\nDeleting (at-vehicle plane1 airportb)\nAdding (at-vehicle plane1 airporta)\n\nChecking next happening (time 24)\nDeleting (at-vehicle truck1 airporta)\nAdding (at-vehicle truck1 loc0)\nPlan executed successfully - checking goal\nPlan valid\nFinal value: 24 \n\nSuccessful plans:\nValue: 24\n data/planbench_public/logistics/plans_valid/logistics_0061.txt 24 \n\n",
+  "transitions": [
+    {
+      "step": 0,
+      "time": 1.0,
+      "action": "(load-truck pkg1 truck1 loc0)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 loc0",
+        "at pkg2 loc0",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle truck1 loc0"
+      ],
+      "effects": {
+        "del": [
+          "at pkg1 loc0"
+        ],
+        "add": [
+          "in pkg1 truck1"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg2 loc0",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle truck1 loc0",
+        "in pkg1 truck1"
+      ],
+      "errors": []
+    },
+    {
+      "step": 1,
+      "time": 2.0,
+      "action": "(drive truck1 loc0 airportA)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg2 loc0",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle truck1 loc0",
+        "in pkg1 truck1"
+      ],
+      "effects": {
+        "del": [
+          "at-vehicle truck1 loc0"
+        ],
+        "add": [
+          "at-vehicle truck1 airporta"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg2 loc0",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle truck1 airporta",
+        "in pkg1 truck1"
+      ],
+      "errors": []
+    },
+    {
+      "step": 2,
+      "time": 3.0,
+      "action": "(unload-truck pkg1 truck1 airportA)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg2 loc0",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle truck1 airporta",
+        "in pkg1 truck1"
+      ],
+      "effects": {
+        "del": [
+          "in pkg1 truck1"
+        ],
+        "add": [
+          "at pkg1 airporta"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airporta",
+        "at pkg2 loc0",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle truck1 airporta"
+      ],
+      "errors": []
+    },
+    {
+      "step": 3,
+      "time": 4.0,
+      "action": "(load-plane pkg1 plane1 airportA)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airporta",
+        "at pkg2 loc0",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle truck1 airporta"
+      ],
+      "effects": {
+        "del": [
+          "at pkg1 airporta"
+        ],
+        "add": [
+          "in pkg1 plane1"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg2 loc0",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle truck1 airporta",
+        "in pkg1 plane1"
+      ],
+      "errors": []
+    },
+    {
+      "step": 4,
+      "time": 5.0,
+      "action": "(fly plane1 airportA airportB)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg2 loc0",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle truck1 airporta",
+        "in pkg1 plane1"
+      ],
+      "effects": {
+        "del": [
+          "at-vehicle plane1 airporta"
+        ],
+        "add": [
+          "at-vehicle plane1 airportb"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg2 loc0",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airportb",
+        "at-vehicle truck1 airporta",
+        "in pkg1 plane1"
+      ],
+      "errors": []
+    },
+    {
+      "step": 5,
+      "time": 6.0,
+      "action": "(unload-plane pkg1 plane1 airportB)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg2 loc0",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airportb",
+        "at-vehicle truck1 airporta",
+        "in pkg1 plane1"
+      ],
+      "effects": {
+        "del": [
+          "in pkg1 plane1"
+        ],
+        "add": [
+          "at pkg1 airportb"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 loc0",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airportb",
+        "at-vehicle truck1 airporta"
+      ],
+      "errors": []
+    },
+    {
+      "step": 6,
+      "time": 7.0,
+      "action": "(fly plane1 airportB airportA)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 loc0",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airportb",
+        "at-vehicle truck1 airporta"
+      ],
+      "effects": {
+        "del": [
+          "at-vehicle plane1 airportb"
+        ],
+        "add": [
+          "at-vehicle plane1 airporta"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 loc0",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta"
+      ],
+      "errors": []
+    },
+    {
+      "step": 7,
+      "time": 8.0,
+      "action": "(drive truck1 airportA loc0)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 loc0",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta"
+      ],
+      "effects": {
+        "del": [
+          "at-vehicle truck1 airporta"
+        ],
+        "add": [
+          "at-vehicle truck1 loc0"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 loc0",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 loc0"
+      ],
+      "errors": []
+    },
+    {
+      "step": 8,
+      "time": 9.0,
+      "action": "(load-truck pkg2 truck1 loc0)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 loc0",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 loc0"
+      ],
+      "effects": {
+        "del": [
+          "at pkg2 loc0"
+        ],
+        "add": [
+          "in pkg2 truck1"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 loc0",
+        "in pkg2 truck1"
+      ],
+      "errors": []
+    },
+    {
+      "step": 9,
+      "time": 10.0,
+      "action": "(drive truck1 loc0 airportA)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 loc0",
+        "in pkg2 truck1"
+      ],
+      "effects": {
+        "del": [
+          "at-vehicle truck1 loc0"
+        ],
+        "add": [
+          "at-vehicle truck1 airporta"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta",
+        "in pkg2 truck1"
+      ],
+      "errors": []
+    },
+    {
+      "step": 10,
+      "time": 11.0,
+      "action": "(unload-truck pkg2 truck1 airportA)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta",
+        "in pkg2 truck1"
+      ],
+      "effects": {
+        "del": [
+          "in pkg2 truck1"
+        ],
+        "add": [
+          "at pkg2 airporta"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airporta",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta"
+      ],
+      "errors": []
+    },
+    {
+      "step": 11,
+      "time": 12.0,
+      "action": "(load-plane pkg2 plane1 airportA)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airporta",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta"
+      ],
+      "effects": {
+        "del": [
+          "at pkg2 airporta"
+        ],
+        "add": [
+          "in pkg2 plane1"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta",
+        "in pkg2 plane1"
+      ],
+      "errors": []
+    },
+    {
+      "step": 12,
+      "time": 13.0,
+      "action": "(fly plane1 airportA airportB)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta",
+        "in pkg2 plane1"
+      ],
+      "effects": {
+        "del": [
+          "at-vehicle plane1 airporta"
+        ],
+        "add": [
+          "at-vehicle plane1 airportb"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airportb",
+        "at-vehicle truck1 airporta",
+        "in pkg2 plane1"
+      ],
+      "errors": []
+    },
+    {
+      "step": 13,
+      "time": 14.0,
+      "action": "(unload-plane pkg2 plane1 airportB)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airportb",
+        "at-vehicle truck1 airporta",
+        "in pkg2 plane1"
+      ],
+      "effects": {
+        "del": [
+          "in pkg2 plane1"
+        ],
+        "add": [
+          "at pkg2 airportb"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airportb",
+        "at-vehicle truck1 airporta"
+      ],
+      "errors": []
+    },
+    {
+      "step": 14,
+      "time": 15.0,
+      "action": "(fly plane1 airportB airportA)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airportb",
+        "at-vehicle truck1 airporta"
+      ],
+      "effects": {
+        "del": [
+          "at-vehicle plane1 airportb"
+        ],
+        "add": [
+          "at-vehicle plane1 airporta"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta"
+      ],
+      "errors": []
+    },
+    {
+      "step": 15,
+      "time": 16.0,
+      "action": "(drive truck1 airportA loc0)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta"
+      ],
+      "effects": {
+        "del": [
+          "at-vehicle truck1 airporta"
+        ],
+        "add": [
+          "at-vehicle truck1 loc0"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 loc0"
+      ],
+      "errors": []
+    },
+    {
+      "step": 16,
+      "time": 17.0,
+      "action": "(load-truck pkg3 truck1 loc0)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at pkg3 loc0",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 loc0"
+      ],
+      "effects": {
+        "del": [
+          "at pkg3 loc0"
+        ],
+        "add": [
+          "in pkg3 truck1"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 loc0",
+        "in pkg3 truck1"
+      ],
+      "errors": []
+    },
+    {
+      "step": 17,
+      "time": 18.0,
+      "action": "(drive truck1 loc0 airportA)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 loc0",
+        "in pkg3 truck1"
+      ],
+      "effects": {
+        "del": [
+          "at-vehicle truck1 loc0"
+        ],
+        "add": [
+          "at-vehicle truck1 airporta"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta",
+        "in pkg3 truck1"
+      ],
+      "errors": []
+    },
+    {
+      "step": 18,
+      "time": 19.0,
+      "action": "(unload-truck pkg3 truck1 airportA)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta",
+        "in pkg3 truck1"
+      ],
+      "effects": {
+        "del": [
+          "in pkg3 truck1"
+        ],
+        "add": [
+          "at pkg3 airporta"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at pkg3 airporta",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta"
+      ],
+      "errors": []
+    },
+    {
+      "step": 19,
+      "time": 20.0,
+      "action": "(load-plane pkg3 plane1 airportA)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at pkg3 airporta",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta"
+      ],
+      "effects": {
+        "del": [
+          "at pkg3 airporta"
+        ],
+        "add": [
+          "in pkg3 plane1"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta",
+        "in pkg3 plane1"
+      ],
+      "errors": []
+    },
+    {
+      "step": 20,
+      "time": 21.0,
+      "action": "(fly plane1 airportA airportB)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta",
+        "in pkg3 plane1"
+      ],
+      "effects": {
+        "del": [
+          "at-vehicle plane1 airporta"
+        ],
+        "add": [
+          "at-vehicle plane1 airportb"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airportb",
+        "at-vehicle truck1 airporta",
+        "in pkg3 plane1"
+      ],
+      "errors": []
+    },
+    {
+      "step": 21,
+      "time": 22.0,
+      "action": "(unload-plane pkg3 plane1 airportB)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airportb",
+        "at-vehicle truck1 airporta",
+        "in pkg3 plane1"
+      ],
+      "effects": {
+        "del": [
+          "in pkg3 plane1"
+        ],
+        "add": [
+          "at pkg3 airportb"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at pkg3 airportb",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airportb",
+        "at-vehicle truck1 airporta"
+      ],
+      "errors": []
+    },
+    {
+      "step": 22,
+      "time": 23.0,
+      "action": "(fly plane1 airportB airportA)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at pkg3 airportb",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airportb",
+        "at-vehicle truck1 airporta"
+      ],
+      "effects": {
+        "del": [
+          "at-vehicle plane1 airportb"
+        ],
+        "add": [
+          "at-vehicle plane1 airporta"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at pkg3 airportb",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta"
+      ],
+      "errors": []
+    },
+    {
+      "step": 23,
+      "time": 24.0,
+      "action": "(drive truck1 airportA loc0)",
+      "state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at pkg3 airportb",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 airporta"
+      ],
+      "effects": {
+        "del": [
+          "at-vehicle truck1 airporta"
+        ],
+        "add": [
+          "at-vehicle truck1 loc0"
+        ]
+      },
+      "status": "valid",
+      "next_state": [
+        "airport airportA",
+        "airport airportB",
+        "at pkg1 airportb",
+        "at pkg2 airportb",
+        "at pkg3 airportb",
+        "at-vehicle plane1 airportA",
+        "at-vehicle plane1 airporta",
+        "at-vehicle truck1 loc0"
+      ],
+      "errors": []
+    }
+  ],
+  "errors": [],
+  "failed_at_step": null,
+  "plan_type": "valid"
+}

@@ -190,6 +190,7 @@ def _compute_lead_metrics(
         "window_count": limit,
         "path_cut": path_cut,
         "signal_cut": signal_cut,
+        "failure_index": failure_idx,
     }
     metrics_dir.mkdir(parents=True, exist_ok=True)
     (metrics_dir / f"{ctx.name}_lead.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
@@ -237,6 +238,7 @@ def _compute_twin_metrics(
                 "distance": suggestion.distance,
                 "tokens": list(suggestion.tokens),
                 "metrics": suggestion.metrics,
+                "aligned_tokens": len(suggestion.tokens),
             }
             for suggestion in suggestions
         ]
