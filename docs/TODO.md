@@ -1,330 +1,161 @@
-## Excellent Progress! Here Are Your Refined Next Steps 🚀
+Structural Context Co‑processor Case Study – Work Plan
 
-You've successfully built the **Interactive Text Console** with real phrase detection! Now let's make this customer-ready. Based on your latest updates, here's what to focus on:
+Overview
+The scrallex/score repository contains your QFH/QBSA-based “structural manifold” engine. You now want to turn this into a practical, licensable demonstration: a co‑processor that takes a raw data stream, builds a live manifold (context), and returns an enriched context object. This should be packaged into a demo that can run on your droplet and be compelling to investors. The “verify register” video describes a system that compares incoming data against a reference register to identify matches; your manifold does something analogous by comparing the current window’s signature against historical patterns. Both systems try to find “where have I seen this pattern before?” and use that to verify or enrich the current context.
 
-### 🎯 Immediate Priority: Make Results Actionable (1-2 days)
+Below is a complete, actionable outline to get from the current repo to a finished case study and demo.
 
-#### 1. **Visual Pattern Highlighting** 
-Add this to show WHERE patterns appear in the original text:
+1. Align Concepts: Scoring Repo vs. Verify Register Video
 
-```javascript
-// Add to webapp/main.js
-function highlightPatternsInText(text, patterns, phrases) {
-  let highlightedText = text;
-  const highlights = [];
-  
-  // Collect all positions to highlight
-  patterns.forEach((pattern, idx) => {
-    const color = ['#ffeb3b', '#8bc34a', '#03a9f4', '#ff9800', '#e91e63'][idx % 5];
-    pattern.positions?.forEach(pos => {
-      highlights.push({
-        start: pos.start,
-        end: pos.end,
-        color: color,
-        signature: pattern.signature
-      });
-    });
-  });
-  
-  // Sort by position and apply highlights
-  highlights.sort((a, b) => b.start - a.start);
-  highlights.forEach(h => {
-    const before = highlightedText.substring(0, h.start);
-    const match = highlightedText.substring(h.start, h.end);
-    const after = highlightedText.substring(h.end);
-    highlightedText = `${before}<mark style="background:${h.color}" title="${h.signature}">${match}</mark>${after}`;
-  });
-  
-  return highlightedText;
-}
+Video’s verify register: A table of known patterns; incoming data is hashed/checked against this “register” to verify authenticity or classify it quickly. It’s often used in streaming verification or deduplication systems.
 
-// Add highlighted view after analysis
-const highlightContainer = document.createElement('div');
-highlightContainer.className = 'highlighted-text';
-highlightContainer.innerHTML = `
-  <h3>Pattern Visualization</h3>
-  <div class="text-with-highlights">${highlightedText}</div>
-`;
-document.getElementById('text-patterns').appendChild(highlightContainer);
-```
+Your scoring repo: Builds a manifold from live data via QFH/QBSA, computes coherence, stability, entropy and repetition signatures, and uses these to classify current windows and find structural twins. In effect, the manifold is a “register,” and its signatures are analogous to the verify register’s hashes.
 
-#### 2. **Export Results as Report**
-Add download button for professional reports:
+Key similarity: Both maintain a reference sheet of patterns and use it to identify or classify new streams quickly.
 
-```python
-# Add to src/stm_demo/api.py
-from io import BytesIO
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Table
-import json
+Key difference: The scoring engine goes beyond hash matching; it tracks continuous metrics (coherence, entropy, rupture) and can produce lead‑time alerts and propose next strings. Your case study should explain how these extra metrics allow richer decisions than a simple verify register.
 
-@app.post("/api/export/report")
-async def export_analysis_report(request: Request):
-    """Generate PDF report of analysis results."""
-    body = await request.json()
-    results = body.get("results")
-    text_preview = body.get("text", "")[:500]
-    
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    story = []
-    
-    # Title
-    story.append(Paragraph("Structural Intelligence Analysis Report", title_style))
-    story.append(Paragraph(f"Generated: {datetime.now().isoformat()}", date_style))
-    
-    # Summary metrics
-    metrics = results.get("metrics", {})
-    summary_data = [
-        ["Total Tokens", str(metrics.get("total_tokens", 0))],
-        ["Unique Patterns", str(metrics.get("unique_patterns", 0))],
-        ["Structural Coverage", f"{metrics.get('structural_coverage', 0)*100:.1f}%"],
-        ["Repetition Score", f"{metrics.get('repetition_ratio', 0)*100:.1f}%"]
-    ]
-    story.append(Table(summary_data))
-    
-    # Top patterns with examples
-    story.append(Paragraph("Discovered Patterns", heading_style))
-    for pattern in results.get("structural_patterns", [])[:5]:
-        story.append(Paragraph(
-            f"• {pattern['signature']}: {pattern['count']} occurrences "
-            f"(coherence: {pattern['avg_coherence']:.3f})",
-            body_style
-        ))
-        if pattern.get('sample_snippet'):
-            story.append(Paragraph(f'  "{pattern["sample_snippet"]}"', quote_style))
-    
-    # Build PDF
-    doc.build(story)
-    buffer.seek(0)
-    
-    return StreamingResponse(
-        buffer,
-        media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=structural_analysis.pdf"}
-    )
-```
+2. High‑Level Product Vision
 
-### 📊 Phase 2: Comparison Features (2-3 days)
+Service: A containerized API server exposing /enrich (structural context co‑processor).
 
-#### 3. **Side-by-Side Text Comparison**
-This is killer for showing "before/after" or comparing two documents:
+Input: Raw text/telemetry/log strings.
 
-```html
-<!-- Add to webapp/index.html -->
-<section class="demo" id="text-compare">
-  <div class="demo__heading">
-    <h2>Compare Texts</h2>
-    <p>Analyze structural differences between two text samples.</p>
-  </div>
-  <div class="compare-container">
-    <div class="compare-panel">
-      <h3>Text A</h3>
-      <textarea id="compare-text-a" placeholder="Original text..."></textarea>
-    </div>
-    <div class="compare-panel">
-      <h3>Text B</h3>
-      <textarea id="compare-text-b" placeholder="Modified text..."></textarea>
-    </div>
-  </div>
-  <button id="compare-btn" class="btn">Compare Structures</button>
-  <div id="compare-results" class="card" hidden>
-    <h3>Structural Comparison</h3>
-    <div id="compare-metrics"></div>
-    <div id="compare-unique-a"></div>
-    <div id="compare-unique-b"></div>
-    <div id="compare-similarity"></div>
-  </div>
-</section>
-```
+Process:
 
-```python
-# Add comparison endpoint
-@app.post("/api/compare/texts")
-async def compare_texts(request: Request):
-    body = await request.json()
-    text_a = body.get("text_a", "")
-    text_b = body.get("text_b", "")
-    
-    # Analyze both texts
-    results_a = await analyze_text_internal(text_a)
-    results_b = await analyze_text_internal(text_b)
-    
-    # Find unique and common patterns
-    patterns_a = set(p["signature"] for p in results_a["structural_patterns"])
-    patterns_b = set(p["signature"] for p in results_b["structural_patterns"])
-    
-    common = patterns_a.intersection(patterns_b)
-    unique_a = patterns_a - patterns_b
-    unique_b = patterns_b - patterns_a
-    
-    # Calculate similarity score
-    jaccard = len(common) / len(patterns_a.union(patterns_b)) if patterns_a or patterns_b else 0
-    
-    return {
-        "similarity_score": round(jaccard, 3),
-        "common_patterns": list(common),
-        "unique_to_a": list(unique_a),
-        "unique_to_b": list(unique_b),
-        "metrics_comparison": {
-            "structural_coverage_diff": results_b["metrics"]["structural_coverage"] - results_a["metrics"]["structural_coverage"],
-            "repetition_diff": results_b["metrics"]["repetition_ratio"] - results_a["metrics"]["repetition_ratio"]
-        }
-    }
-```
+Bit‑encode the input into structural features (UP/ACCEL/RANGEEXP/ZPOS).
 
-### 🏭 Phase 3: Industry Templates (3-4 days)
+Compute QFH/QBSA metrics and repetition signature.
 
-#### 4. **Pre-Loaded Industry Examples**
-Make it instant for prospects to see value:
+Compare against the stored manifold (the “register”) using ANN and signature postings.
 
-```javascript
-// Add industry-specific samples
-const INDUSTRY_SAMPLES = {
-  'manufacturing': {
-    name: 'Sensor Log Analysis',
-    text: `2025-01-19 10:00:00 TEMP:45.2C PRESSURE:101.3kPa STATUS:NORMAL
-2025-01-19 10:00:05 TEMP:45.8C PRESSURE:101.5kPa STATUS:NORMAL
-2025-01-19 10:00:10 TEMP:52.1C PRESSURE:103.2kPa STATUS:WARNING
-2025-01-19 10:00:15 TEMP:58.3C PRESSURE:105.1kPa STATUS:CRITICAL`,
-    expected: 'Temperature spike pattern detection'
-  },
-  'finance': {
-    name: 'Transaction Pattern Analysis',
-    text: `TXN:001 AMOUNT:1000.00 TYPE:DEPOSIT ACCOUNT:ACC123 TIME:09:00:00
-TXN:002 AMOUNT:500.00 TYPE:WITHDRAW ACCOUNT:ACC123 TIME:09:05:00
-TXN:003 AMOUNT:1000.00 TYPE:DEPOSIT ACCOUNT:ACC456 TIME:09:10:00`,
-    expected: 'Repeated transaction patterns'
-  },
-  'healthcare': {
-    name: 'Clinical Notes Structure',
-    text: `Patient presents with headache and fever. Temp: 38.5C. BP: 120/80.
-Prescribed acetaminophen 500mg. Follow-up in 3 days.
-Patient presents with cough and fatigue. Temp: 37.8C. BP: 118/78.
-Prescribed rest and fluids. Follow-up in 5 days.`,
-    expected: 'Clinical documentation patterns'
-  }
-};
+Compute dilution metrics (Path Dilution, Signal Dilution, Semantic Dilution).
 
-// Add dropdown to select industry
-document.getElementById('industry-selector').addEventListener('change', (e) => {
-  const sample = INDUSTRY_SAMPLES[e.target.value];
-  document.getElementById('text-input').value = sample.text;
-  showToast(`Loaded ${sample.name} example`);
-});
-```
+Surface high‑coherence foreground tokens and propose tangent themes.
 
-### 💼 Phase 4: Sales Enablement (1 week)
+Output: JSON containing the original context, top structural tokens with significance scores, tangent themes, dilution/confidence scores, and warnings on ambiguous tokens.
 
-#### 5. **Self-Service Pilot Mode**
-Let prospects run their own pilot:
+Demonstration: Provide a CLI and web UI for uploading text, getting enriched context, and visualizing the manifold (plots of coherence, stability, rupture over time).
 
-```python
-@app.post("/api/pilot/start")
-async def start_pilot(email: str, company: str, use_case: str):
-    """Generate time-limited pilot access."""
-    pilot_key = generate_pilot_key()
-    expiry = datetime.now() + timedelta(days=14)
-    
-    # Store pilot info (Redis/DB)
-    await store_pilot({
-        "key": pilot_key,
-        "email": email,
-        "company": company,
-        "use_case": use_case,
-        "expiry": expiry,
-        "usage": {"analyses": 0, "exports": 0}
-    })
-    
-    # Send welcome email with key
-    await send_pilot_welcome(email, pilot_key, use_case)
-    
-    return {
-        "pilot_key": pilot_key,
-        "expires": expiry.isoformat(),
-        "limits": {
-            "max_analyses": 100,
-            "max_text_size": 1000000,
-            "export_enabled": True
-        }
-    }
-```
+3. Step‑by‑Step Implementation Plan
+A. Repository Refactoring & Packaging
 
-#### 6. **Usage Analytics Dashboard**
-Track what prospects are doing:
+Create a single stm package inside the repo with clear modules:
 
-```python
-@app.get("/api/analytics/pilot/{pilot_key}")
-async def get_pilot_analytics(pilot_key: str):
-    """Show usage patterns for sales follow-up."""
-    usage = await get_pilot_usage(pilot_key)
-    
-    return {
-        "total_analyses": usage["analyses"],
-        "avg_text_size": usage["avg_size"],
-        "top_patterns": usage["common_patterns"],
-        "last_active": usage["last_used"],
-        "engagement_score": calculate_engagement(usage),
-        "recommended_follow_up": suggest_next_steps(usage)
-    }
-```
+adapters/: Preprocessing adapters (MMS, THEMIS, generic CSV).
 
-### 🚀 Phase 5: The Killer Features (5-7 days)
+core/: Existing kernel wrapper, bit‑encoding, QFH/QBSA logic.
 
-#### 7. **Live Pattern Monitoring**
-For streaming/real-time use cases:
+manifold/: Data structures for signals, ANN index, signature postings.
 
-```python
-@app.websocket("/ws/monitor")
-async def pattern_monitor(websocket: WebSocket, pattern: str):
-    """Alert when specific pattern appears in stream."""
-    await websocket.accept()
-    
-    async for text_chunk in monitor_stream():
-        if detect_pattern(text_chunk, pattern):
-            await websocket.send_json({
-                "alert": "Pattern detected",
-                "pattern": pattern,
-                "context": text_chunk,
-                "timestamp": datetime.now().isoformat(),
-                "confidence": calculate_confidence(text_chunk, pattern)
-            })
-```
+router/: Percentile calibration, dilution metrics, retention policy.
 
-#### 8. **API Key Management**
-For enterprise customers:
+api/: FastAPI routes (/enrich, /seen, /propose, /lead, /onsets, /dilution).
 
-```python
-@app.post("/api/keys/generate")
-async def generate_api_key(tier: str = "trial"):
-    """Generate API keys for programmatic access."""
-    key = secrets.token_urlsafe(32)
-    limits = {
-        "trial": {"requests_per_minute": 10, "max_text_size": 10000},
-        "pro": {"requests_per_minute": 100, "max_text_size": 100000},
-        "enterprise": {"requests_per_minute": 1000, "max_text_size": 10000000}
-    }
-    
-    await store_api_key(key, tier, limits[tier])
-    
-    return {
-        "api_key": key,
-        "tier": tier,
-        "limits": limits[tier],
-        "docs_url": "https://mxbikes.xyz/api/docs"
-    }
-```
+cli/: Command‑line entrypoints (stm ingest, stm report, stm stream, stm onsets, etc.).
 
-### 📋 Your Action Plan (Next 2 Weeks)
+Add setup/pyproject to make the package pip‑installable.
 
-**Week 1: Polish & Package**
-- [ ] Day 1-2: Add pattern highlighting and PDF export
-- [ ] Day 3-4: Implement text comparison feature
-- [ ] Day 5: Add industry templates and examples
+Write a Dockerfile that:
 
-**Week 2: Sales Ready**
-- [ ] Day 6-7: Build self-service pilot system
-- [ ] Day 8-9: Add usage analytics
-- [ ] Day 10: Create API key management
-- [ ] Day 11-12: Final testing and demo prep
+Installs Python, compile dependencies (pybind11, CDFlib), and the native C++ kernel.
 
+Copies the package and configuration files.
+
+Sets up CMD ["stm", "stream", "--config", "/config/default.yaml"].
+
+B. Adapter & Preprocessing Enhancements
+
+Finalize bit‑encoding for generic text and telemetry:
+
+Map delta, acceleration, range expansion, and z‑position to bit flags per channel.
+
+Implement an adapter to process CSV/HDF5/CDF into these bit tokens.
+
+Write a generic text adapter that tokenizes by whitespace and phrase; produce structural tokens (e.g., n‑grams) and semantic tokens (original words).
+
+C. Manifold & Router Improvements
+
+Implement Dilution metrics:
+
+Path Dilution from entropy of next‑signature distribution.
+
+Signal Dilution from diversity of structural tokens in the foreground.
+
+Semantic Dilution from mutual information between structural signatures and semantic tokens.
+
+Add significance scoring:
+
+Weighted combination of recency and popularity (connector centrality) for each token.
+
+Implement retention policy:
+
+Drop oldest structural tokens if they no longer improve PD/SD; keep novel ones longer.
+
+D. API & CLI Endpoints
+
+/enrich (POST):
+
+Accept { context_string, config: { recency_weight, top_k_foreground, top_k_tangents } }.
+
+Return structural summary (context certainty = 1‑PD, signal clarity = 1‑SD, semantic clarity = 1‑SeD), top foreground tokens, tangent themes, and warnings for high SeD.
+
+/seen (POST): existing; return foreground & deferred windows given a trigger token.
+
+/propose (POST): existing; propose new strings based on seeds and filters.
+
+/lead (POST): return lead‑time bins given state and onset time.
+
+/dilution (POST): return PD/SD/SeD for current window and list top candidate signatures/tokens.
+
+CLI enhancements:
+
+stm report generates the full case‑study report, including dilution plots.
+
+stm onsets autolabel supports mission rules and writes onsets; optionally runs stm lead in one step.
+
+E. Multi‑Mission Validation & Case‑Study
+
+Run the pipeline on MMS (the baseline, already done).
+
+Run on THEMIS (with new adapter) and produce a cross‑mission scorecard.
+
+Run on a generic text corpus (e.g., doc files or open‑source code) to illustrate portability.
+
+Write a technical note comparing results across missions: number of twins, lead‑time improvement, PD/SD trends.
+
+F. Demo & Presentation Assets
+
+Create “STM_OnePager.md” summarizing key metrics, results and investor talking points.
+
+Update “Demo_Runbook.md”: live streaming and batch demonstration steps, referencing the new endpoints.
+
+Finish “SUITE.md”: position STM alongside other SEP applications (text manifold, market signals).
+
+Ensure all evidence (plots, tables, JSON) is packaged in docs/note/ and ready for export.
+
+4. Licensing & Go‑to‑Market
+
+Prepare the pilot SOW using docs/Pilot_SOW_Template.md: describe scope, success metrics (twins count, PD/SD improvement, lead‑time uplift), deliverables, timeline, and pricing.
+
+Define licensing tiers: pilot (evaluation only), enterprise license (perpetual on‑prem deployment), OEM (royalty per unit).
+
+Draft an investor summary that highlights the unique selling points (structural twins, percentile guardrail, early‑warning lead‑time, explainable tokens) and the potential market segments.
+
+Chris’s outreach: Use the templates in docs/Outreach_Templates.md to contact relevant mission ops leads, predictive maintenance managers, and AI tool vendors. Provide the one‑pager and offer a pilot SOW.
+
+5. Final Deliverables for the Coding Bot
+
+To transform the scrallex/score repo into the described case study and product, supply your coding bot with:
+
+This outline as the high‑level blueprint.
+
+A list of todos (bullet‑point tasks), each clearly described with expected input/outputs.
+
+A minimal API specification for /enrich, /dilution, /onsets/autolabel, and enhanced /stream usage.
+
+Pointers to key files in the repository that need to be modified (e.g. src/sep_text_manifold/, docs/TOOL_QUICKSTART.md) and new files to be added (stm_adapters/nasa_themis.py, stm_stream/router.py, etc.).
+
+Testing requirements: ensure the kernel litmus test remains, include unit tests for PD/SD/SeD, and integration tests for /enrich and streaming health.
+
+By following the steps above, you will create a stand‑alone, data‑agnostic structural context co‑processor that demonstrates clear value using the existing scoring engine, while being packaged for licensing and pilot engagements.
