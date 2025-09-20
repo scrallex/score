@@ -323,17 +323,25 @@ function stopLiveStream(button, notify = true) {
 }
 
 async function handleQuickAnalyze(file) {
+  const summaryCard = document.getElementById('quick-summary');
   const summaryEl = document.getElementById('quick-summary-text');
+  const metricsCard = document.getElementById('quick-metrics');
   const numericEl = document.getElementById('quick-numeric');
+  const recommendCard = document.getElementById('quick-recommend');
   const recommendationsEl = document.getElementById('quick-recommendations');
+  const signatureCard = document.getElementById('quick-signature-card');
   const signaturesEl = document.getElementById('quick-signatures');
   const manifoldMetaEl = document.getElementById('quick-manifold-meta');
-  if (!file || !summaryEl || !numericEl || !recommendationsEl || !signaturesEl || !manifoldMetaEl) {
+  if (!file || !summaryCard || !summaryEl || !metricsCard || !numericEl || !recommendCard || !recommendationsEl || !signatureCard || !signaturesEl || !manifoldMetaEl) {
     return;
   }
+  summaryCard.hidden = false;
   summaryEl.textContent = 'Analyzing…';
+  metricsCard.hidden = true;
   numericEl.innerHTML = '';
+  recommendCard.hidden = true;
   recommendationsEl.innerHTML = '';
+  signatureCard.hidden = true;
   signaturesEl.innerHTML = '';
   manifoldMetaEl.textContent = '';
 
@@ -354,12 +362,16 @@ async function handleQuickAnalyze(file) {
     }
     const result = await response.json();
     summaryEl.textContent = `${result.rows ?? 0} rows · ${result.columns?.length ?? 0} columns`;
+    metricsCard.hidden = false;
 
     (result.numeric_columns || []).forEach((name) => {
       const li = document.createElement('li');
       li.innerHTML = `<span>${name}</span>`;
       numericEl.appendChild(li);
     });
+    if (numericEl.childElementCount === 0) {
+      numericEl.innerHTML = '<li><span>No numeric columns detected</span></li>';
+    }
 
     (result.metrics || []).forEach((metric) => {
       const li = document.createElement('li');
@@ -375,6 +387,7 @@ async function handleQuickAnalyze(file) {
       li.innerHTML = `<span>${key}</span><span class="value">${value}</span>`;
       recommendationsEl.appendChild(li);
     });
+    recommendCard.hidden = recommendationsEl.childElementCount === 0;
 
     const manifold = result.manifold || {};
     (manifold.top_signatures || []).forEach((entry) => {
@@ -386,13 +399,15 @@ async function handleQuickAnalyze(file) {
       signaturesEl.appendChild(li);
     });
     manifoldMetaEl.textContent = `Windows: ${fmtInteger(manifold.total_windows || 0)} · window=${manifold.window_bytes} stride=${manifold.stride}`;
+    signatureCard.hidden = signaturesEl.childElementCount === 0;
 
     showToast('Quick analysis complete');
   } catch (error) {
     console.error('Quick analyze failed', error);
     summaryEl.textContent = 'Analysis failed';
-    manifoldMetaEl.textContent = 'Analysis failed';
-    signaturesEl.innerHTML = '';
+    metricsCard.hidden = true;
+    recommendCard.hidden = true;
+    signatureCard.hidden = true;
     showToast(error.message || 'Failed to analyze file', 'error');
   }
 }
@@ -543,6 +558,16 @@ document.addEventListener('DOMContentLoaded', () => {
   if (analyzeTextBtn) {
     analyzeTextBtn.addEventListener('click', () => {
       void analyzeText();
+    });
+  }
+
+  const sampleBtn = document.getElementById('text-sample-btn');
+  if (sampleBtn && textInput) {
+    sampleBtn.addEventListener('click', () => {
+      const sample = `Dear customer, thank you for your order.\nYour order number is 12345.\nDear customer, your shipment is ready.\nYour tracking number is 67890.`;
+      textInput.value = sample;
+      const event = new Event('input');
+      textInput.dispatchEvent(event);
     });
   }
 });

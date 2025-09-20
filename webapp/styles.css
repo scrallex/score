@@ -274,6 +274,15 @@ tbody tr:last-child td {
   color: var(--text-secondary);
 }
 
+.button-row {
+  display: flex;
+  gap: 12px;
+}
+
+.text-result {
+  transition: opacity 0.2s ease;
+}
+
 .pattern-list li,
 .sequence-list li {
   display: flex;

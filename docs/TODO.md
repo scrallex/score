@@ -183,52 +183,8 @@ def _interpret_text_patterns(metrics, patterns, repeating):
 
 ### Step 2: Add Text Input UI (Frontend)
 
-Add this section to `webapp/index.html` after the CSV upload section:
+- [x] Reworked `webapp/index.html` so the text console is the primary hero section (textarea, sample loader, analyze button, results cards).
 
-```html
-<section class="demo" id="text-analyze">
-  <div class="demo__heading">
-    <h2>Paste Text Analysis</h2>
-    <p>Paste any text to discover its structural patterns and repetitive sequences.</p>
-  </div>
-  <div class="demo__body">
-    <div class="card card--wide">
-      <h3>Paste Your Text</h3>
-      <textarea 
-        id="text-input" 
-        class="text-input"
-        placeholder="Paste your text here... (emails, logs, documents, code, etc.)"
-        rows="8"
-      ></textarea>
-      <div class="input-actions">
-        <span id="text-char-count">0 characters</span>
-        <button id="text-analyze-btn" class="btn" type="button">Analyze Text</button>
-      </div>
-    </div>
-    
-    <div class="card" id="text-summary" style="display: none;">
-      <h3>Analysis Summary</h3>
-      <dl class="kv" id="text-metrics"></dl>
-    </div>
-    
-    <div class="card" id="text-patterns" style="display: none;">
-      <h3>Structural Patterns</h3>
-      <ul class="pattern-list" id="text-pattern-list"></ul>
-    </div>
-    
-    <div class="card" id="text-repeating" style="display: none;">
-      <h3>Repeating Sequences</h3>
-      <ul class="sequence-list" id="text-sequence-list"></ul>
-    </div>
-    
-    <div class="card" id="text-interpretation" style="display: none;">
-      <h3>Interpretation</h3>
-      <ul class="interpretation-list" id="text-interpretation-list"></ul>
-    </div>
-  </div>
-</section>
-```
-- [x] Added text analysis section to the main demo page with paste area, live character count, and result panels.
 
 ### Step 3: Add JavaScript Handler
 
@@ -340,54 +296,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 ### Step 4: Add Styles
 
-Add to `webapp/styles.css`:
+### Step 4: Add Styles
 
-```css
-.text-input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--border-color, #ddd);
-  border-radius: 4px;
-  font-family: monospace;
-  font-size: 14px;
-  resize: vertical;
-  min-height: 150px;
-}
-
-.input-actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 12px;
-}
-
-.pattern-list li,
-.sequence-list li {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border-color, #eee);
-}
-
-.pattern-sig,
-.seq-token {
-  font-family: monospace;
-  font-weight: bold;
-  color: var(--primary-color, #333);
-}
-
-.pattern-stats,
-.seq-stats {
-  color: var(--secondary-color, #666);
-  font-size: 0.9em;
-}
-
-.interpretation-list li {
-  padding: 8px 0;
-  line-height: 1.5;
-}
-```
-- [x] Styling for text input, pattern lists, and interpretation output added to `styles.css`.
+- [x] Styling for the text console (textarea, button row, results cards) added to `styles.css`.
 
 ### Step 5: Quick Testing
 

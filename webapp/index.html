@@ -30,225 +30,98 @@
     </header>
 
     <main class="content" id="content">
-      <section class="demo" id="pattern-prophet" data-demo="pattern_prophet">
+      <section class="demo" id="text-console">
         <div class="demo__heading">
-          <h2>Pattern Prophet</h2>
-          <p>Quantifies repeating signatures before a critical onset.</p>
-        </div>
-        <div class="demo__body">
-          <div class="card" data-role="summary">
-            <h3>Lead Signature</h3>
-            <dl class="kv">
-              <div>
-                <dt>Signature</dt>
-                <dd data-field="label">—</dd>
-              </div>
-              <div>
-                <dt>Event Count</dt>
-                <dd data-field="event_count">—</dd>
-              </div>
-              <div>
-                <dt>History Count</dt>
-                <dd data-field="history_count">—</dd>
-              </div>
-              <div>
-                <dt>Lift</dt>
-                <dd data-field="lift">—</dd>
-              </div>
-            </dl>
-          </div>
-          <div class="card" data-role="metrics">
-            <h3>Average Metrics</h3>
-            <div class="metrics">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Metric</th>
-                    <th>Event Window</th>
-                    <th>Historical</th>
-                  </tr>
-                </thead>
-                <tbody data-field="metrics"></tbody>
-              </table>
-            </div>
-          </div>
-          <div class="card" data-role="samples">
-            <h3>Sample Windows</h3>
-            <table>
-              <thead>
-                <tr>
-                  <th>Index</th>
-                  <th>Coherence</th>
-                  <th>Stability</th>
-                  <th>Entropy</th>
-                  <th>Hazard</th>
-                </tr>
-              </thead>
-              <tbody data-field="samples"></tbody>
-            </table>
-          </div>
-          <aside class="card" data-role="notes">
-            <h3>How to read this</h3>
-            <p>
-              We scan the final 8% of the MMS storm corpus looking for structural echoes that
-              accelerate before the 00:40 UTC onset. Lift compares event cadence against the
-              prior hour; values &gt; 1 mean the signature densifies as we approach the event.
-            </p>
-          </aside>
-        </div>
-        <footer class="demo__footer" data-field="chart"></footer>
-      </section>
-
-      <section class="demo" id="twin-finder" data-demo="twin_finder">
-        <div class="demo__heading">
-          <h2>Twin Finder</h2>
-          <p>Locates structurally identical windows across missions and days.</p>
+          <h2>Interactive Text Console</h2>
+          <p>Paste any text (emails, logs, documents, code) and the Structural Intelligence Engine will expose structural patterns, repetition dynamics, and coaching insights in seconds.</p>
         </div>
         <div class="demo__body">
           <div class="card card--wide">
-            <table class="twins">
-              <thead>
-                <tr>
-                  <th>String</th>
-                  <th>Aligned Windows</th>
-                  <th>Mean Distance</th>
-                  <th>Coherence</th>
-                  <th>Stability</th>
-                </tr>
-              </thead>
-              <tbody data-field="rows"></tbody>
-            </table>
+            <h3>Your Text</h3>
+            <textarea
+              id="text-input"
+              class="text-input"
+              placeholder="Paste or type text here…"
+              rows="10"
+            ></textarea>
+            <div class="input-actions">
+              <span id="text-char-count">0 characters</span>
+              <div class="button-row">
+                <button id="text-sample-btn" class="btn btn--ghost" type="button">Load Sample</button>
+                <button id="text-analyze-btn" class="btn" type="button">Analyze Text</button>
+              </div>
+            </div>
+            <p class="stat__note">Nothing is stored server-side—analysis runs live via the quantum manifold.</p>
           </div>
-          <aside class="card" data-role="notes">
-            <h3>What this shows</h3>
-            <p>
-              Each row is a structural string whose manifold neighbours match 50+ windows from
-              later MMS storms. Distances are ANN scores in 1e-6 scale; closer is better.
-            </p>
-            <p>
-              Use this to highlight portability: the same rhythm appears across storms with
-              consistent coherence profiles.
-            </p>
-          </aside>
+
+          <div class="card text-result" id="text-summary" hidden>
+            <h3>Summary</h3>
+            <dl class="kv" id="text-metrics"></dl>
+          </div>
+
+          <div class="card text-result" id="text-patterns" hidden>
+            <h3>Structural Signatures</h3>
+            <ul class="pattern-list" id="text-pattern-list"></ul>
+          </div>
+
+          <div class="card text-result" id="text-repeating" hidden>
+            <h3>Repeating Sequences</h3>
+            <ul class="sequence-list" id="text-sequence-list"></ul>
+          </div>
+
+          <div class="card text-result" id="text-interpretation" hidden>
+            <h3>Interpretation</h3>
+            <ul class="interpretation-list" id="text-interpretation-list"></ul>
+          </div>
         </div>
-        <footer class="demo__footer" data-field="chart"></footer>
       </section>
 
-      <section class="demo" id="context-refinery" data-demo="context_refinery">
-        <div class="demo__heading">
-          <h2>Context Refinery</h2>
-          <p>Converts noisy telemetry into structural vocabularies.</p>
-        </div>
-        <div class="demo__body">
-          <div class="card">
-            <h3>Structural Coverage</h3>
-            <p class="stat" data-field="structural_share">—</p>
-            <p class="stat__note">Share of foreground activity carried by structural tokens.</p>
-          </div>
-          <div class="card">
-            <h3>Top Structural Tokens</h3>
-            <ul class="token-list" data-field="top_structural"></ul>
-          </div>
-          <div class="card">
-            <h3>Bridge Proposals</h3>
-            <ul class="token-list" data-field="top_proposals"></ul>
-          </div>
-          <aside class="card" data-role="notes">
-            <h3>Pitch it like this</h3>
-            <p>
-              Raw MMS telemetry carries millions of numeric readings. The refinery collapses
-              them into 16 stable structural tokens, which then drive the Pattern Prophet and
-              Twin Finder demos.
-            </p>
-          </aside>
-        </div>
-      </section>
-      <section class="demo" id="live-demo">
-        <div class="demo__heading">
-          <h2>Live Demo Stream</h2>
-          <p>Replay the MMS manifold as a live signal feed to showcase real-time pattern scoring.</p>
-        </div>
-        <div class="demo__body">
-          <div class="card">
-            <h3>Stream Controls</h3>
-            <button id="live-toggle" class="btn btn--ghost" type="button">Start Live Stream</button>
-            <p class="stat__note">Uses event-stream updates from <code>/api/demo/live</code>.</p>
-          </div>
-          <div class="card card--wide" id="live-feed">
-            <h3>Recent Frames</h3>
-            <ul class="live-feed" id="live-feed-items"></ul>
-          </div>
-        </div>
-      </section>
       <section class="demo" id="quick-analyze">
         <div class="demo__heading">
-          <h2>Analyze Your Data (MVP)</h2>
-          <p>Upload a CSV to receive instant structural readiness hints. Ideal for customer walkthroughs.</p>
+          <h2>Batch CSV Analysis (Optional)</h2>
+          <p>Upload a CSV/TSV to run the same structural engine on numerical streams.</p>
         </div>
         <div class="demo__body">
           <div class="card">
-            <h3>Upload Sample</h3>
-            <input type="file" id="quick-upload" accept=".csv,.txt,.tsv" />
+            <h3>Upload File</h3>
+            <input type="file" id="quick-upload" accept=".csv,.tsv,.txt" />
             <button id="quick-upload-btn" class="btn" type="button">Analyze File</button>
-            <p class="stat__note">No data is persisted; server computes statistics directly from the uploaded file.</p>
+            <p class="stat__note">Results stream directly from the manifold builder; nothing is persisted.</p>
           </div>
-          <div class="card" id="quick-summary">
+          <div class="card" id="quick-summary" hidden>
             <h3>Summary</h3>
             <p id="quick-summary-text">Awaiting upload…</p>
           </div>
-          <div class="card">
+          <div class="card" id="quick-metrics" hidden>
             <h3>Numeric Columns</h3>
             <ul class="token-list" id="quick-numeric"></ul>
           </div>
-          <div class="card">
+          <div class="card" id="quick-recommend" hidden>
             <h3>Recommendations</h3>
             <ul class="token-list" id="quick-recommendations"></ul>
           </div>
-          <div class="card">
+          <div class="card" id="quick-signature-card" hidden>
             <h3>Top Signatures</h3>
             <ul class="token-list" id="quick-signatures"></ul>
             <p class="stat__note" id="quick-manifold-meta">Awaiting upload…</p>
           </div>
         </div>
       </section>
-      <section class="demo" id="text-analyze">
+
+      <section class="demo" id="live-demo">
         <div class="demo__heading">
-          <h2>Paste Text Analysis</h2>
-          <p>Paste any text to discover its structural patterns and repetitive sequences.</p>
+          <h2>MMS Live Replay</h2>
+          <p>Replay the MMS manifold feed to showcase real-time structural scoring.</p>
         </div>
         <div class="demo__body">
-          <div class="card card--wide">
-            <h3>Paste Your Text</h3>
-            <textarea
-              id="text-input"
-              class="text-input"
-              placeholder="Paste your text here... (emails, logs, documents, code, etc.)"
-              rows="8"
-            ></textarea>
-            <div class="input-actions">
-              <span id="text-char-count">0 characters</span>
-              <button id="text-analyze-btn" class="btn" type="button">Analyze Text</button>
-            </div>
+          <div class="card">
+            <h3>Stream Controls</h3>
+            <button id="live-toggle" class="btn btn--ghost" type="button">Start Live Stream</button>
+            <p class="stat__note">Streams `/ws/stream` via WebSocket (SSE fallback enabled).</p>
           </div>
-
-          <div class="card" id="text-summary" style="display: none;">
-            <h3>Analysis Summary</h3>
-            <dl class="kv" id="text-metrics"></dl>
-          </div>
-
-          <div class="card" id="text-patterns" style="display: none;">
-            <h3>Structural Patterns</h3>
-            <ul class="pattern-list" id="text-pattern-list"></ul>
-          </div>
-
-          <div class="card" id="text-repeating" style="display: none;">
-            <h3>Repeating Sequences</h3>
-            <ul class="sequence-list" id="text-sequence-list"></ul>
-          </div>
-
-          <div class="card" id="text-interpretation" style="display: none;">
-            <h3>Interpretation</h3>
-            <ul class="interpretation-list" id="text-interpretation-list"></ul>
+          <div class="card card--wide" id="live-feed">
+            <h3>Recent Frames</h3>
+            <ul class="live-feed" id="live-feed-items"></ul>
           </div>
         </div>
       </section>
