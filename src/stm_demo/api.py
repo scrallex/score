@@ -24,9 +24,11 @@ from typing import AsyncIterator
 from fastapi import FastAPI, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect, Request
 from starlette.responses import StreamingResponse
 
+from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, Spacer
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, Spacer, TableStyle
+from xml.sax.saxutils import escape
 
 from sep_text_manifold.manifold import build_manifold
 from sep_text_manifold.strings import extract_strings
@@ -34,6 +36,49 @@ from sep_text_manifold.strings import extract_strings
 from demo.standalone import DEFAULT_OUTPUT, build_payload
 
 app = FastAPI(title="STM Demo API", version="0.1.0")
+
+_styles = getSampleStyleSheet()
+TITLE_STYLE = ParagraphStyle(
+    "STMTitle",
+    parent=_styles["Title"],
+    fontSize=18,
+    leading=22,
+    alignment=1,
+    spaceAfter=12,
+)
+DATE_STYLE = ParagraphStyle(
+    "STMDate",
+    parent=_styles["Normal"],
+    fontSize=9,
+    leading=12,
+    textColor=colors.HexColor("#7d8193"),
+    spaceAfter=12,
+)
+HEADING_STYLE = ParagraphStyle(
+    "STMHeading",
+    parent=_styles["Heading2"],
+    fontSize=12,
+    leading=16,
+    spaceBefore=14,
+    spaceAfter=6,
+)
+BODY_STYLE = ParagraphStyle(
+    "STMBody",
+    parent=_styles["BodyText"],
+    fontSize=10,
+    leading=14,
+    spaceAfter=6,
+)
+QUOTE_STYLE = ParagraphStyle(
+    "STMQuote",
+    parent=_styles["BodyText"],
+    fontSize=9,
+    leading=13,
+    textColor=colors.HexColor("#a7aac1"),
+    leftIndent=12,
+    spaceAfter=6,
+    fontName="Helvetica-Oblique",
+)
 
 _output_path = Path(os.environ.get("STM_DEMO_PAYLOAD", str(DEFAULT_OUTPUT))).resolve()
 _payload_lock = threading.Lock()
@@ -606,6 +651,150 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
         },
         "interpretation": interpretation,
     }
+
+
+@app.post("/api/export/report")
+async def export_analysis_report(request: Request) -> StreamingResponse:
+    """Generate a PDF report for previously computed analysis results."""
+
+    try:
+        payload = await request.json()
+    except Exception as exc:  # pragma: no cover - guard malformed JSON
+        raise HTTPException(status_code=400, detail=f"Invalid JSON payload: {exc}") from exc
+
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=400, detail="Request payload must be an object")
+
+    results = payload.get("results")
+    if not isinstance(results, dict):
+        raise HTTPException(status_code=400, detail="Missing analysis results to export")
+
+    text_content = str(payload.get("text") or "")
+    preview = text_content[:800]
+
+    metrics = results.get("metrics") or {}
+    patterns = results.get("structural_patterns") or []
+    sequences = results.get("repeating_sequences") or []
+    insights = results.get("interpretation") or []
+
+    def _fmt_number(value: Any) -> str:
+        try:
+            return f"{int(value):,}"
+        except (TypeError, ValueError):
+            return "—"
+
+    def _fmt_percent(value: Any) -> str:
+        try:
+            return f"{float(value) * 100:.1f}%"
+        except (TypeError, ValueError):
+            return "—"
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        leftMargin=54,
+        rightMargin=54,
+        topMargin=54,
+        bottomMargin=54,
+        title="Structural Intelligence Analysis Report",
+    )
+
+    story: List[Any] = []
+    story.append(Paragraph("Structural Intelligence Analysis Report", TITLE_STYLE))
+    story.append(
+        Paragraph(
+            f"Generated: {datetime.utcnow().isoformat(timespec='seconds')}Z",
+            DATE_STYLE,
+        )
+    )
+
+    summary_data = [
+        ["Metric", "Value"],
+        ["Total Tokens", _fmt_number(metrics.get("total_tokens"))],
+        ["Unique Tokens", _fmt_number(metrics.get("unique_tokens"))],
+        ["Structural Coverage", _fmt_percent(metrics.get("structural_coverage"))],
+        ["Repetition Ratio", _fmt_percent(metrics.get("repetition_ratio"))],
+        ["Structural Signatures", _fmt_number(metrics.get("structural_signatures"))],
+    ]
+    summary_table = Table(summary_data, hAlign="LEFT", colWidths=[170, 200])
+    summary_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1e2233")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#0d101c"), colors.HexColor("#13172b")]),
+                ("TEXTCOLOR", (0, 1), (-1, -1), colors.HexColor("#e6e9ff")),
+                ("LINEBELOW", (0, 0), (-1, -1), 0.25, colors.HexColor("#2a3050")),
+                ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+            ]
+        )
+    )
+    story.append(summary_table)
+    story.append(Spacer(1, 12))
+
+    if patterns:
+        story.append(Paragraph("Structural Signatures", HEADING_STYLE))
+        for pattern in patterns[:5]:
+            signature = escape(str(pattern.get("signature", "")))
+            count = _fmt_number(pattern.get("count"))
+            try:
+                coherence = f"{float(pattern.get('avg_coherence', 0.0)):.3f}"
+            except (TypeError, ValueError):
+                coherence = "—"
+            try:
+                stability = f"{float(pattern.get('avg_stability', 0.0)):.3f}"
+            except (TypeError, ValueError):
+                stability = "—"
+            line = f"&bull; {signature} — {count} hits · coh {coherence} · stab {stability}"
+            story.append(Paragraph(line, BODY_STYLE))
+            snippet = pattern.get("sample_snippet")
+            if snippet:
+                story.append(Paragraph(f"“{escape(str(snippet))}”", QUOTE_STYLE))
+        story.append(Spacer(1, 8))
+
+    if sequences:
+        story.append(Paragraph("Top Repeating Phrases", HEADING_STYLE))
+        for sequence in sequences[:5]:
+            phrase = escape(str(sequence.get("phrase", "")))
+            frequency = _fmt_number(sequence.get("frequency"))
+            periodicity = sequence.get("periodicity")
+            details = f"{frequency} hits"
+            try:
+                if periodicity:
+                    details += f" · period {float(periodicity):.1f}"
+            except (TypeError, ValueError):
+                pass
+            story.append(Paragraph(f"&bull; {phrase} — {details}", BODY_STYLE))
+        story.append(Spacer(1, 8))
+
+    if insights:
+        story.append(Paragraph("Insights", HEADING_STYLE))
+        for insight in insights[:6]:
+            story.append(Paragraph(f"&bull; {escape(str(insight))}", BODY_STYLE))
+        story.append(Spacer(1, 8))
+
+    if preview:
+        story.append(Paragraph("Source Preview", HEADING_STYLE))
+        preview_block = escape(preview).replace("\n", "<br/>")
+        if len(text_content) > len(preview):
+            preview_block += "<br/><i>…truncated for brevity…</i>"
+        story.append(Paragraph(preview_block, BODY_STYLE))
+
+    if not story:
+        raise HTTPException(status_code=400, detail="No content available for report generation")
+
+    doc.build(story)
+    buffer.seek(0)
+
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=structural-analysis-report.pdf"},
+    )
 
 
 def _interpret_text_patterns(

@@ -6,6 +6,8 @@ const QUICK_ANALYZE_ENDPOINT = `${API_BASE}/analyze/quick`;
 const toastEl = document.getElementById('toast');
 let liveSocket = null;
 let liveEventSource = null;
+let latestTextAnalysis = null;
+let latestAnalyzedText = '';
 
 function showToast(message, kind = 'info') {
   if (!toastEl) return;
@@ -51,6 +53,136 @@ function fmtInteger(value) {
     return '—';
   }
   return Number(value).toLocaleString();
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>]/g, (char) => {
+    switch (char) {
+      case '&':
+        return '&amp;';
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      default:
+        return char;
+    }
+  });
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value).replace(/"/g, '&quot;');
+}
+
+function buildTextHighlights(text, patterns, sequences) {
+  if (!text) {
+    return [];
+  }
+
+  const patternPalette = ['#ffeb3b', '#8bc34a', '#03a9f4', '#ff9800', '#e91e63'];
+  const phrasePalette = ['#b39ddb', '#4db6ac', '#f06292', '#64b5f6'];
+  const textLength = text.length;
+  const segments = [];
+
+  patterns.forEach((pattern, idx) => {
+    const spans = Array.isArray(pattern?.spans) ? pattern.spans : [];
+    const color = patternPalette[idx % patternPalette.length];
+    spans.forEach((span) => {
+      const start = Math.max(0, Math.min(textLength, Number(span?.start ?? 0)));
+      const end = Math.max(start, Math.min(textLength, Number(span?.end ?? start)));
+      if (end > start) {
+        segments.push({
+          start,
+          end,
+          color,
+          tooltip: `Signature ${pattern.signature}`,
+          type: 'pattern',
+        });
+      }
+    });
+  });
+
+  sequences.forEach((sequence, idx) => {
+    const positions = Array.isArray(sequence?.positions) ? sequence.positions : [];
+    const phrase = String(sequence?.phrase ?? '');
+    if (!phrase) {
+      return;
+    }
+    const color = phrasePalette[idx % phrasePalette.length];
+    positions.forEach((pos) => {
+      const start = Math.max(0, Math.min(textLength, Number(pos)));
+      let end = start + phrase.length;
+      if (end > textLength) {
+        end = textLength;
+      }
+      if (end > start) {
+        segments.push({
+          start,
+          end,
+          color,
+          tooltip: `Phrase "${phrase}"`,
+          type: 'phrase',
+        });
+      }
+    });
+  });
+
+  if (segments.length > 400) {
+    return segments
+      .sort((a, b) => {
+        if (a.start === b.start) {
+          return b.end - b.start - (a.end - a.start);
+        }
+        return a.start - b.start;
+      })
+      .slice(0, 400);
+  }
+
+  return segments;
+}
+
+function renderHighlightedText(text, patterns, sequences) {
+  const highlights = buildTextHighlights(text, patterns, sequences);
+  if (!highlights.length) {
+    return '';
+  }
+
+  const boundaries = new Set([0, text.length]);
+  highlights.forEach((segment) => {
+    boundaries.add(segment.start);
+    boundaries.add(segment.end);
+  });
+
+  const sortedBounds = Array.from(boundaries).sort((a, b) => a - b);
+  const typeWeight = { pattern: 2, phrase: 1 };
+  let html = '';
+  for (let i = 0; i < sortedBounds.length - 1; i += 1) {
+    const start = sortedBounds[i];
+    const end = sortedBounds[i + 1];
+    if (end <= start) {
+      continue;
+    }
+    const slice = text.slice(start, end);
+    const covering = highlights.filter((segment) => segment.start <= start && segment.end >= end);
+    if (!covering.length) {
+      html += escapeHtml(slice);
+      continue;
+    }
+    covering.sort((a, b) => {
+      const weightDiff = (typeWeight[b.type] || 0) - (typeWeight[a.type] || 0);
+      if (weightDiff !== 0) {
+        return weightDiff;
+      }
+      const spanDiff = (b.end - b.start) - (a.end - a.start);
+      if (spanDiff !== 0) {
+        return spanDiff;
+      }
+      return a.start - b.start;
+    });
+    const selected = covering[0];
+    html += `<mark style="background:${selected.color}" title="${escapeAttr(selected.tooltip)}">${escapeHtml(slice)}</mark>`;
+  }
+  return html;
 }
 
 function setMeta(meta) {
@@ -416,12 +548,15 @@ async function analyzeText() {
   const textInput = document.getElementById('text-input');
   const summaryCard = document.getElementById('text-summary');
   const metricsEl = document.getElementById('text-metrics');
+  const highlightCard = document.getElementById('text-highlight');
+  const highlightBody = document.getElementById('text-highlight-body');
   const patternsCard = document.getElementById('text-patterns');
   const patternList = document.getElementById('text-pattern-list');
   const repeatingCard = document.getElementById('text-repeating');
   const repeatingList = document.getElementById('text-sequence-list');
   const interpretationCard = document.getElementById('text-interpretation');
   const interpretationList = document.getElementById('text-interpretation-list');
+  const exportBtn = document.getElementById('text-export-btn');
   if (!textInput || !summaryCard || !metricsEl || !patternsCard || !patternList || !repeatingCard || !repeatingList || !interpretationCard || !interpretationList) {
     return;
   }
@@ -432,13 +567,25 @@ async function analyzeText() {
     return;
   }
 
-  summaryCard.style.display = 'block';
+  latestTextAnalysis = null;
+  latestAnalyzedText = '';
+  if (exportBtn) {
+    exportBtn.disabled = true;
+  }
+
+  summaryCard.hidden = false;
   metricsEl.innerHTML = '<div><dt>Status</dt><dd>Analyzing…</dd></div>';
-  patternsCard.style.display = 'none';
+  if (highlightCard) {
+    highlightCard.hidden = true;
+  }
+  if (highlightBody) {
+    highlightBody.innerHTML = '';
+  }
+  patternsCard.hidden = true;
   patternList.innerHTML = '';
-  repeatingCard.style.display = 'none';
+  repeatingCard.hidden = true;
   repeatingList.innerHTML = '';
-  interpretationCard.style.display = 'none';
+  interpretationCard.hidden = true;
   interpretationList.innerHTML = '';
 
   try {
@@ -461,55 +608,128 @@ async function analyzeText() {
       <div><dt>Repetition Ratio</dt><dd>${fmtPercent(metrics.repetition_ratio ?? 0, 1)}</dd></div>
     `;
 
-   const patterns = result.structural_patterns || [];
-   if (patterns.length) {
-     patternsCard.style.display = 'block';
-     patternList.innerHTML = patterns
-       .map(
-         (pattern) => `
+    const patterns = result.structural_patterns || [];
+    if (patterns.length) {
+      patternsCard.hidden = false;
+      patternList.innerHTML = patterns
+        .map((pattern) => {
+          const signature = escapeHtml(pattern.signature ?? '');
+          const snippet = pattern.sample_snippet ? `<div class="pattern-snippet">${escapeHtml(pattern.sample_snippet)}</div>` : '';
+          return `
             <li>
               <div class="pattern-header">
-                <span class="pattern-sig">${pattern.signature}</span>
+                <span class="pattern-sig">${signature}</span>
                 <span class="pattern-stats">${fmtInteger(pattern.count)} hits · coh ${fmtNumber(pattern.avg_coherence, 4)} · stab ${fmtNumber(pattern.avg_stability, 4)}</span>
               </div>
-              ${pattern.sample_snippet ? `<div class="pattern-snippet">${pattern.sample_snippet}</div>` : ''}
+              ${snippet}
             </li>
-          `,
-        )
+          `;
+        })
         .join('');
     }
 
     const sequences = result.repeating_sequences || [];
     if (sequences.length) {
-      repeatingCard.style.display = 'block';
+      repeatingCard.hidden = false;
       repeatingList.innerHTML = sequences
-        .map(
-          (sequence) => `
+        .map((sequence) => `
             <li>
-              <span class="seq-token">"${sequence.phrase}"</span>
+              <span class="seq-token">"${escapeHtml(sequence.phrase ?? '')}"</span>
               <span class="seq-stats">${fmtInteger(sequence.frequency)} hits${
                 sequence.periodicity ? ` · period ${fmtInteger(sequence.periodicity)}` : ''
               }</span>
             </li>
-          `,
-        )
+          `)
         .join('');
+    }
+
+    if (highlightCard && highlightBody) {
+      const highlightedHtml = renderHighlightedText(text, patterns, sequences);
+      if (highlightedHtml) {
+        highlightCard.hidden = false;
+        highlightBody.innerHTML = highlightedHtml;
+      } else {
+        highlightCard.hidden = true;
+        highlightBody.innerHTML = '';
+      }
     }
 
     const interpretation = result.interpretation || [];
     if (interpretation.length) {
-      interpretationCard.style.display = 'block';
-      interpretationList.innerHTML = interpretation.map((entry) => `<li>${entry}</li>`).join('');
+      interpretationCard.hidden = false;
+      interpretationList.innerHTML = interpretation.map((entry) => `<li>${escapeHtml(entry)}</li>`).join('');
+    }
+
+    latestTextAnalysis = result;
+    latestAnalyzedText = text;
+    if (exportBtn) {
+      exportBtn.disabled = false;
     }
 
     showToast('Text analysis complete!');
   } catch (error) {
     console.error('Text analysis failed', error);
     metricsEl.innerHTML = '<div><dt>Status</dt><dd>Analysis failed</dd></div>';
-    patternsCard.style.display = 'none';
-    repeatingCard.style.display = 'none';
-    interpretationCard.style.display = 'none';
+    patternsCard.hidden = true;
+    repeatingCard.hidden = true;
+    interpretationCard.hidden = true;
+    if (highlightCard) {
+      highlightCard.hidden = true;
+    }
+    if (exportBtn) {
+      exportBtn.disabled = true;
+    }
     showToast(error.message || 'Text analysis failed', 'error');
+  }
+}
+
+async function exportAnalysisReport(button) {
+  if (!latestTextAnalysis || !latestAnalyzedText) {
+    showToast('Run an analysis before exporting a report', 'error');
+    return;
+  }
+
+  const target = button ?? document.getElementById('text-export-btn');
+  const originalLabel = target?.textContent;
+  if (target) {
+    target.disabled = true;
+    target.textContent = 'Generating…';
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/export/report`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        results: latestTextAnalysis,
+        text: latestAnalyzedText,
+      }),
+    });
+    if (!response.ok) {
+      const detail = await response.text();
+      throw new Error(detail || response.statusText);
+    }
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'structural-analysis-report.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast('Report downloaded');
+  } catch (error) {
+    console.error('Report export failed', error);
+    showToast(error.message || 'Failed to export report', 'error');
+  } finally {
+    if (target) {
+      target.disabled = !latestTextAnalysis;
+      if (originalLabel) {
+        target.textContent = originalLabel;
+      }
+    }
   }
 }
 
@@ -552,6 +772,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (textInput && charCount) {
     const updateCount = () => {
       charCount.textContent = `${textInput.value.length} characters`;
+      latestTextAnalysis = null;
+      latestAnalyzedText = '';
+      const exportControl = document.getElementById('text-export-btn');
+      if (exportControl) {
+        exportControl.disabled = true;
+      }
     };
     textInput.addEventListener('input', updateCount);
     updateCount();
@@ -561,6 +787,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (analyzeTextBtn) {
     analyzeTextBtn.addEventListener('click', () => {
       void analyzeText();
+    });
+  }
+
+  const exportBtn = document.getElementById('text-export-btn');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      void exportAnalysisReport(exportBtn);
     });
   }
 
