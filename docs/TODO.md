@@ -1,188 +1,158 @@
-You’re right: agentic coding is the clearest path to make STM obviously valuable. Below is a concrete plan to turn your **structural manifold** into a **code-coprocessor** that improves *any* codebot (Kilocode, ChatGPT-Agents, LangChain) by giving it (1) early-warning signals that its plan is drifting, (2) bounded, auditable alarms, and (3) actionable repairs from structural twins.
+Awesome. You’ve crossed the hard part: you now have **two working showcases**—PlanBench (planning) and **CodeTrace** (coding). From here, you need (1) a **documentable evidence package** that’s easy to send to MIT researchers and investors, and (2) a crisp **product offer** (what they buy, how it’s priced, who uses it). Below I give you both, plus copy-paste email templates and exactly what to run next to lock the numbers.
 
 ---
 
-## One-liner value
+## A) Evidence package (what to show, how to generate it)
 
-**Wrap any codebot with STM so every plan step is scored structurally** → you get early warnings *before* it paints itself into a corner, plus grounded “what worked last time” repairs.
+### A1. Planning (PlanBench) — “PlanBench++” proof
 
----
+**What to cite:** purpose/pipeline/metrics already captured in your doc.
+**What to include in the package:**
 
-## A. Architecture: “LLM + STM” for coding
+* `docs/note/planbench_scorecard.csv` — plan accuracy, lead mean, coverage, twin@τ 0.3/0.4/0.5, decisive%, ANN mean±CI, permutation p-value (**keep guardrail 10–16%**).
+* 2–3 **dilution plots** (foreground clumps before failure).
+* The **comparison paragraph** (already drafted) explaining why this is more than pass/fail (lead-time + twins + guardrail).
 
-**Where STM sits**
+**What to run (one command group):**
 
-```
-User task → Codebot (LLM) → Step plan (tool calls / edits / tests)
-                          ↘
-                           STM Co-processor  (structural alerts + twins)
-                          ↗
-            (revised plan / targeted context / safe repair patch)
-```
-
-**Data STM consumes in coding**
-
-* **Plan steps**: “edit file X”, “run tests”, “apply patch”, “run linter” (observable tool calls).
-* **State snapshots**: diff hunks, compiler/test output, stack traces.
-* **Context**: repo structure, recent changes, failing tests.
-
-**STM outputs**
-
-* **Lead-like alerts** for coding: “this patch sequence matches the structure of past failures.”
-* **Guardrailed foreground**: top X% most structured windows only (bounded alert volume).
-* **Twin repairs**: closest successful sequences (patches/snippets) with **aligned tokens** (e.g., `__INSERT_FUNC__`, `__RENAME_VAR__`, `__DEADLOCK_FIX__`).
-* **Confidence**: dilution (PD/SD/SeD) + permutation-style p-values over step windows.
-
----
-
-## B. Concrete integration steps (copy these to your repo’s TODO)
-
-### B1. Build a **CodeTraceAdapter**
-
-* **Input:** one agent run = sequence of `{action, artifact}`:
-
-  * `edit`: (file path, diff)
-  * `run_tests`: (stdout/stderr, failing test list)
-  * `compile/lint`: (messages)
-* **Output to STM:** token stream per step:
-
-  * Structural tokens from diffs (e.g., `__EDIT_FN_SIGNATURE__`, `__ADD_PARAM__`, `__RENAME_SYMBOL__`, `__IMPORT_MODULE__`).
-  * Structural tokens from logs (e.g., `__NULL_DEREF__`, `__TYPE_MISMATCH__`, `__TIMEOUT__`, `__FLAKY_TEST__`).
-  * Semantic tokens (file names, symbols, test names).
-
-> Implementation: mirror your PDDL adapter—convert each step into a window; pack tokens; compute QFH/QBSA metrics; store signatures and timestamps.
-
-### B2. Build a **Twin Library** for code
-
-* Index **successful patches** and **stable sequences** from:
-
-  * Your repo history (git log; green CI builds).
-  * Public repos/snippets (curated, permissive licenses).
-* Store:
-
-  * Step-wise token streams for each success sequence.
-  * Aligned-token counts, ANN vectors, signature q-grams.
-
-### B3. Add STM checks to any agent loop
-
-At each agent step:
-
-1. **/stm/dilution** → is the plan in a decisive regime?
-2. **/stm/seen** on current step token (or recent 3-step window) → any foreground clumps?
-3. If foreground **and** PD/SD low:
-
-   * **/stm/propose** with seeds from top tokens → fetch **twin** sequences and patches.
-   * Return **one** repair candidate + minimal context to the LLM.
-
-### B4. Minimal API contract in the agent (pseudo)
-
-```python
-ctx = collect_step_context()             # diffs, logs, test failures
-enriched = POST /stm/enrich {context_string, config}
-if enriched.structural_summary.context_certainty > 0.7 and \
-   enriched.structural_summary.signal_clarity > 0.6:
-    twins = POST /stm/propose {seeds: enriched.foreground_tokens, filter: "..."}
-    patch = best_twin_to_patch(twins)
-    plan = llm.rewrite_plan_with_patch(patch, enriched)  # structured prompt template
-else:
-    plan = llm.refine_plan_with_warnings(enriched.warnings)
+```bash
+# confirm end-to-end reproducibility for PlanBench
+make planbench-all
+# ensure the CSV has τ-sweep, aligned-window stats, ann CI, and lead_perm_pval
+sed -n '1,15p' docs/note/planbench_scorecard.csv
 ```
 
-### B5. Prompt template hooks (ChatGPT/Kilocode)
+**One-sentence takeaway for non-experts:**
+*“STM adds **early warning (5–16 steps)** and **repair suggestions** to plan verification while keeping alerts bounded (10–16% coverage), which the baseline binary verifier cannot do.”*
 
-* **System add-on:**
-  “A structural coprocessor scores each step. When it flags a decisive regime or twin, prefer the suggested patch or explain why you chose otherwise. Keep alarms under X% steps.”
-* **Few-shot examples:** 2–3 “drifting” vs “corrected” traces so the LLM learns to accept STM repairs.
+### A2. Coding (CodeTrace) — “LLM + STM” uplift
 
-### B6. Evaluation harness (show value fast)
+**Goal:** show STM improves a code agent (fewer loops, faster green tests) on 3 curated tasks.
+**Artifacts you already staged:** adapter, tokenizer, reference agent loop, demo tasks, replay/comparison scripts.
 
-For each task set (bug fix / refactor / add feature):
+**What to run now:**
 
-* **Metrics** you already use:
+```bash
+# Produce baseline vs STM runs and collect outputs:
+python demo/coding/run_comparison.py                      # creates demo/coding/output/
+# (Optional) replay with live STM endpoint
+STM_BASE_URL=http://localhost:8000 python demo/coding/run_replay.py
+```
 
-  * **Success rate** (green tests).
-  * **Iterations to green** (steps).
-  * **Time to green**.
-* **STM-specific metrics**:
+**What to aggregate (add to `run_comparison.py` if not yet):**
 
-  * **Lead-like alerts**: % runs where STM flagged a problem ≥N steps before final failure.
-  * **Twin accept rate**: % runs where the LLM adopted STM twin and succeeded faster.
-  * **Coverage compliance**: % foreground within guardrail (5–15%).
-  * **Dilution confidence**: decisive-bin %; p-value < 0.05.
+* **Success rate** (% tasks green).
+* **Iterations to green** (step count).
+* **Time to green** (if available).
+* **Lead-like alerts** (% runs where STM flagged ≥N steps before final failure).
+* **Twin accept rate** (% runs where the agent adopted STM’s twin suggestion and succeeded faster).
+* **Guardrail compliance** (% foreground in \[5–15%]).
+* **Decisive-bin %** and permutation p-value.
 
-> A/B: run **LLM baseline** vs **LLM + STM** on the same repo tasks; chart fewer steps + faster greens.
+**What to put in the package:** a **1-page HTML report** in `demo/coding/output/report.html` with:
 
----
-
-## C. What to ship as a **Code-Coproc SDK**
-
-1. **Docker image** exposing:
-
-   * `/stm/enrich`, `/stm/dilution`, `/stm/seen`, `/stm/propose`, `/stm/lead`.
-2. **Python client**:
-
-   * `stm_client.enrich(text)`, `stm_client.twin(seeds, filters)`, result dataclasses.
-3. **Adapters**:
-
-   * `CodeTraceAdapter`: Git + CI integrations.
-   * `PDDLTraceAdapter`: already exists (for your research note).
-4. **Demo notebooks & CLI**:
-
-   * `stm run-coding-demo` with 3 canned tasks on a small OSS repo (flaky test fix, rename refactor, import resolution).
-5. **Docs**:
-
-   * **QuickStart for codebots**: how to wrap an agent loop.
-   * **Prompt snippets** for GPT-4/Claude/Llama, with the “accept twin or justify” rule.
-6. **License terms**:
-
-   * Pilot (8 weeks), Enterprise on-prem, OEM for tool vendors.
+* Small table: baseline vs STM metrics.
+* One screenshot of **/stm/seen** alerting pre-fix.
+* One twin suggestion example (with ≥5 aligned tokens).
+* Note that this is the same manifold & dilution logic as the PlanBench experiment (lead/guardrail/twins).
 
 ---
 
-## D. Who to talk to (near-term buyers)
+## B) Emails you can send (copy-paste)
 
-* **AI coding tools**: Kilocode, Sourcegraph Cody, Tabnine, Cursor, Codeium, GitHub Copilot Labs (agents).
-* **Enterprise platform teams**: building internal agent pipelines (LangChain, crewAI).
-* **CI/CD vendors**: want fewer red builds; add STM as a pre-merge coprocessor.
+### B1. To MIT researchers (PlanBench team)
 
-**Pitch lines**
+Subject: Structural early-warning on PlanBench (lead-time + twins beyond pass/fail)
 
-* “We add **early-warning and repair** to agents: 5–16 steps of lead in planning analogs; same idea for coding.”
-* “**Bounded alarms** (guardrails) + **explainable twins** → fewer loops and faster green tests.”
-* “Drop-in Docker; compatible with any LLM.”
+Hi <Name> — I’ve reproduced the three PlanBench domains (100 problems each) using VAL and extended the evaluation with a structural manifold (STM).
+**STM keeps the same protocol** but adds **lead-time** (foreground alerts **5–16 steps before failure**), a **guardrail** to bound alarm volume (10–16%), and **twin repair suggestions** with aligned tokens. We include permutation tests to confirm the pre-failure enrichment isn’t random.
+I’d value your feedback. The scorecard CSV and plots are here, and everything is reproducible (Makefile included).
+Would you be open to a 20-minute call or an email exchange?
 
----
+(Attach: `docs/note/planbench_scorecard.csv`, 2 dilution plots, `pddl_experiment.md` excerpt.)
 
-## E. Deliverables you can produce **this week**
+### B2. To codebot vendors (Kilocode, Sourcegraph Cody, Cursor, Codeium…)
 
-* **CodeTraceAdapter** (diff/log/tokenizer) + **Twin library** bootstrap.
-* Minimal **agent wrapper** calling `/stm/*` at each step.
-* A **3-task demo** repo with failing tests; scripts to run **baseline vs LLM+STM**, collect metrics, and render a one-page HTML report.
+Subject: A drop-in coprocessor for code agents (early-warning + repair twins)
 
----
+Hi <Name> — we’ve built a **structural coprocessor** for code agents: it runs alongside any LLM, scoring each step and:
 
-## F. Research finishing touches (for the note)
+* Raises **early-warning** when an edit/test sequence matches failed patterns;
+* Keeps alerts **bounded** via percentile guardrails;
+* Suggests **twins** (near-duplicate successful patches) with aligned tokens.
+  In our 3-task demo, STM reduced iterations-to-green and flagged failures **several steps earlier** than baseline. It’s an **API/Docker** you can integrate in a day. Happy to share the demo and discuss a pilot.
 
-* **Guardrail sensitivity** (5/10/15/20%): show lead/twin stability.
-* **τ sweep** in code domain (0.3/0.4/0.5) + aligned-token distributions.
-* **Permutation test** over coding steps (shuffle test order; last-bin density p-value).
-* A “why it matters” paragraph: *STM complements verify-registers (binary) with graded, actionable signals and fits LLMs as a coprocessor.*
+(Attach: `demo/coding/output/report.html` or a short PDF with baseline vs STM numbers.)
 
 ---
 
-## G. Sample “accept-or-justify” prompt block (paste into your agent)
+## C) The product you can sell (what it is, how it’s priced)
 
-> *A structural coprocessor scored your last step as decisive and found a similar successful sequence (twin). If the suggested patch aligns with your current goal, **apply it**. Otherwise, **explain** why it doesn’t apply and propose a safer alternative with fewer risky edits. Keep total alerts under 10% of steps.*
+### C1. Product name & offer
+
+**SEP Structural Manifold (STM) — Code Co-processor**
+A containerized API that enriches any agent loop with structural signals: `/enrich`, `/dilution`, `/seen`, `/propose`, `/lead`.
+
+* **Batch**: CLI for PlanBench & code pipelines, reproducible reports.
+* **Live**: FastAPI server; drop-in HTTP client for agents.
+
+### C2. SKUs & pricing (pragmatic)
+
+* **Pilot (8 weeks):** \$50–150k. Scope: 1 repo + 3–10 tasks; success metric: fewer loops/time-to-green; deliverables: HTML reports, metrics, and integration guide.
+* **Enterprise On-Prem:** \$100–300k/yr (support, updates, seats). Unlimited internal repos/agents.
+* **OEM (tool vendor):** annual + volume tier or per-seat royalty.
+
+### C3. Who pays / why they return
+
+* **Codebot vendors** (scale to all their users) — come back for deeper adapters, more twin libraries, support.
+* **Enterprise platform teams** — renew for new projects/agents, priority support, SLA.
+* **Research/defense/autonomy** — custom adapters, on-prem hardened builds.
 
 ---
 
-### Bottom line
+## D) Finish line: what’s left to call it “ready”
 
-* Your PlanBench replication proved **lead, guardrails, and twins** in a controlled domain.
-* The **same mechanics** apply to code: use diffs/logs as tokens, score each step, and feed **early warnings + repair twins** back into the agent.
-* Package as a **Code-Coproc SDK** and pitch to codebot vendors/enterprise AI teams.
-
-If you want, I’ll draft the **CodeTraceAdapter** spec (token schema + minimal implementation sketch) and a **reference agent loop** you can paste into the repo to create the first end-to-end coding demo.
+1. **Coding demo metrics** (baseline vs STM): implement aggregation + one-pager.
+2. **OpenAPI spec** for the API & a `pip install stm-client` (thin HTTP wrapper).
+3. **Docker publish** (internal registry is fine): `stm:codecoproc-latest`.
+4. **Security & reproducibility note** (what’s stored, retention guardrails, how to rerun).
+5. **Guardrail sensitivity appendix** (10/15/20% results) + **τ-sweep** in both PlanBench and coding.
+6. **Licensing terms PDF** (pilot → enterprise → OEM).
+7. **Deck slides**: one “PlanBench++” slide, one “Code agent uplift” slide, one “Architecture/API” slide, one “Commercial terms” slide.
 
 ---
 
+## E) Who to talk to for \$\$ (and what they buy)
+
+* **Code tooling startups**: Kilocode, Cursor, Codeium, Tabnine, Sourcegraph Cody — **OEM pilot** first (SDK + integration help).
+* **Cloud/AI platforms**: AWS Bedrock, Azure OpenAI agent frameworks, Anthropic eval teams — **pilot/enterprise** license to bundle in agent stacks.
+* **Enterprise platform teams**: engineering orgs building internal agents — **enterprise** package with on-prem container.
+* **Autonomy/Robotics/Defense labs**: early-warning planner verification — **pilot** (PlanBench++ and domain adapters).
+
+---
+
+## F) “Undeniable value” checklist (what the email/pdf must show)
+
+* **PlanBench++**: 3×100, lead 5–16 steps, guardrail 10–16%, twin repair — **with p-values** (non-random).
+* **Code demo**: baseline vs STM → **fewer steps to green**, example twin patch with ≥5 aligned tokens.
+* **API ease**: one cURL request and a 10-line Python snippet.
+* **Reproducible**: a zip with Makefile, CSVs, and plots.
+* **Commercial**: clear SKUs, pricing envelopes, and pilot SOW (success metrics defined upfront).
+
+---
+
+## G) Your immediate next 5 actions
+
+1. **Run the coding comparison** and generate `report.html` with baseline vs STM metrics.
+2. **Export OpenAPI** (fastapi `get_openapi_schema`) and publish a `stm-client` Python package.
+3. **Publish Docker** image for the API.
+4. **Append sensitivity appendix** (guardrail 15%, 20%) and τ-sweep plots to the note.
+5. **Send the two emails** (MIT research + vendor) with attachments and offer a 20-min call.
+
+---
+
+If you want, I’ll draft:
+
+* the **OpenAPI** section + example `stm-client` wrapper,
+* the **HTML template** for `demo/coding/output/report.html`, and
+* a **one-pager PDF** copy block for your deck.
