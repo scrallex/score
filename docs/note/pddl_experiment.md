@@ -47,27 +47,40 @@
   - `output/planbench_public/invalid/metrics/summary.json`
   - `docs/note/planbench_scorecard.csv`
 
+
 ```
-# 1. Generate plan traces directly from VAL
-PYTHONPATH=src scripts/val_to_trace.py domain.pddl problem.pddl plan.txt \
-  --output traces/plan.trace.json
+# 1. Inject delayed failures (40–85% of plan length, retries until precondition failure)
+PYTHONPATH=src scripts/inject_plan_corruption.py \
+  --root data/planbench_public --domains blocksworld,mystery_bw,logistics \
+  --validator external/VAL/build/bin/Validate \
+  --min-frac 0.4 --max-frac 0.85 --max-retries 8
 
-# 2. Inject a delayed-plan error (40–80% window)
-scripts/inject_plan_corruption.py plan.txt --output plan.corrupt.txt --seed 7
+# 2. Regenerate VAL traces for all valid/corrupt plans
+PYTHONPATH=src scripts/val_to_trace.py \
+  --root data/planbench_public --domains blocksworld,mystery_bw,logistics \
+  --validator external/VAL/build/bin/Validate
 
-# 3. Run STM lead/twin analysis across all traces
+# 3. Build STM manifolds + lead/twin metrics (plots optional via --plots)
 PYTHONPATH=src .venv/bin/python scripts/planbench_to_stm.py \
-  --valid traces/plan.trace.json \
-  --invalid traces/plan.corrupt.trace.json \
-  --output output/planbench_public
+  --input-root data/planbench_public \
+  --domains blocksworld,mystery_bw,logistics \
+  --output output/planbench_public --window-bytes 256 --stride 128
 
-# 4. Aggregate per-domain metrics for reporting
-scripts/aggregate_planbench_results.py \
+# 4. Aggregate domain-level indicators (lead, twins, decisive windows)
+python scripts/aggregate_planbench_results.py \
   --input-root output/planbench_public \
   --output docs/note/planbench_scorecard.csv
 ```
 
-> These figures remain preliminary and drawn from handcrafted mini traces to validate the tooling. Scale to the full PlanBench splits (100 problems/domain) for publication-ready comparisons.
+Small-sample scoreboard (current toy run):
+
+| Domain | `n_traces` | `plan_accuracy` | `lead_mean` | `twin_rate@0.4` |
+| ------ | ---------- | --------------- | ----------- | --------------- |
+| Blocksworld | 1 | 1.00 | 0.00 | 1.00 |
+| Mystery BW  | 1 | 1.00 | 0.00 | 1.00 |
+| Logistics   | 1 | 1.00 | 0.00 | 1.00 |
+
+> These figures are still derived from handcrafted mini traces; scale to the full PlanBench splits (100 problems/domain) to obtain meaningful lead > 0 and coverage numbers.
 
 ## Deliverables Checklist
 - [x] Dilution metrics module with CLI inspection and streaming router integration
