@@ -104,9 +104,11 @@ function buildTextHighlights(text, patterns, sequences) {
 
   sequences.forEach((sequence, idx) => {
     const phraseLabel = typeof sequence?.phrase === 'string' ? sequence.phrase : '';
+    const basePhrase = typeof sequence?.base_phrase === 'string' ? sequence.base_phrase : '';
     const color = phrasePalette[idx % phrasePalette.length];
     const bounds = Array.isArray(sequence?.bounds) ? sequence.bounds : [];
     if (bounds.length) {
+      const tooltipText = phraseLabel || basePhrase || 'Repeating phrase';
       bounds.forEach((bound) => {
         const start = Math.max(0, Math.min(textLength, Number(bound?.start ?? 0)));
         const end = Math.max(start, Math.min(textLength, Number(bound?.end ?? start)));
@@ -115,7 +117,7 @@ function buildTextHighlights(text, patterns, sequences) {
             start,
             end,
             color,
-            tooltip: phraseLabel ? `Phrase "${phraseLabel}"` : 'Repeating phrase',
+            tooltip: tooltipText ? `Phrase "${tooltipText}"` : 'Repeating phrase',
             type: 'phrase',
           });
         }
@@ -128,6 +130,7 @@ function buildTextHighlights(text, patterns, sequences) {
     if (!positions.length || fallbackLength === 0) {
       return;
     }
+    const tooltipText = phraseLabel || basePhrase || 'Repeating phrase';
     positions.forEach((pos) => {
       const start = Math.max(0, Math.min(textLength, Number(pos)));
       const end = Math.max(start, Math.min(textLength, start + fallbackLength));
@@ -136,7 +139,7 @@ function buildTextHighlights(text, patterns, sequences) {
           start,
           end,
           color,
-          tooltip: phraseLabel ? `Phrase "${phraseLabel}"` : 'Repeating phrase',
+          tooltip: tooltipText ? `Phrase "${tooltipText}"` : 'Repeating phrase',
           type: 'phrase',
         });
       }
@@ -644,10 +647,19 @@ async function analyzeText() {
                 )
                 .join('')}</ul>`
             : '';
-          const contexts = Array.isArray(pattern.sample_contexts) ? pattern.sample_contexts : [];
-          const contextList = contexts.length
-            ? `<ul class="pattern-contexts">${contexts
-                .map((ctx) => `<li>${escapeHtml(ctx)}</li>`)
+          const contextVariants = Array.isArray(pattern.context_variants)
+            ? pattern.context_variants
+            : [];
+          const contextList = contextVariants.length
+            ? `<ul class="pattern-contexts">${contextVariants
+                .map(
+                  (variant) => `
+                    <li>
+                      <span class="phr-label">${escapeHtml(variant.text ?? '')}</span>
+                      <span class="phr-hits">${fmtInteger(variant.count)} hits</span>
+                    </li>
+                  `,
+                )
                 .join('')}</ul>`
             : '';
           return `
@@ -672,6 +684,10 @@ async function analyzeText() {
         .map((sequence) => {
           const phraseLabel = escapeHtml(sequence.phrase ?? '');
           const periodicityLabel = sequence.periodicity ? ` · period ${fmtInteger(sequence.periodicity)}` : '';
+          const basePhrase = typeof sequence.base_phrase === 'string' ? sequence.base_phrase : '';
+          const baseHtml = basePhrase && basePhrase !== sequence.phrase
+            ? `<div class="seq-base">base phrase: ${escapeHtml(basePhrase)}</div>`
+            : '';
           const related = Array.isArray(sequence.related_signatures)
             ? sequence.related_signatures
             : [];
@@ -680,8 +696,21 @@ async function analyzeText() {
                 .map((item) => `${escapeHtml(item.signature)} (${fmtInteger(item.hits)})`)
                 .join(' · ')}</div>`
             : '';
+          const variants = Array.isArray(sequence.variants) ? sequence.variants : [];
+          const variantHtml = variants.length
+            ? `<ul class="seq-variants">${variants
+                .map(
+                  (variant) => `
+                    <li>
+                      <span class="phr-label">${escapeHtml(variant.text ?? '')}</span>
+                      <span class="phr-hits">${fmtInteger(variant.count)} hits</span>
+                    </li>
+                  `,
+                )
+                .join('')}</ul>`
+            : '';
           const examples = Array.isArray(sequence.examples) ? sequence.examples : [];
-          const exampleHtml = examples.length
+          const exampleHtml = !variants.length && examples.length
             ? `<ul class="seq-examples">${examples
                 .map((example) => {
                   const context = example?.context || example?.snippet || '';
@@ -695,7 +724,9 @@ async function analyzeText() {
                 <span class="seq-token">"${phraseLabel}"</span>
                 <span class="seq-stats">${fmtInteger(sequence.frequency)} hits${periodicityLabel}</span>
               </div>
+              ${baseHtml}
               ${relatedHtml}
+              ${variantHtml}
               ${exampleHtml}
             </li>
           `;

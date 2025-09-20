@@ -346,7 +346,8 @@ tbody tr:last-child td {
 
 .pattern-phrases,
 .pattern-contexts,
-.seq-examples {
+.seq-examples,
+.seq-variants {
   list-style: none;
   margin: 4px 0 0;
   padding: 0;
@@ -357,7 +358,8 @@ tbody tr:last-child td {
 
 .pattern-phrases li,
 .pattern-contexts li,
-.seq-examples li {
+.seq-examples li,
+.seq-variants li {
   margin: 0;
   padding: 6px 0;
   border-bottom: 1px solid rgba(124, 140, 255, 0.08);
@@ -367,7 +369,8 @@ tbody tr:last-child td {
 
 .pattern-phrases li:last-child,
 .pattern-contexts li:last-child,
-.seq-examples li:last-child {
+.seq-examples li:last-child,
+.seq-variants li:last-child {
   border-bottom: none;
 }
 
@@ -393,6 +396,13 @@ tbody tr:last-child td {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: rgba(230, 233, 255, 0.6);
+}
+
+.seq-base {
+  font-size: 0.75rem;
+  color: rgba(230, 233, 255, 0.65);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .interpretation-list li {

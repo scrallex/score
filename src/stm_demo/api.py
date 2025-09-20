@@ -538,6 +538,7 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
                 "positions": [],
                 "snippets": [],
                 "contexts": [],
+                "context_groups": {},
                 "spans": [],
                 "bounds": [],
             },
@@ -550,16 +551,48 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
             entry["snippets"].append(snippet)
         if len(entry["spans"]) < 50:
             entry["spans"].append({"start": start, "end": end})
-        context_window = 80
+        context_window = 120
         context_slice = text_content[max(0, start - context_window) : min(len(text_content), end + context_window)].strip()
-        if context_slice and len(entry["contexts"]) < 5:
-            entry["contexts"].append(context_slice)
+        if len(context_slice) > 280:
+            context_slice = context_slice[:280] + "…"
+        if context_slice:
+            if context_slice not in entry["contexts"] and len(entry["contexts"]) < 8:
+                entry["contexts"].append(context_slice)
         if len(entry["bounds"]) < 500:
             entry["bounds"].append((start, end))
+        if context_slice:
+            normalized_context = " ".join(context_slice.split())
+            groups = entry["context_groups"]
+            group = groups.setdefault(
+                normalized_context,
+                {
+                    "text": context_slice,
+                    "count": 0,
+                    "bounds": [],
+                },
+            )
+            group["count"] += 1
+            if len(group["bounds"]) < 10:
+                group["bounds"].append({"start": start, "end": end})
 
     top_patterns: List[Dict[str, Any]] = []
     for signature, stats in pattern_scores.items():
         count = stats["count"]
+        context_groups = stats.get("context_groups", {})
+        context_variants: List[Dict[str, Any]] = []
+        if context_groups:
+            ordered = sorted(context_groups.values(), key=lambda item: item["count"], reverse=True)
+            for variant in ordered[:5]:
+                context_variants.append(
+                    {
+                        "text": variant["text"],
+                        "count": variant["count"],
+                        "bounds": variant["bounds"],
+                    }
+                )
+        sample_contexts = [variant["text"] for variant in context_variants[:3]]
+        if not sample_contexts:
+            sample_contexts = stats.get("contexts", [])
         top_patterns.append(
             {
                 "signature": signature,
@@ -569,7 +602,8 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
                 "positions": stats["positions"][:5],
                 "spans": stats["spans"][:5],
                 "sample_snippet": stats["snippets"][0] if stats["snippets"] else "",
-                "sample_contexts": stats.get("contexts", []),
+                "sample_contexts": sample_contexts,
+                "context_variants": context_variants,
                 "top_phrases": [],
             }
         )
@@ -638,16 +672,40 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
                 periodicity = avg_gap
         bounds_sorted = sorted(stats["bounds"], key=lambda item: item[0])
         occurrences_preview = stats["occurrences"]
-        display_text = (stats.get("display") or phrase).strip() or phrase
+        variant_map: Dict[str, Dict[str, Any]] = {}
+        for occurrence in occurrences_preview:
+            context_text = (occurrence.get("context") or occurrence.get("snippet") or "").strip()
+            if not context_text:
+                continue
+            normalized = " ".join(context_text.split())
+            record = variant_map.setdefault(
+                normalized,
+                {
+                    "text": context_text,
+                    "count": 0,
+                    "bounds": [],
+                },
+            )
+            record["count"] += 1
+            if len(record["bounds"]) < 10:
+                record["bounds"].append({"start": occurrence.get("start", 0), "end": occurrence.get("end", occurrence.get("start", 0))})
+        variants = sorted(variant_map.values(), key=lambda item: item["count"], reverse=True)
+        display_text = (stats.get("display") or phrase).strip()
+        if not display_text or display_text.lower() in {"undefined", "null", "none"}:
+            if variants:
+                display_text = variants[0]["text"]
+        display_text = display_text or phrase
         repeating_sequences.append(
             {
                 "phrase": display_text,
                 "normalized_phrase": phrase,
+                "base_phrase": phrase,
                 "frequency": freq,
                 "periodicity": periodicity,
                 "positions": positions[:25],
                 "bounds": [{"start": start, "end": end} for start, end in bounds_sorted[:25]],
                 "examples": occurrences_preview[:5],
+                "variants": variants[:5],
             }
         )
 
@@ -658,10 +716,32 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
             if stats["count"] < 2:
                 continue
             positions = sorted(stats["positions"])
+            variant_map: Dict[str, Dict[str, Any]] = {}
+            for start in positions[:25]:
+                snippet = token
+                context_start = max(0, start - 80)
+                context_end = min(len(text_content), start + len(token) + 80)
+                context_slice = text_content[context_start:context_end].strip()
+                if len(context_slice) > 220:
+                    context_slice = context_slice[:220] + "…"
+                normalized_context = " ".join(context_slice.split()) or snippet
+                record = variant_map.setdefault(
+                    normalized_context,
+                    {
+                        "text": context_slice or snippet,
+                        "count": 0,
+                        "bounds": [],
+                    },
+                )
+                record["count"] += 1
+                if len(record["bounds"]) < 10:
+                    record["bounds"].append({"start": start, "end": start + len(token)})
+            variants = sorted(variant_map.values(), key=lambda item: item["count"], reverse=True)
             repeating_sequences.append(
                 {
                     "phrase": token,
                     "normalized_phrase": token.lower(),
+                    "base_phrase": token,
                     "frequency": stats["count"],
                     "periodicity": None,
                     "positions": positions[:25],
@@ -681,6 +761,7 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
                         }
                         for start in positions[:5]
                     ],
+                    "variants": variants[:5],
                 }
             )
         repeating_sequences.sort(key=lambda item: item["frequency"], reverse=True)
@@ -871,6 +952,15 @@ async def export_analysis_report(request: Request) -> StreamingResponse:
             snippet = pattern.get("sample_snippet")
             if snippet:
                 story.append(Paragraph(f"“{escape(str(snippet))}”", QUOTE_STYLE))
+            context_variants = pattern.get("context_variants") or []
+            for variant in context_variants[:3]:
+                story.append(
+                    Paragraph(
+                        f"<i>{escape(str(variant.get('text', '')))}</i>"
+                        f" &nbsp;({variant.get('count', 0)} hits)",
+                        QUOTE_STYLE,
+                    )
+                )
         story.append(Spacer(1, 8))
 
     if sequences:
@@ -886,6 +976,15 @@ async def export_analysis_report(request: Request) -> StreamingResponse:
             except (TypeError, ValueError):
                 pass
             story.append(Paragraph(f"&bull; {phrase} — {details}", BODY_STYLE))
+            variants = sequence.get("variants") or []
+            for variant in variants[:3]:
+                story.append(
+                    Paragraph(
+                        f"<i>{escape(str(variant.get('text', '')))}</i>"
+                        f" &nbsp;({variant.get('count', 0)} hits)",
+                        QUOTE_STYLE,
+                    )
+                )
         story.append(Spacer(1, 8))
 
     if insights:
