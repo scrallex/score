@@ -24,6 +24,8 @@ from .dilution import (
     semantic_dilution,
     compute_dilution_metrics,
 )
+from .comparison import stm_val_alignment, detection_lead_time, AlignmentResult, LeadTimeResult
+from .feedback import suggest_twin_action, TwinSuggestion
 
 __all__ = [
     "ingest_directory",
@@ -41,4 +43,10 @@ __all__ = [
     "signal_dilution",
     "semantic_dilution",
     "compute_dilution_metrics",
+    "stm_val_alignment",
+    "detection_lead_time",
+    "AlignmentResult",
+    "LeadTimeResult",
+    "suggest_twin_action",
+    "TwinSuggestion",
 ]
