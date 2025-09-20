@@ -26,18 +26,18 @@ def mutate_plan(
     max_frac: float,
 ) -> Tuple[List[str], int]:
     n = len(actions)
-    if n < 2:
-        raise ValueError("Plan too short to corrupt")
-    low = max(1, math.floor(min_frac * n))
-    high = min(n - 2, math.floor(max_frac * n))
+    invalid = actions[-1]
+    m = n + 1
+    low = max(1, math.floor(min_frac * m))
+    high = min(m - 2, math.floor(max_frac * m))
     if high < low:
         high = low
     if high <= low:
-        idx = min(low, n - 2)
+        idx = min(low, m - 2)
     else:
         idx = rng.randint(low, high)
     mutated = list(actions)
-    mutated.pop(idx)
+    mutated.insert(idx, invalid)
     return mutated, idx
 
 
@@ -71,17 +71,15 @@ def generate_corruption(
     rng = random.Random(base_seed)
     actions = read_plan(source_plan)
     init_atoms = extract_init_atoms(problem)
-    min_index = max(1, math.floor(min_frac * len(actions)))
+    min_index = max(1, math.floor(min_frac * (len(actions) + 1)))
 
     best_failed_step: Optional[int] = None
-    last_mutated: Optional[List[str]] = None
     success = False
     attempts = 0
 
     for attempt in range(max_retries):
         attempts = attempt + 1
         mutated_actions, _ = mutate_plan(actions, rng, min_frac, max_frac)
-        last_mutated = mutated_actions
         with tempfile.NamedTemporaryFile("w", delete=False, dir=output_plan.parent, suffix=output_plan.suffix) as tmp:
             temp_path = Path(tmp.name)
         status_ok, failed_step = evaluate_mutation(
@@ -89,7 +87,7 @@ def generate_corruption(
         )
         if not status_ok:
             best_failed_step = failed_step
-            if failed_step is not None and failed_step > min_index:
+            if failed_step is not None and failed_step >= min_index:
                 shutil.move(str(temp_path), output_plan)
                 success = True
                 break

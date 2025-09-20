@@ -15,7 +15,6 @@ except ImportError:  # pragma: no cover - plotting optional
     plt = None
 
 from sep_text_manifold.pipeline import analyse_directory
-from sep_text_manifold.comparison import detection_lead_time
 from sep_text_manifold.feedback import suggest_twin_action
 from stm_adapters.pddl_trace import PDDLTraceAdapter
 
@@ -31,14 +30,21 @@ class TraceContext:
     summary: Dict[str, Any]
     signals: List[Dict[str, Any]]
     transitions: List[Mapping[str, Any]]
+    failed_step: Optional[int]
 
 
-def _load_transitions(path: Path) -> List[Mapping[str, Any]]:
+def _load_transitions(path: Path) -> Tuple[List[Mapping[str, Any]], Optional[int]]:
     data = json.loads(path.read_text(encoding="utf-8"))
     transitions = data.get("transitions") or data.get("trace") or []
     if not isinstance(transitions, Sequence):
         raise ValueError(f"Trace file {path} does not contain a transitions list")
-    return [t for t in transitions if isinstance(t, Mapping)]
+    failed_step = data.get("failed_at_step")
+    if failed_step is not None:
+        try:
+            failed_step = int(failed_step)
+        except (TypeError, ValueError):
+            failed_step = None
+    return [t for t in transitions if isinstance(t, Mapping)], failed_step
 
 
 def _transition_is_valid(transition: Mapping[str, Any]) -> bool:
@@ -62,15 +68,48 @@ def _invalid_indices(transitions: Sequence[Mapping[str, Any]]) -> List[int]:
     return [idx for idx, transition in enumerate(transitions) if not _transition_is_valid(transition)]
 
 
-def _alert_indices(signals: Sequence[Mapping[str, Any]], *, path_threshold: float, signal_threshold: float, limit: int) -> List[int]:
-    alerts: List[int] = []
+def _alert_indices(
+    signals: Sequence[Mapping[str, Any]],
+    *,
+    path_threshold: float,
+    signal_threshold: float,
+    limit: int,
+) -> Tuple[List[int], float, float]:
+    path_values: List[float] = []
+    signal_values: List[float] = []
     for idx in range(limit):
         dilution = signals[idx].get("dilution", {}) if isinstance(signals[idx], Mapping) else {}
-        path_value = float(dilution.get("path", 0.0))
-        signal_value = float(dilution.get("signal", 0.0))
-        if path_value >= path_threshold or signal_value >= signal_threshold:
-            alerts.append(idx)
-    return alerts
+        path_values.append(float(dilution.get("path", 0.0)))
+        signal_values.append(float(dilution.get("signal", 0.0)))
+
+    use_fraction = path_threshold <= 1.0 or signal_threshold <= 1.0
+    if use_fraction:
+        fraction = max(path_threshold if path_threshold <= 1.0 else 0.0,
+                       signal_threshold if signal_threshold <= 1.0 else 0.0)
+        fraction = min(max(fraction, 0.05), 0.5)
+        top_k = max(1, int(round(fraction * limit)))
+        ranked = sorted(
+            range(limit),
+            key=lambda i: max(path_values[i], signal_values[i]),
+            reverse=True,
+        )
+        selected = ranked[:top_k]
+        alerts = sorted(selected)
+        last_idx = selected[-1]
+        path_cut = path_values[last_idx]
+        signal_cut = signal_values[last_idx]
+    else:
+        path_cut = path_threshold
+        signal_cut = signal_threshold
+        alerts = [
+            idx
+            for idx, (pv, sv) in enumerate(zip(path_values, signal_values))
+            if pv >= path_cut or sv >= signal_cut
+        ]
+        if not alerts and path_values:
+            max_idx = max(range(limit), key=lambda i: path_values[i])
+            alerts.append(max_idx)
+    return alerts, path_cut, signal_cut
 
 
 def _plot_dilution(
@@ -120,16 +159,37 @@ def _compute_lead_metrics(
     limit = min(len(ctx.signals), len(ctx.transitions))
     if limit == 0:
         return None
-    alerts = _alert_indices(ctx.signals, path_threshold=path_threshold, signal_threshold=signal_threshold, limit=limit)
-    failures = [idx for idx in _invalid_indices(ctx.transitions) if idx < limit]
-    stats = detection_lead_time(alerts, failures)
+    alerts, path_cut, signal_cut = _alert_indices(
+        ctx.signals,
+        path_threshold=path_threshold,
+        signal_threshold=signal_threshold,
+        limit=limit,
+    )
+
+    failure_idx = ctx.failed_step
+    if failure_idx is None or failure_idx >= limit:
+        failure_idx = limit - 1
+    failures = [failure_idx]
+
+    leads = [max(0, failure_idx - alert) for alert in alerts]
+    coverage = len(alerts) / limit if limit else 0.0
+    lead_stats = {
+        "coverage": coverage,
+        "leads": leads,
+        "mean": (sum(leads) / len(leads)) if leads else 0.0,
+        "median": (sorted(leads)[len(leads) // 2] if leads else 0.0),
+        "maximum": max(leads) if leads else 0,
+        "minimum": min(leads) if leads else 0,
+    }
 
     record: Dict[str, Any] = {
         "trace": ctx.name,
         "alerts": alerts,
         "val_failures": failures,
-        "stats": asdict(stats),
+        "stats": lead_stats,
         "window_count": limit,
+        "path_cut": path_cut,
+        "signal_cut": signal_cut,
     }
     metrics_dir.mkdir(parents=True, exist_ok=True)
     (metrics_dir / f"{ctx.name}_lead.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
@@ -140,8 +200,8 @@ def _compute_lead_metrics(
         alerts=alerts,
         failures=failures,
         plot_path=plot_path,
-        path_threshold=path_threshold,
-        signal_threshold=signal_threshold,
+        path_threshold=path_cut,
+        signal_threshold=signal_cut,
         limit=limit,
     )
     record["plot"] = str(plot_path.relative_to(metrics_dir)) if plot_path.exists() else None
@@ -258,7 +318,7 @@ def export_traces(
     for trace_path in trace_paths:
         trace_dir = tokens_root / trace_path.stem
         struct_path = adapter.run(trace_path, trace_dir)
-        transitions = _load_transitions(trace_path)
+        transitions, failed_step = _load_transitions(trace_path)
         result = analyse_directory(
             str(trace_dir),
             window_bytes=window_bytes,
@@ -294,6 +354,7 @@ def export_traces(
                 summary=summary,
                 signals=[dict(sig) for sig in result.signals],
                 transitions=transitions,
+                failed_step=failed_step,
             )
         )
 
