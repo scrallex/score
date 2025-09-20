@@ -29,9 +29,11 @@ def mutate_plan(
     if n < 2:
         raise ValueError("Plan too short to corrupt")
     low = max(1, math.floor(min_frac * n))
-    high = max(low, min(n - 1, math.floor(max_frac * n)))
+    high = min(n - 2, math.floor(max_frac * n))
+    if high < low:
+        high = low
     if high <= low:
-        idx = min(low, n - 1)
+        idx = min(low, n - 2)
     else:
         idx = rng.randint(low, high)
     mutated = list(actions)
@@ -82,18 +84,20 @@ def generate_corruption(
         last_mutated = mutated_actions
         with tempfile.NamedTemporaryFile("w", delete=False, dir=output_plan.parent, suffix=output_plan.suffix) as tmp:
             temp_path = Path(tmp.name)
-        status_ok, failed_step = evaluate_mutation(validator, domain, problem, mutated_actions, init_atoms, temp_path)
-            if not status_ok:
-                best_failed_step = failed_step
-                if failed_step is not None and failed_step > min_index:
-                    shutil.move(str(temp_path), output_plan)
-                    success = True
-                    break
+        status_ok, failed_step = evaluate_mutation(
+            validator, domain, problem, mutated_actions, init_atoms, temp_path
+        )
+        if not status_ok:
+            best_failed_step = failed_step
+            if failed_step is not None and failed_step > min_index:
+                shutil.move(str(temp_path), output_plan)
+                success = True
+                break
         temp_path.unlink(missing_ok=True)
-    if not success and last_mutated is not None:
-        # fallback: write the last attempted mutation even if early failure/valid
-        output_plan.parent.mkdir(parents=True, exist_ok=True)
-        output_plan.write_text("\n".join(last_mutated) + "\n", encoding="utf-8")
+    if not success:
+        raise RuntimeError(
+            f"Failed to inject delayed error for {source_plan} after {max_retries} attempts"
+        )
     return success, best_failed_step, attempts
 
 
