@@ -397,6 +397,104 @@ async function handleQuickAnalyze(file) {
   }
 }
 
+async function analyzeText() {
+  const textInput = document.getElementById('text-input');
+  const summaryCard = document.getElementById('text-summary');
+  const metricsEl = document.getElementById('text-metrics');
+  const patternsCard = document.getElementById('text-patterns');
+  const patternList = document.getElementById('text-pattern-list');
+  const repeatingCard = document.getElementById('text-repeating');
+  const repeatingList = document.getElementById('text-sequence-list');
+  const interpretationCard = document.getElementById('text-interpretation');
+  const interpretationList = document.getElementById('text-interpretation-list');
+  if (!textInput || !summaryCard || !metricsEl || !patternsCard || !patternList || !repeatingCard || !repeatingList || !interpretationCard || !interpretationList) {
+    return;
+  }
+
+  const text = textInput.value.trim();
+  if (!text) {
+    showToast('Please paste some text to analyze', 'error');
+    return;
+  }
+
+  summaryCard.style.display = 'block';
+  metricsEl.innerHTML = '<div><dt>Status</dt><dd>Analyzing…</dd></div>';
+  patternsCard.style.display = 'none';
+  patternList.innerHTML = '';
+  repeatingCard.style.display = 'none';
+  repeatingList.innerHTML = '';
+  interpretationCard.style.display = 'none';
+  interpretationList.innerHTML = '';
+
+  try {
+    const response = await fetch(`${API_BASE}/analyze/text`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    if (!response.ok) {
+      const detail = await response.text();
+      throw new Error(detail || response.statusText);
+    }
+    const result = await response.json();
+
+    const metrics = result.metrics || {};
+    metricsEl.innerHTML = `
+      <div><dt>Total Tokens</dt><dd>${fmtInteger(metrics.total_tokens ?? 0)}</dd></div>
+      <div><dt>Unique Tokens</dt><dd>${fmtInteger(metrics.unique_tokens ?? 0)}</dd></div>
+      <div><dt>Structural Coverage</dt><dd>${fmtPercent(metrics.structural_coverage ?? 0, 1)}</dd></div>
+      <div><dt>Repetition Ratio</dt><dd>${fmtPercent(metrics.repetition_ratio ?? 0, 1)}</dd></div>
+    `;
+
+    const patterns = result.structural_patterns || [];
+    if (patterns.length) {
+      patternsCard.style.display = 'block';
+      patternList.innerHTML = patterns
+        .map(
+          (pattern) => `
+            <li>
+              <span class="pattern-sig">${pattern.signature}</span>
+              <span class="pattern-stats">${fmtInteger(pattern.count)} hits · coh ${fmtNumber(pattern.avg_coherence, 4)} · stab ${fmtNumber(pattern.avg_stability, 4)}</span>
+            </li>
+          `,
+        )
+        .join('');
+    }
+
+    const sequences = result.repeating_sequences || [];
+    if (sequences.length) {
+      repeatingCard.style.display = 'block';
+      repeatingList.innerHTML = sequences
+        .map(
+          (sequence) => `
+            <li>
+              <span class="seq-token">"${sequence.token}"</span>
+              <span class="seq-stats">${fmtInteger(sequence.frequency)} hits${
+                sequence.periodicity ? ` · period ${fmtInteger(sequence.periodicity)}` : ''
+              }</span>
+            </li>
+          `,
+        )
+        .join('');
+    }
+
+    const interpretation = result.interpretation || [];
+    if (interpretation.length) {
+      interpretationCard.style.display = 'block';
+      interpretationList.innerHTML = interpretation.map((entry) => `<li>${entry}</li>`).join('');
+    }
+
+    showToast('Text analysis complete!');
+  } catch (error) {
+    console.error('Text analysis failed', error);
+    metricsEl.innerHTML = '<div><dt>Status</dt><dd>Analysis failed</dd></div>';
+    patternsCard.style.display = 'none';
+    repeatingCard.style.display = 'none';
+    interpretationCard.style.display = 'none';
+    showToast(error.message || 'Text analysis failed', 'error');
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   loadDemo();
   const metaEl = document.getElementById('meta');
@@ -428,6 +526,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       void handleQuickAnalyze(file);
+    });
+  }
+
+  const textInput = document.getElementById('text-input');
+  const charCount = document.getElementById('text-char-count');
+  if (textInput && charCount) {
+    const updateCount = () => {
+      charCount.textContent = `${textInput.value.length} characters`;
+    };
+    textInput.addEventListener('input', updateCount);
+    updateCount();
+  }
+
+  const analyzeTextBtn = document.getElementById('text-analyze-btn');
+  if (analyzeTextBtn) {
+    analyzeTextBtn.addEventListener('click', () => {
+      void analyzeText();
     });
   }
 });

@@ -8,7 +8,7 @@ import threading
 import time
 from collections import Counter
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import asyncio
 import csv
@@ -17,10 +17,11 @@ import math
 from itertools import cycle
 from typing import AsyncIterator
 
-from fastapi import FastAPI, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect, Request
 from starlette.responses import StreamingResponse
 
 from sep_text_manifold.manifold import build_manifold
+from sep_text_manifold.strings import extract_strings
 
 from demo.standalone import DEFAULT_OUTPUT, build_payload
 
@@ -330,7 +331,6 @@ async def quick_analyze(file: UploadFile = File(...)) -> Dict[str, Any]:
     }
 
     # Build manifold using the actual quantum metrics pipeline
-    numeric_column_indices = [item["index"] for item in summary]
     lines: list[str] = []
     for row_numeric in numeric_rows:
         tokens: list[str] = []
@@ -407,3 +407,177 @@ async def quick_analyze(file: UploadFile = File(...)) -> Dict[str, Any]:
         "recommendations": recommendations,
         "manifold": manifold_summary,
     }
+
+
+@app.post("/api/analyze/text")
+@app.post("/analyze/text")
+async def analyze_text(request: Request) -> Dict[str, Any]:
+    """Analyze pasted text using the quantum manifold pipeline."""
+    try:
+        payload = await request.json()
+    except Exception as exc:  # pragma: no cover - guard malformed JSON
+        raise HTTPException(status_code=400, detail=f"Invalid JSON payload: {exc}") from exc
+
+    text_content = str(payload.get("text", "")) if isinstance(payload, dict) else ""
+    text_content = text_content.strip()
+    if not text_content:
+        raise HTTPException(status_code=400, detail="No text provided")
+
+    max_text_length = int(os.environ.get("STM_TEXT_MAX_CHARS", 100_000))
+    if len(text_content) > max_text_length:
+        raise HTTPException(status_code=413, detail=f"Text exceeds {max_text_length} characters limit")
+
+    occurrences = extract_strings(text_content, file_id="pasted_text")
+    if not occurrences:
+        raise HTTPException(status_code=400, detail="Unable to extract structural tokens from the provided text")
+
+    token_stats: Dict[str, Dict[str, Any]] = {}
+    lines: List[str] = []
+    for occ in occurrences:
+        token = occ.string
+        if len(token) < 2:
+            continue
+        stats = token_stats.setdefault(token, {"count": 0, "positions": []})
+        stats["count"] += 1
+        stats["positions"].append(int(occ.byte_start))
+        lines.append(f"{token}:{occ.byte_start}:{occ.byte_end}")
+
+    if len(lines) < 10:
+        raise HTTPException(status_code=400, detail="Text too short for structural analysis (need ≥10 tokens)")
+
+    corpus_bytes = "\n".join(lines).encode("utf-8")
+    window_bytes = max(64, min(256, len(corpus_bytes) // 4 or 64))
+    stride = max(1, window_bytes // 2)
+
+    try:
+        signals = build_manifold(
+            corpus_bytes,
+            window_bytes=window_bytes,
+            stride=stride,
+            max_signals=1024,
+        )
+    except Exception as exc:  # pragma: no cover - guard unexpected failures
+        raise HTTPException(status_code=500, detail=f"Failed to compute manifold: {exc}") from exc
+
+    pattern_scores: Dict[str, Dict[str, Any]] = {}
+    for signal in signals:
+        signature = signal.get("signature")
+        if not signature:
+            continue
+        metrics = signal.get("metrics", {})
+        coherence = float(metrics.get("coherence", signal.get("coherence", 0.0)))
+        stability = float(metrics.get("stability", signal.get("stability", 0.0)))
+        if coherence <= 0.01 or stability <= 0.45:
+            continue
+        entry = pattern_scores.setdefault(
+            signature,
+            {"signature": signature, "count": 0, "sum_coherence": 0.0, "sum_stability": 0.0, "positions": []},
+        )
+        entry["count"] += 1
+        entry["sum_coherence"] += coherence
+        entry["sum_stability"] += stability
+        entry["positions"].append(int(signal.get("window_start", 0)))
+
+    top_patterns: List[Dict[str, Any]] = []
+    for signature, stats in pattern_scores.items():
+        count = stats["count"]
+        top_patterns.append(
+            {
+                "signature": signature,
+                "count": count,
+                "avg_coherence": round(stats["sum_coherence"] / count, 4),
+                "avg_stability": round(stats["sum_stability"] / count, 4),
+                "positions": stats["positions"][:5],
+            }
+        )
+    top_patterns.sort(key=lambda item: item["avg_coherence"] * item["count"], reverse=True)
+    top_patterns = top_patterns[:10]
+
+    repeating_sequences: List[Dict[str, Any]] = []
+    for token, stats in token_stats.items():
+        freq = stats["count"]
+        if freq < 3:
+            continue
+        positions = sorted(stats["positions"])
+        gaps = [positions[i + 1] - positions[i] for i in range(len(positions) - 1)]
+        periodicity = None
+        if gaps:
+            avg_gap = sum(gaps) / len(gaps)
+            variance = sum((gap - avg_gap) ** 2 for gap in gaps) / len(gaps)
+            if avg_gap > 0 and variance < avg_gap:
+                periodicity = avg_gap
+        repeating_sequences.append(
+            {
+                "token": token,
+                "frequency": freq,
+                "periodicity": periodicity,
+                "positions": positions[:5],
+            }
+        )
+    repeating_sequences.sort(key=lambda item: item["frequency"], reverse=True)
+    repeating_sequences = repeating_sequences[:10]
+
+    structural_coverage = len(pattern_scores) / max(len(signals), 1)
+    repeated_tokens = sum(stats["count"] for stats in token_stats.values() if stats["count"] > 1)
+    repetition_ratio = repeated_tokens / max(len(occurrences), 1)
+    text_metrics = {
+        "total_characters": len(text_content),
+        "total_tokens": len(occurrences),
+        "unique_tokens": len(token_stats),
+        "structural_coverage": round(structural_coverage, 4),
+        "repetition_ratio": round(repetition_ratio, 4),
+    }
+
+    interpretation = _interpret_text_patterns(text_metrics, top_patterns, repeating_sequences)
+
+    return {
+        "success": True,
+        "metrics": text_metrics,
+        "structural_patterns": top_patterns,
+        "repeating_sequences": repeating_sequences,
+        "manifold": {
+            "total_windows": len(signals),
+            "window_bytes": window_bytes,
+            "stride": stride,
+            "emit_threshold": 0.01,
+        },
+        "interpretation": interpretation,
+    }
+
+
+def _interpret_text_patterns(
+    metrics: Dict[str, Any],
+    patterns: List[Dict[str, Any]],
+    repeating: List[Dict[str, Any]],
+) -> List[str]:
+    """Generate a human-readable interpretation for text analysis."""
+
+    insights: List[str] = []
+    coverage = metrics.get("structural_coverage", 0.0)
+    repetition_ratio = metrics.get("repetition_ratio", 0.0)
+
+    if coverage > 0.3:
+        insights.append("High structural coherence – text shows strong organizational patterns.")
+    elif coverage > 0.1:
+        insights.append("Moderate structure detected – some repeatable patterns present.")
+    else:
+        insights.append("Low structural coherence – content appears loosely organized.")
+
+    if repetition_ratio > 0.4:
+        insights.append("Significant repetition detected – likely templated or formulaic content.")
+    elif repetition_ratio > 0.2:
+        insights.append("Notable repetition present across the text.")
+
+    if patterns:
+        lead = patterns[0]
+        insights.append(
+            f"Lead structural signature {lead['signature']} appears {lead['count']} times with coherence {lead['avg_coherence']:.3f}."
+        )
+
+    periodic_tokens = [item for item in repeating if item.get("periodicity")]
+    if periodic_tokens:
+        insights.append(
+            f"Detected {len(periodic_tokens)} tokens with regular spacing – indicates rhythmic or tabular structure."
+        )
+
+    return insights

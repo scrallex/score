@@ -252,6 +252,61 @@ tbody tr:last-child td {
   font-variant-numeric: tabular-nums;
 }
 
+.text-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-family: "Inter", system-ui, monospace;
+  font-size: 0.95rem;
+  resize: vertical;
+  min-height: 150px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-primary);
+}
+
+.input-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.pattern-list li,
+.sequence-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(124, 140, 255, 0.12);
+}
+
+.pattern-list li:last-child,
+.sequence-list li:last-child {
+  border-bottom: none;
+}
+
+.pattern-sig,
+.seq-token {
+  font-family: "Inter", system-ui, monospace;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.pattern-stats,
+.seq-stats {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.interpretation-list li {
+  padding: 8px 0;
+  line-height: 1.5;
+}
+
 .live-feed {
   list-style: none;
   margin: 0;
