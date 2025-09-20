@@ -76,39 +76,6 @@ python scripts/aggregate_planbench_results.py \
   --output docs/note/planbench_scorecard.csv
 ```
 
-| Domain |   N | Plan Acc. | Lead Mean (steps) | Foreground Cov. | Twin Corr. @0.4 |
-| ------ | --: | --------: | ----------------: | ---------------: | ---------------: |
-| Blocksworld | 100 | 1.00 | 5.40  | 0.148 | 1.00 |
-| Mystery BW  | 100 | 1.00 | 5.67  | 0.160 | 1.00 |
-| Logistics   | 100 | 1.00 | 16.35 | 0.104 | 1.00 |
-
-All corrupted traces fail after ≥40 % of the plan (mean ratios: BW 0.85, Mystery 0.84, Logistics 0.94). Foreground coverage now sits inside the 5–20 % guardrail by design (top 10 % windows). The τ=0.4 twin rate remains saturated on this synthetic set; the upcoming robustness sweep will report τ∈{0.3, 0.4, 0.5} alongside aligned-window counts to split easy vs. hard repair cases.
-
-
-```
-# 1. Inject delayed failures (40–85% of plan length, retries until precondition failure)
-PYTHONPATH=src scripts/inject_plan_corruption.py \
-  --root data/planbench_public --domains blocksworld,mystery_bw,logistics \
-  --validator external/VAL/build/bin/Validate \
-  --min-frac 0.4 --max-frac 0.85 --max-retries 8
-
-# 2. Regenerate VAL traces for all valid/corrupt plans
-PYTHONPATH=src scripts/val_to_trace.py \
-  --root data/planbench_public --domains blocksworld,mystery_bw,logistics \
-  --validator external/VAL/build/bin/Validate
-
-# 3. Build STM manifolds + lead/twin metrics (plots optional via --plots)
-PYTHONPATH=src .venv/bin/python scripts/planbench_to_stm.py \
-  --input-root data/planbench_public \
-  --domains blocksworld,mystery_bw,logistics \
-  --output output/planbench_public --window-bytes 256 --stride 128
-
-# 4. Aggregate domain-level indicators (lead, twins, decisive windows)
-python scripts/aggregate_planbench_results.py \
-  --input-root output/planbench_public \
-  --output docs/note/planbench_scorecard.csv
-```
-
 PlanBench-scale scoreboard (100 problems/domain):
 
 | Domain |   N | Plan Acc. | Lead Mean (steps) | Cov. % | Twin@0.3 | Twin@0.4 | Twin@0.5 | ANN mean (±CI) | Aligned (mean/min/max) | Perm. p-val |
@@ -126,3 +93,13 @@ All corrupted traces fail after ≥40 % of the plan (mean ratios: BW 0.85, M
 - [x] PDDL trace adapter + PlanBench exporter
 - [ ] Training loop hook blending STM feedback with VAL (pending)
 - [ ] Comparative ablation report (pending)
+
+### Guardrail Sensitivity Appendix (pending sweeps)
+
+| Guardrail (top %) | Lead Mean (steps) – Log / Myst / BW | Coverage Mean – Log / Myst / BW | Twin@0.3 | Twin@0.4 | Twin@0.5 | Perm. p-val | Notes |
+| ----------------- | ----------------------------------- | -------------------------------- | -------: | -------: | -------: | -----------: | ----- |
+| 10 % (current)    | 16.35 / 5.67 / 5.40                 | 0.104 / 0.160 / 0.148            | 1.00 / 1.00 / 1.00 | same | same | 0.99 / 0.88 / 0.85 | Baseline | 
+| 15 %              | _TBD_                               | _TBD_                             | _TBD_    | _TBD_    | _TBD_    | _TBD_        | Run after 15 % sweep |
+| 20 %              | _TBD_                               | _TBD_                             | _TBD_    | _TBD_    | _TBD_    | _TBD_        | Run after 20 % sweep |
+
+_(Rows report Logistics / Mystery / Blocksworld per cell; fill in after running the guardrail sweeps.)_
