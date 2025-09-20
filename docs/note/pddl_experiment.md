@@ -38,14 +38,51 @@
 
 ## Current Results Snapshot
 
-- **Domains covered:** Blocksworld, Mystery Blocksworld, Logistics (1 valid + 1 corrupted trace each)
-- **Plan accuracy:** 100% per domain on the valid traces (baseline sanity check)
-- **Lead-time coverage:** STM flagged every corrupted trace before or at the failure step (coverage = 1.0). Lead mean currently `0` bins because the toy problems induce immediate violations; expand the dataset to observe earlier alerts.
-- **Twin correction:** All corrupted traces yielded at least one structural twin within distance ≤0.4 (correction rate = 1.0 in this seed set).
+- **Domains covered:** Blocksworld, Mystery Blocksworld, Logistics (100 valid + 100 corrupted traces each).
+- **Plan accuracy:** 100% per domain on the planner-produced valid plans.
+- **Lead-time coverage:** Mean lead spans from 5.4 (BW) to 16.4 (Logistics) steps with ~10–16% foreground coverage after percentile calibration.
+- **Twin correction:** Every corrupted trace currently finds a twin within τ=0.4 (≥20 aligned windows). Next iteration will report the τ-sweep to expose harder cases.
 - **Artifacts:**
   - `output/planbench_public/gold_state.json` / `invalid_state.json`
   - `output/planbench_public/invalid/metrics/summary.json`
   - `docs/note/planbench_scorecard.csv`
+
+```
+# 0. Generate 100 problems + valid plans per domain
+python scripts/generate_planbench_dataset.py --root data/planbench_public --count 100
+
+# 1. Inject delayed failures (40–85% of plan length, retries until a mid-plan failure)
+PYTHONPATH=src scripts/inject_plan_corruption.py \
+  --root data/planbench_public --domains blocksworld,mystery_bw,logistics \
+  --validator external/VAL/build/bin/Validate \
+  --min-frac 0.4 --max-frac 0.85 --max-retries 8
+
+# 2. Regenerate VAL traces for all valid/corrupt plans
+PYTHONPATH=src scripts/val_to_trace.py \
+  --root data/planbench_public --domains blocksworld,mystery_bw,logistics \
+  --validator external/VAL/build/bin/Validate
+
+# 3. Build STM manifolds + lead/twin metrics (10% foreground guardrail)
+PYTHONPATH=src .venv/bin/python scripts/planbench_to_stm.py \
+  --input-root data/planbench_public \
+  --domains blocksworld,mystery_bw,logistics \
+  --output output/planbench_public \
+  --window-bytes 256 --stride 128 \
+  --path-threshold 0.1 --signal-threshold 0.1
+
+# 4. Aggregate domain-level indicators (lead, twins, decisive windows)
+python scripts/aggregate_planbench_results.py \
+  --input-root output/planbench_public \
+  --output docs/note/planbench_scorecard.csv
+```
+
+| Domain |   N | Plan Acc. | Lead Mean (steps) | Foreground Cov. | Twin Corr. @0.4 |
+| ------ | --: | --------: | ----------------: | ---------------: | ---------------: |
+| Blocksworld | 100 | 1.00 | 5.40  | 0.148 | 1.00 |
+| Mystery BW  | 100 | 1.00 | 5.67  | 0.160 | 1.00 |
+| Logistics   | 100 | 1.00 | 16.35 | 0.104 | 1.00 |
+
+All corrupted traces fail after ≥40 % of the plan (mean ratios: BW 0.85, Mystery 0.84, Logistics 0.94). Foreground coverage now sits inside the 5–20 % guardrail by design (top 10 % windows). The τ=0.4 twin rate remains saturated on this synthetic set; the upcoming robustness sweep will report τ∈{0.3, 0.4, 0.5} alongside aligned-window counts to split easy vs. hard repair cases.
 
 
 ```
