@@ -48,6 +48,7 @@
               <span id="text-char-count">0 characters</span>
               <div class="button-row">
                 <button id="text-sample-btn" class="btn btn--ghost" type="button">Load Sample</button>
+                <button id="text-export-btn" class="btn btn--ghost" type="button" disabled>Download Report</button>
                 <button id="text-analyze-btn" class="btn" type="button">Analyze Text</button>
               </div>
             </div>
@@ -57,6 +58,11 @@
           <div class="card text-result" id="text-summary" hidden>
             <h3>Summary</h3>
             <dl class="kv" id="text-metrics"></dl>
+          </div>
+
+          <div class="card text-result" id="text-highlight" hidden>
+            <h3>Pattern Visualization</h3>
+            <div class="text-with-highlights" id="text-highlight-body"></div>
           </div>
 
           <div class="card text-result" id="text-patterns" hidden>

@@ -7,8 +7,11 @@ import os
 import threading
 import time
 from collections import Counter
+from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, List
+
+from datetime import datetime
 
 import asyncio
 import csv
@@ -20,6 +23,10 @@ from typing import AsyncIterator
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect, Request
 from starlette.responses import StreamingResponse
+
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, Spacer
 
 from sep_text_manifold.manifold import build_manifold
 from sep_text_manifold.strings import extract_strings
@@ -485,14 +492,17 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
                 "sum_stability": 0.0,
                 "positions": [],
                 "snippets": [],
+                "spans": [],
             },
         )
         entry["count"] += 1
         entry["sum_coherence"] += coherence
         entry["sum_stability"] += stability
-        entry["positions"].append(int(signal.get("window_start", 0)))
+        entry["positions"].append(start)
         if snippet and len(entry["snippets"]) < 3:
             entry["snippets"].append(snippet)
+        if len(entry["spans"]) < 5:
+            entry["spans"].append({"start": start, "end": end})
 
     top_patterns: List[Dict[str, Any]] = []
     for signature, stats in pattern_scores.items():
@@ -504,6 +514,7 @@ async def analyze_text(request: Request) -> Dict[str, Any]:
                 "avg_coherence": round(stats["sum_coherence"] / count, 4),
                 "avg_stability": round(stats["sum_stability"] / count, 4),
                 "positions": stats["positions"][:5],
+                "spans": stats["spans"][:5],
                 "sample_snippet": stats["snippets"][0] if stats["snippets"] else "",
             }
         )

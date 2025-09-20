@@ -283,6 +283,27 @@ tbody tr:last-child td {
   transition: opacity 0.2s ease;
 }
 
+.text-with-highlights {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(124, 140, 255, 0.12);
+  border-radius: 12px;
+  padding: 12px;
+  font-family: "Inter", system-ui, monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  max-height: 320px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+.text-with-highlights mark {
+  color: var(--text-primary);
+  padding: 0 2px;
+  border-radius: 4px;
+  background: rgba(255, 235, 59, 0.35);
+  border: 1px solid rgba(255, 235, 59, 0.5);
+}
+
 .pattern-list li,
 .sequence-list li {
   display: flex;
