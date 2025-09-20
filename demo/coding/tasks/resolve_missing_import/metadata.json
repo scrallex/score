@@ -1,0 +1,12 @@
+{
+  "title": "Resolve missing timezone import",
+  "description": "Background job uses timezone utilities without importing them. Baseline iterates through missing symbol errors; STM suggests a twin import patch reused from similar fixes.",
+  "repo": "https://example.com/worker-service",
+  "primary_files": ["src/worker/jobs.py"],
+  "metrics": {
+    "baseline_steps": 6,
+    "stm_steps": 4,
+    "baseline_diagnostics": 3,
+    "stm_foreground_hits": 1
+  }
+}

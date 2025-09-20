@@ -1,0 +1,12 @@
+{
+  "title": "Rename user_service to account_service",
+  "description": "Coordinated rename touches the service package, exported symbol, and downstream tests. Baseline iterates through missing-module errors; STM twin bundles a previously successful rename.",
+  "repo": "https://example.com/account-api",
+  "primary_files": ["services/__init__.py", "services/account_service.py", "tests/test_users.py"],
+  "metrics": {
+    "baseline_steps": 8,
+    "stm_steps": 5,
+    "baseline_broken_imports": 2,
+    "stm_foreground_hits": 1
+  }
+}

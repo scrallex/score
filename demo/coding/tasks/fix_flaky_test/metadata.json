@@ -1,0 +1,12 @@
+{
+  "title": "Stabilise flaky retry test",
+  "description": "A background worker retry policy oscillates around a clock skew tolerance. The baseline agent increases tolerance too far; STM twin proposes a clamp based on past fix.",
+  "repo": "https://example.com/retry-service",
+  "primary_files": ["src/retry/policy.py", "tests/test_retry.py"],
+  "metrics": {
+    "baseline_steps": 6,
+    "stm_steps": 4,
+    "baseline_fail_loops": 2,
+    "stm_foreground_hits": 1
+  }
+}
