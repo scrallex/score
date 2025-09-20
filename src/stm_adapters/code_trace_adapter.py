@@ -193,20 +193,21 @@ class CodeTraceAdapter:
         text = trace_path.read_text(encoding="utf-8").strip()
         if not text:
             return []
-        if "\n" in text and text.lstrip().startswith("{") is False:
-            steps: List[Mapping[str, object]] = []
-            for line in text.splitlines():
-                line = line.strip()
-                if not line:
-                    continue
-                data = json.loads(line)
-                if isinstance(data, Mapping):
-                    steps.append(data)
-            return steps
-        data = json.loads(text)
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        if len(lines) > 1:
+            try:
+                parsed_lines = [json.loads(line) for line in lines]
+                if all(isinstance(item, Mapping) for item in parsed_lines):
+                    return parsed_lines
+            except json.JSONDecodeError:
+                pass
+        try:
+            data = json.loads(text)
+        except json.JSONDecodeError:
+            parsed_lines = [json.loads(line) for line in lines]
+            return [item for item in parsed_lines if isinstance(item, Mapping)]
         if isinstance(data, Mapping) and "steps" in data and isinstance(data["steps"], Sequence):
             return [item for item in data["steps"] if isinstance(item, Mapping)]
         if isinstance(data, Sequence):
             return [item for item in data if isinstance(item, Mapping)]
         raise ValueError(f"Unsupported trace format: {trace_path}")
-

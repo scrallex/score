@@ -5,10 +5,26 @@ from __future__ import annotations
 
 import argparse
 import json
+import importlib.util
+import sys
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping
+from typing import Dict, Iterable, List
 
-from stm_adapters.code_trace_adapter import CodeTraceAdapter
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+SRC_ROOT = PROJECT_ROOT / "src"
+if str(SRC_ROOT) not in sys.path:
+    sys.path.insert(0, str(SRC_ROOT))
+
+spec = importlib.util.spec_from_file_location(
+    "stm_adapters.code_trace_adapter", SRC_ROOT / "stm_adapters" / "code_trace_adapter.py"
+)
+if spec is None or spec.loader is None:
+    raise ImportError("Unable to load CodeTraceAdapter module")
+_module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = _module
+spec.loader.exec_module(_module)  # type: ignore[attr-defined]
+CodeTraceAdapter = getattr(_module, "CodeTraceAdapter")
 
 TASK_ROOT = Path(__file__).resolve().parent / "tasks"
 OUTPUT_ROOT = Path(__file__).resolve().parent / "output"
@@ -19,17 +35,19 @@ def load_steps(trace_path: Path) -> List[Mapping[str, object]]:
     text = trace_path.read_text(encoding="utf-8").strip()
     if not text:
         return []
-    if "\n" in text and not text.lstrip().startswith("{"):
-        steps: List[Mapping[str, object]] = []
-        for line in text.splitlines():
-            line = line.strip()
-            if not line:
-                continue
-            data = json.loads(line)
-            if isinstance(data, Mapping):
-                steps.append(data)
-        return steps
-    data = json.loads(text)
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if len(lines) > 1:
+        try:
+            parsed = [json.loads(line) for line in lines]
+            if all(isinstance(item, Mapping) for item in parsed):
+                return parsed  # type: ignore[return-value]
+        except json.JSONDecodeError:
+            pass
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError:
+        parsed = [json.loads(line) for line in lines]
+        return [item for item in parsed if isinstance(item, Mapping)]
     if isinstance(data, Mapping) and "steps" in data:
         payload = data.get("steps")
         if isinstance(payload, list):
