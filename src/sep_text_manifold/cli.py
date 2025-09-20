@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 from datetime import datetime, timezone
+from statistics import mean, median
 import shutil
 import tempfile
 from pathlib import Path
@@ -33,6 +34,7 @@ from .filters import (
     requested_percentiles,
     compute_metric_quantiles,
 )
+from .dilution import compute_dilution_metrics
 
 
 def _load_state(state_file: Path) -> Dict[str, Any]:
@@ -91,6 +93,20 @@ def _print_summary(summary: Dict[str, Any]) -> None:
         print("\nMean window metrics:")
         for name, value in mean_metrics.items():
             print(f"  {name}: {value:.3f}")
+    dilution = summary.get("dilution")
+    if dilution:
+        print("\nDilution metrics:")
+        print(
+            f"  context certainty: {dilution.get('context_certainty', 0.0):.3f}"
+            f"  signal clarity: {dilution.get('signal_clarity', 0.0):.3f}"
+            f"  semantic clarity: {dilution.get('semantic_clarity', 0.0):.3f}"
+        )
+        print(
+            f"  path mean: {dilution.get('path_mean', 0.0):.3f}"
+            f"  path max: {dilution.get('path_max', 0.0):.3f}"
+            f"  signal mean: {dilution.get('signal_mean', 0.0):.3f}"
+            f"  signal max: {dilution.get('signal_max', 0.0):.3f}"
+        )
 
 
 def _collect_seeds(args: argparse.Namespace) -> List[str]:
@@ -160,6 +176,7 @@ def cmd_ingest(args: argparse.Namespace) -> None:
         include_profiles=args.store_profiles,
     )
     state["summary"] = summary
+    state["dilution_summary"] = result.dilution_summary
     generated_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     state["generated_at"] = generated_at
     _save_state(state_file, state)
@@ -416,7 +433,7 @@ def cmd_discover(args: argparse.Namespace) -> None:
         min_connector=args.min_connector,
         min_patternability=args.min_patternability,
         target_profile=args.target_profile,
-    )
+        )
     proposals = result["proposals"]
     if args.output:
         Path(args.output).write_text(json.dumps(result, indent=2), encoding="utf-8")
@@ -429,6 +446,74 @@ def cmd_discover(args: argparse.Namespace) -> None:
             f" occ={item['occurrences']}"
         )
 
+
+def cmd_dilution(args: argparse.Namespace) -> None:
+    state = _load_state(Path(args.input))
+    signals: List[Dict[str, Any]] = state.get("signals") or []  # type: ignore[assignment]
+    if not signals:
+        print(
+            "State does not include per-window signals. Rerun 'stm ingest' with "
+            "--store-signals to enable dilution analysis."
+        )
+        return
+    token_mapping: Mapping[str, Any] = state.get("string_scores") or state.get("string_profiles") or {}
+    if not token_mapping:
+        print(
+            "State file is missing string-to-window mappings. Include string scores or profiles "
+            "when generating the analysis state."
+        )
+        return
+    path_series, signal_series, semantic_score = compute_dilution_metrics(signals, token_mapping)  # type: ignore[arg-type]
+    if not path_series and not signal_series:
+        print("Unable to compute dilution metrics for the supplied state.")
+        return
+    window_info: List[Dict[str, Any]] = []
+    for idx, sig in enumerate(signals):
+        try:
+            window_id = int(sig.get("id", idx))
+        except (TypeError, ValueError):
+            window_id = idx
+        window_info.append(
+            {
+                "index": idx,
+                "id": window_id,
+                "start": sig.get("window_start"),
+                "end": sig.get("window_end", sig.get("index")),
+                "path": path_series[idx] if idx < len(path_series) else 0.0,
+                "signal": signal_series[idx] if idx < len(signal_series) else 0.0,
+            }
+        )
+    top_k = args.top or 10
+    path_sorted = sorted(window_info, key=lambda item: item["path"], reverse=True)
+    signal_sorted = sorted(window_info, key=lambda item: item["signal"], reverse=True)
+
+    path_mean = mean(path_series) if path_series else 0.0
+    signal_mean = mean(signal_series) if signal_series else 0.0
+    path_median = median(path_series) if path_series else 0.0
+    signal_median = median(signal_series) if signal_series else 0.0
+
+    path_max = path_sorted[0]["path"] if path_sorted else 0.0
+    signal_max = signal_sorted[0]["signal"] if signal_sorted else 0.0
+
+    print("Dilution overview")
+    print("-----------------")
+    print(f"Windows analysed: {len(window_info)}")
+    print(f"Path dilution mean={path_mean:.3f} median={path_median:.3f} max={path_max:.3f}")
+    print(f"Signal dilution mean={signal_mean:.3f} median={signal_median:.3f} max={signal_max:.3f}")
+    print(f"Semantic dilution={semantic_score:.3f} (clarity={max(0.0, min(1.0, 1.0 - semantic_score)):.3f})")
+
+    def _print_top(label: str, items: List[Dict[str, Any]], key: str) -> None:
+        print(f"\nTop windows by {label} dilution:")
+        for entry in items[:top_k]:
+            print(
+                f"  window {entry['id']} (idx {entry['index']}): {key}={entry[key]:.3f}"
+                f" range=({entry['start']},{entry['end']})"
+            )
+
+    if path_sorted:
+        _print_top("path", path_sorted, "path")
+    if signal_sorted:
+        _print_top("signal", signal_sorted, "signal")
 
 def main(argv: Optional[List[str]] = None) -> None:
     parser = argparse.ArgumentParser(prog="stm", description="Sep Text Manifold CLI")
@@ -489,6 +574,16 @@ def main(argv: Optional[List[str]] = None) -> None:
     p_propose.add_argument("--target-profile", help="Target metric profile constraints, e.g. coh>=0.7,ent<=0.3")
     p_propose.add_argument("--output", help="Optional path to write proposals JSON")
     p_propose.set_defaults(func=cmd_propose)
+    # Dilution command
+    p_dilution = subparsers.add_parser("dilution", help="Inspect path/signal/semantic dilution metrics")
+    p_dilution.add_argument("--input", default="stm_state.json", help="Path to analysis state JSON file")
+    p_dilution.add_argument(
+        "--top",
+        type=int,
+        default=10,
+        help="Number of windows to list per ranking",
+    )
+    p_dilution.set_defaults(func=cmd_dilution)
     # Similar command
     p_similar = subparsers.add_parser(
         "similar",

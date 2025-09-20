@@ -18,6 +18,12 @@ from .pipeline import AnalysisResult, analyse_directory
 from .strings import extract_strings, aggregate_string_metrics
 from .scoring import patternability_score, connector_score
 from .themes import build_theme_graph, detect_themes
+from .dilution import (
+    path_dilution,
+    signal_dilution,
+    semantic_dilution,
+    compute_dilution_metrics,
+)
 
 __all__ = [
     "ingest_directory",
@@ -31,4 +37,8 @@ __all__ = [
     "connector_score",
     "build_theme_graph",
     "detect_themes",
+    "path_dilution",
+    "signal_dilution",
+    "semantic_dilution",
+    "compute_dilution_metrics",
 ]

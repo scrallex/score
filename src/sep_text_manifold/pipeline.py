@@ -10,6 +10,7 @@ from .scoring import connector_score, patternability_score
 from .strings import StringOccurrence, aggregate_string_metrics, extract_strings
 from .themes import build_theme_graph, compute_graph_metrics, detect_themes
 from .binary_log import BinaryLogWriter, ManifoldRecord
+from .dilution import compute_dilution_metrics
 
 
 @dataclass
@@ -48,6 +49,7 @@ class AnalysisResult:
     string_scores: Dict[str, Dict[str, Any]]
     graph_metrics: Dict[str, Dict[str, float]]
     themes: List[List[str]]
+    dilution_summary: Dict[str, Any]
 
     @property
     def corpus_size_bytes(self) -> int:
@@ -72,6 +74,7 @@ class AnalysisResult:
             "string_scores": self.string_scores,
             "themes": self.themes,
             "graph_metrics": self.graph_metrics,
+            "dilution_summary": self.dilution_summary,
         }
         if include_signals:
             state["signals"] = self.signals
@@ -89,6 +92,7 @@ class AnalysisResult:
             corpus_size_bytes=self.corpus_size_bytes,
             token_count=self.token_count,
             file_count=len(self.files),
+            dilution_summary=self.dilution_summary,
             top=top,
         )
 
@@ -239,6 +243,38 @@ def analyse_directory(
         )
         entry["connector"] = c_score
         entry["graph_metrics"] = gm
+    path_dilutions, signal_dilutions, semantic_dilution_score = compute_dilution_metrics(
+        signals,
+        string_scores,
+    )
+    for idx, sig in enumerate(signals):
+        path_value = path_dilutions[idx] if idx < len(path_dilutions) else 0.0
+        signal_value = signal_dilutions[idx] if idx < len(signal_dilutions) else 0.0
+        sig.setdefault("dilution", {})
+        sig["dilution"].update(
+            {
+                "path": path_value,
+                "signal": signal_value,
+            }
+        )
+
+    def _mean(values: Iterable[float]) -> float:
+        values = list(values)
+        if not values:
+            return 0.0
+        return sum(values) / len(values)
+
+    dilution_summary = {
+        "window_count": len(signals),
+        "path_mean": _mean(path_dilutions),
+        "path_max": max(path_dilutions) if path_dilutions else 0.0,
+        "signal_mean": _mean(signal_dilutions),
+        "signal_max": max(signal_dilutions) if signal_dilutions else 0.0,
+        "semantic_dilution": semantic_dilution_score,
+        "context_certainty": max(0.0, min(1.0, 1.0 - _mean(path_dilutions))),
+        "signal_clarity": max(0.0, min(1.0, 1.0 - _mean(signal_dilutions))),
+        "semantic_clarity": max(0.0, min(1.0, 1.0 - semantic_dilution_score)),
+    }
     settings = AnalysisSettings(
         directory=str(root.resolve()),
         window_bytes=window_bytes,
@@ -263,6 +299,7 @@ def analyse_directory(
         string_scores=string_scores,
         graph_metrics=graph_metrics,
         themes=themes,
+        dilution_summary=dilution_summary,
     )
 
 
@@ -274,6 +311,7 @@ def compute_summary(
     corpus_size_bytes: Optional[int] = None,
     token_count: Optional[int] = None,
     file_count: Optional[int] = None,
+    dilution_summary: Optional[Dict[str, Any]] = None,
     top: int = 10,
 ) -> Dict[str, Any]:
     if top <= 0:
@@ -334,4 +372,6 @@ def compute_summary(
         summary["window_count"] = window_count
     if avg_window_metrics:
         summary["mean_window_metrics"] = avg_window_metrics
+    if dilution_summary:
+        summary["dilution"] = dict(dilution_summary)
     return summary

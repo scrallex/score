@@ -26,10 +26,16 @@ def test_analyse_directory_basic(tmp_path):
     assert alpha_profile["occurrences"] == 2
     assert 0.0 <= alpha_profile.get("patternability", 0.0) <= 1.0
 
+    dilution = result.dilution_summary
+    assert 0.0 <= dilution["path_mean"] <= 1.0
+    assert 0.0 <= dilution["signal_mean"] <= 1.0
+    assert 0.0 <= dilution["semantic_dilution"] <= 1.0
+
     summary = result.summary(top=2)
     assert summary["string_count"] >= 4
     assert len(summary["top_patternable_strings"]) == 2
     assert summary["theme_count"] >= 1
+    assert "dilution" in summary
 
 
 def test_cli_ingest_and_summary(tmp_path, monkeypatch):
@@ -61,12 +67,14 @@ def test_cli_ingest_and_summary(tmp_path, monkeypatch):
         "0.0",
         "--theme-min-size",
         "1",
+        "--store-signals",
     ])
 
     assert state_path.exists()
     state = json.loads(state_path.read_text(encoding="utf-8"))
     assert "string_scores" in state
     assert state["summary"]["string_count"] == len(state["string_scores"])
+    assert "dilution_summary" in state
 
     cli.main([
         "summary",
@@ -94,4 +102,12 @@ def test_cli_ingest_and_summary(tmp_path, monkeypatch):
         "coh>=P0,ent<=P100",
         "--top",
         "1",
+    ])
+
+    cli.main([
+        "dilution",
+        "--input",
+        str(state_path),
+        "--top",
+        "2",
     ])
