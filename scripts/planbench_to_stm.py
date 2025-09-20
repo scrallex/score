@@ -7,7 +7,7 @@ import argparse
 import json
 from dataclasses import dataclass, asdict
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 try:  # Plotting is optional but recommended
     import matplotlib.pyplot as plt  # type: ignore
@@ -18,6 +18,8 @@ from sep_text_manifold.pipeline import analyse_directory
 from sep_text_manifold.comparison import detection_lead_time
 from sep_text_manifold.feedback import suggest_twin_action
 from stm_adapters.pddl_trace import PDDLTraceAdapter
+
+ENABLE_PLOTS = False
 
 
 @dataclass
@@ -81,7 +83,7 @@ def _plot_dilution(
     signal_threshold: float,
     limit: int,
 ) -> None:
-    if plt is None:
+    if plt is None or not ENABLE_PLOTS:
         return
     path_series = [float((ctx.signals[idx].get("dilution", {}) or {}).get("path", 0.0)) for idx in range(limit)]
     signal_series = [float((ctx.signals[idx].get("dilution", {}) or {}).get("signal", 0.0)) for idx in range(limit)]
@@ -388,11 +390,39 @@ def _collect_paths(inputs: Sequence[str]) -> List[Path]:
     return paths
 
 
+def _collect_traces_from_root(
+    root: Path,
+    domains: Sequence[str],
+    *,
+    traces_dir: str,
+) -> Tuple[List[Path], List[Path]]:
+    valid_paths: List[Path] = []
+    invalid_paths: List[Path] = []
+    for domain in domains:
+        domain_root = root / domain
+        trace_dir = domain_root / traces_dir
+        if not trace_dir.exists():
+            continue
+        for trace_path in sorted(trace_dir.glob("*.json")):
+            data = json.loads(trace_path.read_text(encoding="utf-8"))
+            plan_type = data.get("plan_type")
+            status = str(data.get("status", "")).lower()
+            if plan_type == "corrupt" or status == "invalid":
+                invalid_paths.append(trace_path)
+            else:
+                valid_paths.append(trace_path)
+    return valid_paths, invalid_paths
+
+
 def main(argv: Optional[Sequence[str]] = None) -> None:
     parser = argparse.ArgumentParser(description="PlanBench ➜ STM exporter with lead-time analysis")
-    parser.add_argument("--valid", nargs="+", required=True, help="Valid trace files or directories")
+    parser.add_argument("--valid", nargs="+", help="Valid trace files or directories")
     parser.add_argument("--invalid", nargs="+", help="Invalid trace files or directories")
-    parser.add_argument("--output", required=True, help="Output directory for STM artefacts")
+    parser.add_argument("--input-root", type=Path, help="Root directory containing domain traces")
+    parser.add_argument("--domains", type=str, help="Comma-separated list of domains under --input-root")
+    parser.add_argument("--trace-dir", default="traces", help="Subdirectory holding trace JSONs in root mode")
+    parser.add_argument("--output", dest="output", help="Output directory for STM artefacts")
+    parser.add_argument("--out-root", dest="output", help=argparse.SUPPRESS)
     parser.add_argument("--window-bytes", type=int, default=512, help="Sliding window size in bytes")
     parser.add_argument("--stride", type=int, default=256, help="Stride length in bytes")
     parser.add_argument("--path-threshold", type=float, default=0.55, help="Path dilution threshold for alerts")
@@ -401,13 +431,34 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     parser.add_argument("--twin-top-k", type=int, default=3, help="Number of twin suggestions to retrieve")
     parser.add_argument("--match-signature", action="store_true", help="Only consider twins that share the signature")
     parser.add_argument("--verbose", action="store_true", help="Print progress information")
+    parser.add_argument("--plots", action="store_true", help="Generate dilution plots (requires matplotlib)")
     args = parser.parse_args(argv)
+
+    global ENABLE_PLOTS
+    ENABLE_PLOTS = args.plots
+
+    if not args.output:
+        parser.error("--output/--out-root is required")
 
     output_root = Path(args.output)
     output_root.mkdir(parents=True, exist_ok=True)
 
     adapter = PDDLTraceAdapter()
-    valid_paths = _collect_paths(args.valid)
+    trace_root: Optional[Path] = None
+    if args.input_root:
+        trace_root = args.input_root
+        domain_list = (
+            [d.strip() for d in args.domains.split(",") if d.strip()]
+            if args.domains
+            else [d.name for d in sorted(trace_root.iterdir()) if d.is_dir()]
+        )
+        valid_paths, invalid_paths = _collect_traces_from_root(trace_root, domain_list, traces_dir=args.trace_dir)
+    else:
+        if not args.valid:
+            parser.error("--valid is required when --input-root is not used")
+        valid_paths = _collect_paths(args.valid)
+        invalid_paths = _collect_paths(args.invalid) if args.invalid else []
+
     gold_state_path, _ = export_traces(
         "gold",
         valid_paths,
@@ -418,8 +469,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         verbose=args.verbose,
     )
 
-    if args.invalid:
-        invalid_paths = _collect_paths(args.invalid)
+    if invalid_paths:
         invalid_state_path, invalid_contexts = export_traces(
             "invalid",
             invalid_paths,
@@ -446,6 +496,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     run_summary = {
         "gold_state": str(gold_state_path),
         "invalid_state": str(invalid_state_path) if invalid_state_path else None,
+        "trace_root": str(trace_root) if trace_root else None,
         "settings": {
             "window_bytes": args.window_bytes,
             "stride": args.stride,
