@@ -20,6 +20,7 @@ dependencies = [
     "networkx>=3.0",
     "numpy>=1.23",
     "PyYAML>=6.0",
+    "requests>=2.31",
     "reportlab>=3.6",
 ]
 

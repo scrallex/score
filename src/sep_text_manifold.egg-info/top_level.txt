@@ -1,6 +1,7 @@
 sep_text_manifold
 stm_adapters
 stm_cli
+stm_client
 stm_demo
 stm_onsets
 stm_stream

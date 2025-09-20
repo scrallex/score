@@ -1,0 +1,17 @@
+Subject: Structural early-warning on PlanBench (lead-time + twins beyond pass/fail)
+
+Hi <Name>,
+
+Thanks again for sharing the PlanBench replication details last month. I reran all three domains (100 instances each) and layered the Structural Manifold (STM) on top of the standard VAL traces. The result is a drop-in early-warning signal: we see foreground alerts 5–16 steps before failure, a bounded guardrail (10–20%), and actionable “twin” repairs that line up token-for-token with the successful runs.
+
+I’m attaching the scorecard, dilution plots, and τ-sweep summary. Everything is reproducible from the repo—`make planbench-all` still drives the pipeline, and the new appendix in `MMS_Structural_Precursors_v0.1.md` explains the guardrail variants.
+
+Attachments:
+- docs/note/planbench_scorecard.csv
+- docs/note/fig_tau_sweep_planbench.png
+- docs/note/appendix_guardrail_sensitivity.csv
+
+Would you be open to a 20-minute call next week to walk through the findings or compare notes async if that’s easier? Happy to send a calendar invite or keep it over email.
+
+Best,
+<Your Name>

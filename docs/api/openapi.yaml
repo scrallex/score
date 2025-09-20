@@ -1,0 +1,416 @@
+openapi: 3.1.0
+info:
+  title: STM Demo API
+  description: /docs
+  version: 0.1.0
+paths:
+  /health:
+    get:
+      summary: Health
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Health Health Get
+  /demo:
+    get:
+      summary: Get Demo Payload
+      operationId: get_demo_payload_demo_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Get Demo Payload Demo Get
+  /api/demo:
+    get:
+      summary: Get Demo Payload
+      operationId: get_demo_payload_api_demo_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Get Demo Payload Api Demo Get
+  /demo/list:
+    get:
+      summary: List Demos
+      operationId: list_demos_demo_list_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response List Demos Demo List Get
+  /api/demo/list:
+    get:
+      summary: List Demos
+      operationId: list_demos_api_demo_list_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response List Demos Api Demo List Get
+  /demo/{demo_id}:
+    get:
+      summary: Get Demo
+      operationId: get_demo_demo__demo_id__get
+      parameters:
+      - name: demo_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Demo Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Get Demo Demo  Demo Id  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/demo/{demo_id}:
+    get:
+      summary: Get Demo
+      operationId: get_demo_api_demo__demo_id__get
+      parameters:
+      - name: demo_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Demo Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Get Demo Api Demo  Demo Id  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /demo/refresh:
+    post:
+      summary: Refresh Demo
+      operationId: refresh_demo_demo_refresh_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Refresh Demo Demo Refresh Post
+  /api/demo/refresh:
+    post:
+      summary: Refresh Demo
+      operationId: refresh_demo_api_demo_refresh_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Refresh Demo Api Demo Refresh Post
+  /meta:
+    get:
+      summary: Get Meta
+      operationId: get_meta_meta_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Get Meta Meta Get
+  /api/meta:
+    get:
+      summary: Get Meta
+      operationId: get_meta_api_meta_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Get Meta Api Meta Get
+  /assets/{key}:
+    get:
+      summary: Get Asset
+      operationId: get_asset_assets__key__get
+      parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Get Asset Assets  Key  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/assets/{key}:
+    get:
+      summary: Get Asset
+      operationId: get_asset_api_assets__key__get
+      parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Key
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+                title: Response Get Asset Api Assets  Key  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /ping:
+    get:
+      summary: Ping
+      operationId: ping_ping_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Ping Ping Get
+  /api/ping:
+    get:
+      summary: Ping
+      operationId: ping_api_ping_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Ping Api Ping Get
+  /demo/live:
+    get:
+      summary: Get Live Demo Stream
+      operationId: get_live_demo_stream_demo_live_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/demo/live:
+    get:
+      summary: Get Live Demo Stream
+      operationId: get_live_demo_stream_api_demo_live_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /analyze/quick:
+    post:
+      summary: Quick Analyze
+      operationId: quick_analyze_analyze_quick_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_quick_analyze_analyze_quick_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Quick Analyze Analyze Quick Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/analyze/quick:
+    post:
+      summary: Quick Analyze
+      operationId: quick_analyze_api_analyze_quick_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_quick_analyze_api_analyze_quick_post'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Quick Analyze Api Analyze Quick Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /analyze/text:
+    post:
+      summary: Analyze Text
+      description: Analyze pasted text using the quantum manifold pipeline.
+      operationId: analyze_text_analyze_text_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Analyze Text Analyze Text Post
+  /api/analyze/text:
+    post:
+      summary: Analyze Text
+      description: Analyze pasted text using the quantum manifold pipeline.
+      operationId: analyze_text_api_analyze_text_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+                title: Response Analyze Text Api Analyze Text Post
+  /api/export/report:
+    post:
+      summary: Export Analysis Report
+      description: Generate a PDF report for previously computed analysis results.
+      operationId: export_analysis_report_api_export_report_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+components:
+  schemas:
+    Body_quick_analyze_analyze_quick_post:
+      properties:
+        file:
+          type: string
+          format: binary
+          title: File
+      type: object
+      required:
+      - file
+      title: Body_quick_analyze_analyze_quick_post
+    Body_quick_analyze_api_analyze_quick_post:
+      properties:
+        file:
+          type: string
+          format: binary
+          title: File
+      type: object
+      required:
+      - file
+      title: Body_quick_analyze_api_analyze_quick_post
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError

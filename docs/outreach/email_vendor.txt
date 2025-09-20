@@ -1,0 +1,17 @@
+Subject: Drop-in structural coprocessor for code agents (early-warning + repair twins)
+
+Hi <Name>,
+
+We’ve wrapped our Structural Manifold (STM) as a coprocessor that sits alongside any coding agent. It watches each edit/test step, keeps the alert volume under a configurable guardrail, and surfaces “twin” patches pulled from past successful runs. In our three-task CodeTrace demo the STM version hit green in 30–40% fewer steps and raised the decisive alert before every fix.
+
+Attaching the HTML comparison report plus the OpenAPI spec and lightweight Python client so your team can try it without wiring up new tooling.
+
+Attachments:
+- demo/coding/output/report.html
+- docs/api/openapi.yaml
+- dist/sep_text_manifold-0.1.0-py3-none-any.whl
+
+If you’d like a walkthrough or want to discuss a pilot, I’d love to grab 20 minutes this week. Let me know a couple time slots and I’ll send an invite.
+
+Thanks,
+<Your Name>

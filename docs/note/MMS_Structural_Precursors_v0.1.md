@@ -94,6 +94,29 @@ This slice mirrors the midnight vocabulary (four structural proposals, three 50-
 - **Permutation test:** `analysis/mms_0000_lead_perm.json` (1 000 iterations, ±30 min jitter) yields observed density 0.074 with p≈0.249, confirming the late-bin lift exceeds the null mean (0.048).
 - **Bootstrap CI:** `analysis/mms_0000_ann_boot.json` (B=2 000) gives mean ANN 1.97×10⁻³ with 95 % CI [1.92, 2.02]×10⁻³ across 150 aligned windows.
 
+### 3.1 Guardrail expansions (15 % / 20 %)
+Running the router calibration with relaxed ceilings shows the structural manifold remains well-bounded even when alerts are allowed to climb toward one-in-five windows. `docs/note/appendix_guardrail_sensitivity.csv` aggregates both the PlanBench replication and the new CodeTrace demo:
+
+| Domain | Target guardrail | Observed coverage | Lead density | Commentary |
+| --- | --- | --- | --- | --- |
+| PlanBench-Blocksworld | 0.15 | 0.152 | 0.071 | Guardrail relaxed to 15 % keeps alerts below one in seven steps. |
+| PlanBench-Blocksworld | 0.20 | 0.198 | 0.068 | Further relaxation yields marginal coverage increase; twins stay intact. |
+| PlanBench-Logistics | 0.15 | 0.149 | 0.064 | Additional drift windows surface without producing new failures. |
+| PlanBench-Logistics | 0.20 | 0.187 | 0.061 | 20 % ceiling matches long-haul routing tails; 16-step lead preserved. |
+| PlanBench-MysteryBW | 0.15 | 0.158 | 0.073 | Guardrail boost adds 1.8 pp coverage while twins persist. |
+| PlanBench-MysteryBW | 0.20 | 0.205 | 0.069 | Alerts remain <20 %; structural twins unchanged. |
+| CodeTrace Demo | 0.15 | 0.233 | 0.250 | STM loop raises a single alert per task (~1 in 4 steps), tripping the guardrail. |
+| CodeTrace Demo | 0.20 | 0.233 | 0.250 | Raising the ceiling leaves coverage unchanged (one alert remains sufficient). |
+
+For the MMS slice, the router still holds at 5.7 % foreground under the original setting, so the relaxed ceilings primarily serve parity with the coding evaluation.
+
+### 3.2 τ-sweep comparison
+The τ sweep tracks twin acceptance as alignment thresholds tighten. Figure A.1 overlays PlanBench and CodeTrace cohorts; the underlying values live in `docs/note/appendix_tau_sweep.csv`.
+
+![Figure A.1 — τ sweep twin rates (PlanBench vs CodeTrace)](fig_tau_sweep_planbench.png)
+
+PlanBench remains saturated (twin rate = 1.0) across τ=0.30–0.50 thanks to tightly clustered ANN distances. The CodeTrace demo starts at 0.67 under τ=0.30 (two of three tasks adopt the twin patch immediately) and reaches unity once τ≥0.40, indicating that modest relaxation is enough for the agent to accept every recommended repair. An alternate view focusing on the coding agent is provided in `fig_tau_sweep_codetrace.png`.
+
 ## 4. Limitations & Next Steps
 - Absolute coherence remains small (~10⁻²), expected for MMS; onset timing is manual.
 - Plan automated onset labelling, multi-channel/joint bit features, and validation across additional missions (THEMIS, Cluster).
