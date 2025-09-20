@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import statistics
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
@@ -15,6 +16,12 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 ANALYSIS_DIR = REPO_ROOT / "analysis"
 NOTE_DIR = REPO_ROOT / "docs" / "note"
 DEFAULT_OUTPUT = Path(__file__).resolve().parent / "demo_payload.json"
+ASSET_TARGET_DIR = REPO_ROOT / "webapp" / "assets"
+
+
+def get_demo_payload_path() -> Path:
+    """Return the canonical payload location inside the repository."""
+    return DEFAULT_OUTPUT
 
 _METRIC_KEYS = ("coherence", "stability", "entropy", "rupture", "lambda_hazard")
 
@@ -277,6 +284,30 @@ def analyse_context_refinery(state: Mapping[str, Any], proposals: Mapping[str, A
     }
 
 
+def _prepare_assets() -> Dict[str, str]:
+    assets: Dict[str, str] = {}
+    asset_target = ASSET_TARGET_DIR
+    asset_target.mkdir(parents=True, exist_ok=True)
+
+    asset_map = {
+        "pattern_prophet": NOTE_DIR / "fig3_mms_0000_lead.png",
+        "twin_finder": NOTE_DIR / "fig2_mms_0000_zoom.png",
+        "context_refinery": NOTE_DIR / "fig1_mms_0000_overview.png",
+    }
+
+    for key, source in asset_map.items():
+        if not source.exists():
+            continue
+        destination = asset_target / source.name
+        try:
+            if not destination.exists() or source.stat().st_mtime > destination.stat().st_mtime:
+                shutil.copy2(source, destination)
+            assets[key] = f"assets/{destination.name}"
+        except OSError:
+            continue
+    return assets
+
+
 def build_payload() -> Dict[str, Any]:
     state_path = ANALYSIS_DIR / "mms_state.json"
     proposals_path = ANALYSIS_DIR / "mms_proposals_struct.json"
@@ -290,11 +321,7 @@ def build_payload() -> Dict[str, Any]:
     twin_finder = analyse_twin_finder(twins)
     context_refinery = analyse_context_refinery(state, proposals)
 
-    assets = {
-        "pattern_prophet": str((NOTE_DIR / "fig3_mms_0000_lead.png").relative_to(REPO_ROOT) if (NOTE_DIR / "fig3_mms_0000_lead.png").exists() else ""),
-        "twin_finder": str((NOTE_DIR / "fig2_mms_0000_zoom.png").relative_to(REPO_ROOT) if (NOTE_DIR / "fig2_mms_0000_zoom.png").exists() else ""),
-        "context_refinery": str((NOTE_DIR / "fig1_mms_0000_overview.png").relative_to(REPO_ROOT) if (NOTE_DIR / "fig1_mms_0000_overview.png").exists() else ""),
-    }
+    assets = _prepare_assets()
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),

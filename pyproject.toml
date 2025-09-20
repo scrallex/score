@@ -45,3 +45,4 @@ onsets = [
 stm = "stm_cli.__main__:main"
 stm-plots = "sep_text_manifold.cli_plots:main"
 stm-leadtime = "sep_text_manifold.cli_lead:main"
+stm-demo-api = "stm_demo.__main__:main"

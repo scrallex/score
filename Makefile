@@ -1,4 +1,5 @@
 .PHONY: scorecard plots lead twins onset all
+.PHONY: demo-payload demo-up demo-down
 
 scorecard:
 	python scripts/make_scorecard.py
@@ -27,3 +28,12 @@ twins:
 	python scripts/twin_diagnostics.py analysis/mms_twins_0100_to_0913.json > analysis/mms_twins_0100_diagnostics.json
 
 all: scorecard plots lead twins onset stats
+
+demo-payload:
+	PYTHONPATH=src python demo/standalone.py --no-pretty
+
+demo-up:
+	docker compose -f docker-compose.demo.yml up --build -d
+
+demo-down:
+	docker compose -f docker-compose.demo.yml down

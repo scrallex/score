@@ -1,0 +1,28 @@
+# syntax=docker/dockerfile:1.7
+
+FROM python:3.11-slim AS base
+WORKDIR /app
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONPATH=/app/src
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential && rm -rf /var/lib/apt/lists/*
+
+COPY pyproject.toml README.md ./
+COPY src ./src
+COPY demo ./demo
+COPY analysis ./analysis
+COPY docs ./docs
+COPY scripts ./scripts
+COPY cpp ./cpp
+
+RUN python -m pip install --upgrade pip && \
+    python -m pip install . && \
+    python demo/standalone.py --no-pretty
+
+EXPOSE 8000
+
+CMD ["uvicorn", "stm_demo.api:app", "--host", "0.0.0.0", "--port", "8000"]

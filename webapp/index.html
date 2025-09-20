@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Structural Intelligence Engine</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="main.js"></script>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="hero__copy">
+        <p class="eyebrow">Structural Intelligence Engine</p>
+        <h1>Reveal structure hiding inside chaotic telemetry.</h1>
+        <p class="subtitle">
+          Explore the Pattern Prophet, Twin Finder, and Context Refinery demos built on
+          MMS storm data and the SEP quantum manifold.
+        </p>
+        <div class="hero__actions">
+          <a class="btn" href="#pattern-prophet">View Demos</a>
+          <a class="btn btn--ghost" href="https://docs.mxbikes.xyz" target="_blank" rel="noreferrer">Docs</a>
+        </div>
+      </div>
+      <div class="hero__meta" id="meta">
+        <span class="meta__label">Last generated</span>
+        <time id="meta-generated">Loading…</time>
+      </div>
+    </header>
+
+    <main class="content" id="content">
+      <section class="demo" id="pattern-prophet" data-demo="pattern_prophet">
+        <div class="demo__heading">
+          <h2>Pattern Prophet</h2>
+          <p>Quantifies repeating signatures before a critical onset.</p>
+        </div>
+        <div class="demo__body">
+          <div class="card" data-role="summary">
+            <h3>Lead Signature</h3>
+            <dl class="kv">
+              <div>
+                <dt>Signature</dt>
+                <dd data-field="label">—</dd>
+              </div>
+              <div>
+                <dt>Event Count</dt>
+                <dd data-field="event_count">—</dd>
+              </div>
+              <div>
+                <dt>History Count</dt>
+                <dd data-field="history_count">—</dd>
+              </div>
+              <div>
+                <dt>Lift</dt>
+                <dd data-field="lift">—</dd>
+              </div>
+            </dl>
+          </div>
+          <div class="card" data-role="metrics">
+            <h3>Average Metrics</h3>
+            <div class="metrics">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Metric</th>
+                    <th>Event Window</th>
+                    <th>Historical</th>
+                  </tr>
+                </thead>
+                <tbody data-field="metrics"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card" data-role="samples">
+            <h3>Sample Windows</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Index</th>
+                  <th>Coherence</th>
+                  <th>Stability</th>
+                  <th>Entropy</th>
+                  <th>Hazard</th>
+                </tr>
+              </thead>
+              <tbody data-field="samples"></tbody>
+            </table>
+          </div>
+          <aside class="card" data-role="notes">
+            <h3>How to read this</h3>
+            <p>
+              We scan the final 8% of the MMS storm corpus looking for structural echoes that
+              accelerate before the 00:40 UTC onset. Lift compares event cadence against the
+              prior hour; values &gt; 1 mean the signature densifies as we approach the event.
+            </p>
+          </aside>
+        </div>
+        <footer class="demo__footer" data-field="chart"></footer>
+      </section>
+
+      <section class="demo" id="twin-finder" data-demo="twin_finder">
+        <div class="demo__heading">
+          <h2>Twin Finder</h2>
+          <p>Locates structurally identical windows across missions and days.</p>
+        </div>
+        <div class="demo__body">
+          <div class="card card--wide">
+            <table class="twins">
+              <thead>
+                <tr>
+                  <th>String</th>
+                  <th>Aligned Windows</th>
+                  <th>Mean Distance</th>
+                  <th>Coherence</th>
+                  <th>Stability</th>
+                </tr>
+              </thead>
+              <tbody data-field="rows"></tbody>
+            </table>
+          </div>
+          <aside class="card" data-role="notes">
+            <h3>What this shows</h3>
+            <p>
+              Each row is a structural string whose manifold neighbours match 50+ windows from
+              later MMS storms. Distances are ANN scores in 1e-6 scale; closer is better.
+            </p>
+            <p>
+              Use this to highlight portability: the same rhythm appears across storms with
+              consistent coherence profiles.
+            </p>
+          </aside>
+        </div>
+        <footer class="demo__footer" data-field="chart"></footer>
+      </section>
+
+      <section class="demo" id="context-refinery" data-demo="context_refinery">
+        <div class="demo__heading">
+          <h2>Context Refinery</h2>
+          <p>Converts noisy telemetry into structural vocabularies.</p>
+        </div>
+        <div class="demo__body">
+          <div class="card">
+            <h3>Structural Coverage</h3>
+            <p class="stat" data-field="structural_share">—</p>
+            <p class="stat__note">Share of foreground activity carried by structural tokens.</p>
+          </div>
+          <div class="card">
+            <h3>Top Structural Tokens</h3>
+            <ul class="token-list" data-field="top_structural"></ul>
+          </div>
+          <div class="card">
+            <h3>Bridge Proposals</h3>
+            <ul class="token-list" data-field="top_proposals"></ul>
+          </div>
+          <aside class="card" data-role="notes">
+            <h3>Pitch it like this</h3>
+            <p>
+              Raw MMS telemetry carries millions of numeric readings. The refinery collapses
+              them into 16 stable structural tokens, which then drive the Pattern Prophet and
+              Twin Finder demos.
+            </p>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Built for the mxbikes.xyz sandbox · Powered by SEP Quantum Manifold</p>
+      <p class="site-footer__meta" id="meta-sources">Sources: —</p>
+    </footer>
+  </div>
+  <div id="toast" class="toast" hidden></div>
+</body>
+</html>

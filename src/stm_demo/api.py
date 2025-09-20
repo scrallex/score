@@ -11,7 +11,7 @@ from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException
 
-from score.demo.standalone import DEFAULT_OUTPUT, build_payload
+from demo.standalone import DEFAULT_OUTPUT, build_payload
 
 app = FastAPI(title="STM Demo API", version="0.1.0")
 

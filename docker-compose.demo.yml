@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  stm-demo-api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.demo-api
+    container_name: stm-demo-api
+    environment:
+      - PYTHONPATH=/app/src
+      - STM_DEMO_PAYLOAD=/app/demo/demo_payload.json
+    volumes:
+      - ./analysis:/app/analysis:ro
+      - ./docs:/app/docs:ro
+      - ./demo:/app/demo
+    restart: unless-stopped
+
+  stm-demo-frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.demo-frontend
+    container_name: stm-demo-frontend
+    depends_on:
+      - stm-demo-api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    restart: unless-stopped

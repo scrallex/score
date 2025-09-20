@@ -1,14 +1,5 @@
-"""Demo utilities and prepared payload generation for the Structural Intelligence Engine."""
+"""Demo utilities package for the STM showcase."""
 
-from __future__ import annotations
+from .standalone import build_payload, get_demo_payload_path
 
-from pathlib import Path
-from typing import Dict, Any
-
-
-def get_demo_payload_path() -> Path:
-    """Return the default location for the generated demo payload JSON."""
-    return Path(__file__).resolve().parent / "demo_payload.json"
-
-
-__all__ = ["get_demo_payload_path"]
+__all__ = ["build_payload", "get_demo_payload_path"]

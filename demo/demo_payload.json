@@ -1,8 +1,8 @@
 {
   "assets": {
-    "context_refinery": "docs/note/fig1_mms_0000_overview.png",
-    "pattern_prophet": "docs/note/fig3_mms_0000_lead.png",
-    "twin_finder": "docs/note/fig2_mms_0000_zoom.png"
+    "context_refinery": "assets/fig1_mms_0000_overview.png",
+    "pattern_prophet": "assets/fig3_mms_0000_lead.png",
+    "twin_finder": "assets/fig2_mms_0000_zoom.png"
   },
   "demos": {
     "context_refinery": {
@@ -1006,7 +1006,7 @@
       "total_candidates": 9
     }
   },
-  "generated_at": "2025-09-20T02:22:49.175664+00:00",
+  "generated_at": "2025-09-20T02:40:38.128361+00:00",
   "sources": {
     "proposals": "analysis/mms_proposals_struct.json",
     "state": "analysis/mms_state.json",

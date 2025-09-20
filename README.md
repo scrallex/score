@@ -10,6 +10,17 @@ onto the words and phrases that appear in the text, allowing you to
 identify high‑quality patterns, connectors between topics and overall
 themes in the corpus.
 
+## Structural Intelligence Demo (mxbikes.xyz)
+
+- Generate the canned payload from MMS artefacts: `make demo-payload`.
+- Run the FastAPI backend locally: `python -m stm_demo --reload` (defaults to
+  `http://127.0.0.1:8000`).
+- Serve the static site in `webapp/` or run the docker stack: `make demo-up`.
+
+The demo site pulls from `/api/demo`, renders the Pattern Prophet, Twin Finder
+and Context Refinery summaries, and ships with an nginx config wired for
+`mxbikes.xyz` TLS certificates.
+
 This repository is intended as a **framework** – it contains skeleton
 modules, command line entry points and API scaffolding.  You can run
 basic ingestion and analysis out of the box, but the heavy lifting (the

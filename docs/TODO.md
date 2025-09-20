@@ -124,12 +124,12 @@ analysis:
 ## Revised TODO List for Market-Ready Product
 
 ### Phase 0: Core Value Demonstration (Week 1-2)
-- [ ] Create `demo/standalone.py` that runs without dependencies
+- [x] Create `demo/standalone.py` that runs without dependencies *(generates `demo/demo_payload.json` and copies web assets)*
 - [ ] Build three canned demos with real MMS data showing:
   - Pattern prediction with timestamp proof
   - Twin discovery across days
   - Noise reduction visualization
-- [ ] Package as single Docker container with web UI
+- [ ] Package as single Docker container with web UI *(docker-compose demo stack available; consolidate into single image next)*
 
 ### Phase 1: The "Wow" Interface (Week 3-4)
 - [ ] Build `ui/dashboard.html` with:
