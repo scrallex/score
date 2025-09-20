@@ -1,7 +1,11 @@
 fastapi>=0.110.0
 pydantic>=2.0
 uvicorn>=0.27.0
+python-multipart>=0.0.9
+websockets>=12.0
 networkx>=3.0
+numpy>=1.23
+PyYAML>=6.0
 
 [demo]
 flask>=3.0
@@ -11,6 +15,12 @@ hnswlib>=0.8.0
 
 [native]
 pybind11>=2.11
+
+[onsets]
+cdflib>=1.0
+
+[stream]
+kafka-python>=2.0
 
 [test]
 pytest>=7.0

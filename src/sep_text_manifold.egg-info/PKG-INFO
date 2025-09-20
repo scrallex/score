@@ -9,7 +9,11 @@ Description-Content-Type: text/markdown
 Requires-Dist: fastapi>=0.110.0
 Requires-Dist: pydantic>=2.0
 Requires-Dist: uvicorn>=0.27.0
+Requires-Dist: python-multipart>=0.0.9
+Requires-Dist: websockets>=12.0
 Requires-Dist: networkx>=3.0
+Requires-Dist: numpy>=1.23
+Requires-Dist: PyYAML>=6.0
 Provides-Extra: test
 Requires-Dist: pytest>=7.0; extra == "test"
 Provides-Extra: demo
@@ -18,6 +22,10 @@ Provides-Extra: native
 Requires-Dist: pybind11>=2.11; extra == "native"
 Provides-Extra: index
 Requires-Dist: hnswlib>=0.8.0; extra == "index"
+Provides-Extra: stream
+Requires-Dist: kafka-python>=2.0; extra == "stream"
+Provides-Extra: onsets
+Requires-Dist: cdflib>=1.0; extra == "onsets"
 
 # Sep Text Manifold (STM)
 
@@ -30,6 +38,17 @@ sliding windows of the data.  These metrics are then aggregated back
 onto the words and phrases that appear in the text, allowing you to
 identify high‑quality patterns, connectors between topics and overall
 themes in the corpus.
+
+## Structural Intelligence Demo (mxbikes.xyz)
+
+- Generate the canned payload from MMS artefacts: `make demo-payload`.
+- Run the FastAPI backend locally: `python -m stm_demo --reload` (defaults to
+  `http://127.0.0.1:8000`).
+- Serve the static site in `webapp/` or run the docker stack: `make demo-up`.
+
+The demo site pulls from `/api/demo`, renders the Pattern Prophet, Twin Finder
+and Context Refinery summaries, and ships with an nginx config wired for
+`mxbikes.xyz` TLS certificates.
 
 This repository is intended as a **framework** – it contains skeleton
 modules, command line entry points and API scaffolding.  You can run

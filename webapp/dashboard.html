@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Structural Intelligence Executive Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="dashboard.js"></script>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="hero__copy">
+        <p class="eyebrow">Executive Dashboard</p>
+        <h1>Real-time posture of the Structural Intelligence Engine.</h1>
+        <p class="subtitle">
+          Snapshot key metrics, follow the live manifold feed, and review structural recommendations
+          drawn directly from the MMS evidence bundle.
+        </p>
+        <div class="hero__actions">
+          <a class="btn" href="/index.html">Back to Demo</a>
+          <a class="btn btn--ghost" href="https://docs.mxbikes.xyz" target="_blank" rel="noreferrer">Docs</a>
+        </div>
+      </div>
+      <div class="hero__meta" id="dashboard-meta">
+        <span class="meta__label">Payload generated</span>
+        <time id="dashboard-generated">Loading…</time>
+      </div>
+    </header>
+
+    <main class="content">
+      <section class="demo" id="system-snapshot">
+        <div class="demo__heading">
+          <h2>System Snapshot</h2>
+          <p>Key indicators synthesised from the most recent analysis payload.</p>
+        </div>
+        <div class="demo__body">
+          <div class="card">
+            <h3>Pattern Prophet</h3>
+            <p class="stat" id="snapshot-lift">—</p>
+            <p class="stat__note">Lift vs. baseline</p>
+            <ul class="token-list" id="snapshot-pattern"></ul>
+          </div>
+          <div class="card">
+            <h3>Twin Finder</h3>
+            <p class="stat" id="snapshot-twins">—</p>
+            <p class="stat__note">Aligned windows in top match</p>
+            <ul class="token-list" id="snapshot-twin-list"></ul>
+          </div>
+          <div class="card">
+            <h3>Context Refinery</h3>
+            <p class="stat" id="snapshot-struct-share">—</p>
+            <p class="stat__note">Structural coverage</p>
+            <ul class="token-list" id="snapshot-struct"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="demo" id="live-pattern-feed">
+        <div class="demo__heading">
+          <h2>Live Pattern Feed</h2>
+          <p>Streaming the MMS manifold in real-time via Server-Sent Events.</p>
+        </div>
+        <div class="demo__body">
+          <div class="card">
+            <h3>Controls</h3>
+            <button id="dashboard-live-toggle" class="btn btn--ghost" type="button">Start Stream</button>
+            <p class="stat__note">Endpoint: <code>/api/demo/live</code></p>
+          </div>
+          <div class="card card--wide">
+            <h3>Latest Frames</h3>
+            <ul class="live-feed" id="dashboard-live-feed"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="demo" id="structural-recommendations">
+        <div class="demo__heading">
+          <h2>Structural Recommendations</h2>
+          <p>Top bridge proposals and metrics ready to share with stakeholders.</p>
+        </div>
+        <div class="demo__body">
+          <div class="card card--wide">
+            <table>
+              <thead>
+                <tr>
+                  <th>String</th>
+                  <th>Score</th>
+                  <th>Patternability</th>
+                  <th>Connector</th>
+                  <th>Occurrences</th>
+                </tr>
+              </thead>
+              <tbody id="recommendations-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Built for the mxbikes.xyz sandbox · Powered by SEP Quantum Manifold</p>
+    </footer>
+  </div>
+  <div id="toast" class="toast" hidden></div>
+</body>
+</html>

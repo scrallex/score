@@ -252,6 +252,35 @@ tbody tr:last-child td {
   font-variant-numeric: tabular-nums;
 }
 
+.live-feed {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.live-feed li {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(61, 214, 140, 0.2);
+  background: rgba(61, 214, 140, 0.05);
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 10px;
+}
+
+.live-feed li span.label {
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  color: var(--text-secondary);
+}
+
 .token-list span.value {
   color: var(--text-secondary);
 }

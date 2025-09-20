@@ -1,7 +1,11 @@
 const config = window.__STM_CONFIG__ || {};
 const API_BASE = typeof config.apiBase === 'string' ? config.apiBase.replace(/\/$/, '') : '/api';
+const LIVE_ENDPOINT = `${API_BASE}/demo/live`;
+const QUICK_ANALYZE_ENDPOINT = `${API_BASE}/analyze/quick`;
 
 const toastEl = document.getElementById('toast');
+let liveSocket = null;
+let liveEventSource = null;
 
 function showToast(message, kind = 'info') {
   if (!toastEl) return;
@@ -198,6 +202,201 @@ async function loadDemo() {
   }
 }
 
+function appendLiveFrame(frame) {
+  const list = document.getElementById('live-feed-items');
+  if (!list) return;
+  const item = document.createElement('li');
+  const signature = frame.signature || '(none)';
+  item.innerHTML = `
+    <span class="label">${fmtInteger(frame.index)}</span>
+    <div>
+      <div><strong>${signature}</strong></div>
+      <div style="font-size: 0.8rem; opacity: 0.8;">
+        coh ${fmtNumber(frame.metrics?.coherence, 4)} ·
+        stab ${fmtNumber(frame.metrics?.stability, 4)} ·
+        ent ${fmtNumber(frame.metrics?.entropy, 4)} ·
+        λ ${fmtNumber(frame.metrics?.lambda_hazard, 4)}
+      </div>
+    </div>
+  `;
+  list.prepend(item);
+  while (list.childElementCount > 20) {
+    list.removeChild(list.lastElementChild);
+  }
+}
+
+function resolveWsEndpoint() {
+  if (typeof window !== 'undefined' && window.location && window.location.host) {
+    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${proto}//${window.location.host}/ws/stream`;
+  }
+  return 'ws://127.0.0.1/ws/stream';
+}
+
+function startSseStream(button) {
+  if (liveEventSource) return;
+  liveEventSource = new EventSource(LIVE_ENDPOINT);
+  liveEventSource.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      appendLiveFrame(data);
+    } catch (error) {
+      console.error('Invalid SSE payload', error);
+    }
+  };
+  liveEventSource.onerror = (event) => {
+    console.error('SSE stream error', event);
+    stopLiveStream(button, false);
+    setTimeout(() => startSseStream(button), 1500);
+  };
+  if (button) {
+    button.dataset.state = 'running';
+    button.textContent = 'Stop Live Stream';
+    button.classList.remove('btn--ghost');
+    button.classList.add('btn');
+  }
+  showToast('Live stream started (SSE fallback)');
+}
+
+function startLiveStream(button) {
+  if (liveSocket || liveEventSource) return;
+  try {
+    liveSocket = new WebSocket(resolveWsEndpoint());
+  } catch (error) {
+    console.error('WebSocket init failed, falling back to SSE', error);
+    startSseStream(button);
+    return;
+  }
+  liveSocket.onopen = () => {
+    if (button) {
+      button.dataset.state = 'running';
+      button.textContent = 'Stop Live Stream';
+      button.classList.remove('btn--ghost');
+      button.classList.add('btn');
+    }
+    showToast('Live stream started');
+  };
+  liveSocket.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      appendLiveFrame(data);
+    } catch (error) {
+      console.error('Invalid WebSocket payload', error);
+    }
+  };
+  liveSocket.onerror = (event) => {
+    console.error('WebSocket stream error', event);
+  };
+  liveSocket.onclose = () => {
+    const wasActive = liveSocket !== null;
+    liveSocket = null;
+    if (wasActive) {
+      // Attempt fallback to SSE when WS drops unexpectedly
+      if (!liveEventSource) {
+        startSseStream(button);
+      }
+    }
+  };
+}
+
+function stopLiveStream(button, notify = true) {
+  if (liveSocket) {
+    try {
+      liveSocket.close();
+    } catch (error) {
+      console.error('Error closing WebSocket', error);
+    }
+    liveSocket = null;
+  }
+  if (liveEventSource) {
+    liveEventSource.close();
+    liveEventSource = null;
+  }
+  if (button) {
+    button.dataset.state = 'idle';
+    button.textContent = 'Start Live Stream';
+    button.classList.add('btn--ghost');
+  }
+  if (notify) {
+    showToast('Live stream stopped');
+  }
+}
+
+async function handleQuickAnalyze(file) {
+  const summaryEl = document.getElementById('quick-summary-text');
+  const numericEl = document.getElementById('quick-numeric');
+  const recommendationsEl = document.getElementById('quick-recommendations');
+  const signaturesEl = document.getElementById('quick-signatures');
+  const manifoldMetaEl = document.getElementById('quick-manifold-meta');
+  if (!file || !summaryEl || !numericEl || !recommendationsEl || !signaturesEl || !manifoldMetaEl) {
+    return;
+  }
+  summaryEl.textContent = 'Analyzing…';
+  numericEl.innerHTML = '';
+  recommendationsEl.innerHTML = '';
+  signaturesEl.innerHTML = '';
+  manifoldMetaEl.textContent = '';
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const response = await fetch(QUICK_ANALYZE_ENDPOINT, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) {
+      if (response.status === 413) {
+        throw new Error('Uploaded file exceeds server size limits');
+      }
+      const text = await response.text();
+      throw new Error(text || response.statusText);
+    }
+    const result = await response.json();
+    summaryEl.textContent = `${result.rows ?? 0} rows · ${result.columns?.length ?? 0} columns`;
+
+    (result.numeric_columns || []).forEach((name) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<span>${name}</span>`;
+      numericEl.appendChild(li);
+    });
+
+    (result.metrics || []).forEach((metric) => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <span>${metric.column}</span>
+        <span class="value">μ ${fmtNumber(metric.mean, 4)} · σ ${fmtNumber(metric.std_dev, 4)}</span>
+      `;
+      numericEl.appendChild(li);
+    });
+
+    Object.entries(result.recommendations || {}).forEach(([key, value]) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<span>${key}</span><span class="value">${value}</span>`;
+      recommendationsEl.appendChild(li);
+    });
+
+    const manifold = result.manifold || {};
+    (manifold.top_signatures || []).forEach((entry) => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <span>${entry.signature}</span>
+        <span class="value">${fmtInteger(entry.count)} hits · coh ${fmtNumber(entry.mean_coherence, 4)}</span>
+      `;
+      signaturesEl.appendChild(li);
+    });
+    manifoldMetaEl.textContent = `Windows: ${fmtInteger(manifold.total_windows || 0)} · window=${manifold.window_bytes} stride=${manifold.stride}`;
+
+    showToast('Quick analysis complete');
+  } catch (error) {
+    console.error('Quick analyze failed', error);
+    summaryEl.textContent = 'Analysis failed';
+    manifoldMetaEl.textContent = 'Analysis failed';
+    signaturesEl.innerHTML = '';
+    showToast(error.message || 'Failed to analyze file', 'error');
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   loadDemo();
   const metaEl = document.getElementById('meta');
@@ -205,6 +404,30 @@ document.addEventListener('DOMContentLoaded', () => {
     metaEl.addEventListener('click', () => {
       loadDemo();
       showToast('Refreshing demo payload…');
+    });
+  }
+
+  const liveToggle = document.getElementById('live-toggle');
+  if (liveToggle) {
+    liveToggle.addEventListener('click', () => {
+      if (liveToggle.dataset.state === 'running') {
+        stopLiveStream(liveToggle);
+      } else {
+        startLiveStream(liveToggle);
+      }
+    });
+  }
+
+  const quickBtn = document.getElementById('quick-upload-btn');
+  const quickInput = document.getElementById('quick-upload');
+  if (quickBtn && quickInput) {
+    quickBtn.addEventListener('click', () => {
+      const file = quickInput.files?.[0];
+      if (!file) {
+        showToast('Select a CSV file first', 'error');
+        return;
+      }
+      void handleQuickAnalyze(file);
     });
   }
 });

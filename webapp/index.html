@@ -20,6 +20,7 @@
         <div class="hero__actions">
           <a class="btn" href="#pattern-prophet">View Demos</a>
           <a class="btn btn--ghost" href="https://docs.mxbikes.xyz" target="_blank" rel="noreferrer">Docs</a>
+          <a class="btn btn--ghost" href="/dashboard.html">Executive Dashboard</a>
         </div>
       </div>
       <div class="hero__meta" id="meta">
@@ -160,6 +161,54 @@
               Twin Finder demos.
             </p>
           </aside>
+        </div>
+      </section>
+      <section class="demo" id="live-demo">
+        <div class="demo__heading">
+          <h2>Live Demo Stream</h2>
+          <p>Replay the MMS manifold as a live signal feed to showcase real-time pattern scoring.</p>
+        </div>
+        <div class="demo__body">
+          <div class="card">
+            <h3>Stream Controls</h3>
+            <button id="live-toggle" class="btn btn--ghost" type="button">Start Live Stream</button>
+            <p class="stat__note">Uses event-stream updates from <code>/api/demo/live</code>.</p>
+          </div>
+          <div class="card card--wide" id="live-feed">
+            <h3>Recent Frames</h3>
+            <ul class="live-feed" id="live-feed-items"></ul>
+          </div>
+        </div>
+      </section>
+      <section class="demo" id="quick-analyze">
+        <div class="demo__heading">
+          <h2>Analyze Your Data (MVP)</h2>
+          <p>Upload a CSV to receive instant structural readiness hints. Ideal for customer walkthroughs.</p>
+        </div>
+        <div class="demo__body">
+          <div class="card">
+            <h3>Upload Sample</h3>
+            <input type="file" id="quick-upload" accept=".csv,.txt,.tsv" />
+            <button id="quick-upload-btn" class="btn" type="button">Analyze File</button>
+            <p class="stat__note">No data is persisted; server computes statistics directly from the uploaded file.</p>
+          </div>
+          <div class="card" id="quick-summary">
+            <h3>Summary</h3>
+            <p id="quick-summary-text">Awaiting upload…</p>
+          </div>
+          <div class="card">
+            <h3>Numeric Columns</h3>
+            <ul class="token-list" id="quick-numeric"></ul>
+          </div>
+          <div class="card">
+            <h3>Recommendations</h3>
+            <ul class="token-list" id="quick-recommendations"></ul>
+          </div>
+          <div class="card">
+            <h3>Top Signatures</h3>
+            <ul class="token-list" id="quick-signatures"></ul>
+            <p class="stat__note" id="quick-manifold-meta">Awaiting upload…</p>
+          </div>
         </div>
       </section>
     </main>
