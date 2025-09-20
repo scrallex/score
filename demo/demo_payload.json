@@ -1006,7 +1006,7 @@
       "total_candidates": 9
     }
   },
-  "generated_at": "2025-09-20T07:47:07.807385+00:00",
+  "generated_at": "2025-09-20T07:57:47.806900+00:00",
   "sources": {
     "proposals": "analysis/mms_proposals_struct.json",
     "state": "analysis/mms_state.json",
