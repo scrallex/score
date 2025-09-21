@@ -16,8 +16,8 @@ telemetry (`analysis/mms_state.json`), contributing a further ~6.2k and
 - Mean permutation p-values stay above 0.78 and the minima never fall
   below 0.595, even after tightening the guardrail to 1%. Coverage drops
   to ~1% but the alerts remain statistically indistinguishable from random,
-  even after importing the Logistics, aggregate PlanBench, and robotics
-  corpora.
+  even after importing Logistics/aggregate/robotics corpora and enabling
+  signature-locked twin suggestions.
 - Lead times plateau around 4–5 steps, so reducing the guardrail further
   does not unlock additional early warning.
 - Action: dynamic calibration should defer to the existing 5% guardrail
@@ -49,7 +49,8 @@ telemetry (`analysis/mms_state.json`), contributing a further ~6.2k and
 - P-values remain above 0.08 at every tested guardrail ≤5%; tightening the
   guardrail only reduces coverage to ~2% and shortens the already-small
   leads (<2 steps). Even with the additional Logistics, aggregate
-  PlanBench, and robotics windows, permutation significance is unchanged.
+  PlanBench, and robotics windows, plus signature matching, permutation
+  significance is unchanged.
 - Action: hold the static guardrail and focus on collecting additional
   mystery-domain traces and twins. Dynamic calibration should not shrink
   the guardrail until a more discriminative signal is available.

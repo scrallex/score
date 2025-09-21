@@ -259,8 +259,9 @@ analysis across 1--5\% guardrails; only Logistics crosses the $0.05$
 threshold when the guardrail drops to 2.5\%, while Blocksworld ($p_{\min}\approx
 0.60$) and Mystery ($p_{\min}\approx 0.08$) remain statistically
 indistinguishable from random schedules despite severe coverage reductions,
-longer 512-byte foreground windows, and the addition of Logistics,
-aggregate PlanBench, and robotics telemetry corpora into their twin libraries.
+longer 512-byte foreground windows, signature-locked twin retrieval, and the
+addition of Logistics, aggregate PlanBench, and robotics telemetry corpora into
+their twin libraries.
 The calibration tool now evaluates permutation statistics in-loop and
 automatically rewrites the Logistics router to the 2.5\% profile whenever the
 5\% configuration exhibits $p_{\min} > 0.05$, retaining the baseline artefacts
@@ -386,7 +387,7 @@ To tighten significance and improve robustness we will:
         diversifying CodeTrace scenarios across languages so that lower
         guardrails are exercised on longer, more varied traces;
   \item ingest real-world plan traces, robotic telemetry, and bug-fix commits
-        via the new enrichment hooks (`PLANBENCH_EXTRA_TWINS`) to broaden the
+        via the new enrichment hooks (\texttt{PLANBENCH\_EXTRA\_TWINS}) to broaden the
         twin corpus beyond synthetic data;
   \item explore dynamic guardrail calibration that targets $p \le 0.05$ on
         validation data, extending the in-loop permutation test now deployed for
