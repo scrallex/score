@@ -254,7 +254,18 @@ The lowest observed $p$-value in the fixed $5\%$ calibration (Logistics, $0.070$
 therefore offers only marginal sensitivity, and the $95\%$ confidence intervals
 on the means stay above $0.61$. Alert precision is $1.0$ across all traces, so
 improving discriminative power will require richer structural signals rather
-than stricter timing alone.
+than stricter timing alone. Table~\ref{tab:guardrail-dynamic} expands the
+analysis across 1--5\% guardrails; only Logistics crosses the $0.05$
+threshold when the guardrail drops to 2.5\%, while Blocksworld and Mystery
+remain statistically indistinguishable from random schedules despite severe
+coverage reductions.
+
+\begin{table}[h]
+  \centering
+  \caption{Low guardrail sweep (1--5\%) across PlanBench domains. Coverage and lead are averaged over invalid traces; permutation metrics use 20\,000 shuffles.}
+  \label{tab:guardrail-dynamic}
+  \input{guardrail_sensitivity_dynamic.tex}
+\end{table}
 
 \begin{table}[h]
   \centering

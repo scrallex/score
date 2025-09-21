@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 import pandas as pd
 
@@ -80,6 +81,40 @@ def write_guardrail_table() -> None:
         fh.write("\\bottomrule\n")
 
 
+def write_guardrail_dynamic_table() -> None:
+    dynamic_path = NOTE_DIR / "appendix_guardrail_sensitivity_dynamic.json"
+    data = json.loads(dynamic_path.read_text(encoding="utf-8"))
+    df = pd.DataFrame(data)
+    numeric_cols = [
+        "target_guardrail",
+        "coverage_pct",
+        "lead_mean",
+        "p_value_mean",
+        "p_value_min",
+    ]
+    for col in numeric_cols:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
+    df["notes"] = df["notes"].fillna("")
+
+    with (OUTPUT_DIR / "guardrail_sensitivity_dynamic.tex").open("w", encoding="utf-8") as fh:
+        fh.write("\\toprule\n")
+        fh.write("Domain & Target (\%) & Coverage (\%) & Lead & $p$-mean & $p$-min & Notes\\\\\n")
+        fh.write("\\midrule\n")
+        for _, row in df.iterrows():
+            fh.write(
+                "{domain} & {target:.1f} & {coverage:.2f} & {lead:.2f} & {p_mean:.3f} & {p_min:.3f} & {notes}\\\\\n".format(
+                    domain=row["domain"],
+                    target=row["target_guardrail"] * 100,
+                    coverage=row["coverage_pct"],
+                    lead=row["lead_mean"],
+                    p_mean=row["p_value_mean"],
+                    p_min=row["p_value_min"],
+                    notes=row["notes"],
+                )
+            )
+        fh.write("\\bottomrule\n")
+
+
 def write_tau_table() -> None:
     df = pd.read_csv(NOTE_DIR / "appendix_tau_sweep.csv")
     with (OUTPUT_DIR / "tau_sweep.tex").open("w", encoding="utf-8") as fh:
@@ -102,6 +137,7 @@ def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     write_planbench_scorecard()
     write_guardrail_table()
+    write_guardrail_dynamic_table()
     write_tau_table()
     print("LaTeX tables written to", OUTPUT_DIR)
 
