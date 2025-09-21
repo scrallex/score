@@ -8,6 +8,7 @@ Here’s the straight read on where your work stands today, plus the exact moves
 * ✅ Extended Logistics corpus to 500 traces (new root `data/planbench_scale500`), recalibrated guardrails, and appended sweep results (5\% target still hits $p_{\min}=0.035$ at \~2.9\% coverage; 2.5\% target reverts to $p_{\min}=0.33$).
 * ✅ Scaled Blocksworld and Mystery to 500 traces via `make planbench-scale`; both domains stay null (Blocksworld $p_{\min}=0.62$, Mystery $p_{\min}=0.14$) while preserving $\leq 9\%$ coverage.
 * ✅ Regenerated appendix sweep CSV + feature ablation table to capture the new window and scale probes; whitepaper recompiles cleanly.
+* ✅ Added Logistics 2.5\% guardrail overlay figure and tightened whitepaper layout (no overfull boxes; tables now fit without float warnings).
 
 ---
 

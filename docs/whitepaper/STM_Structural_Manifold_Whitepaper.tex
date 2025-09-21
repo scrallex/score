@@ -9,10 +9,13 @@
 \usepackage{subcaption}
 \usepackage{longtable}
 \usepackage{array}
+\usepackage{tabularx}
 \usepackage{siunitx}
 \usepackage{xcolor}
 \usepackage{tikz}
 \usepackage{listings}
+
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
 \usetikzlibrary{arrows.meta, positioning, shapes.geometric}
 \sisetup{round-mode=places, round-precision=2}
@@ -57,12 +60,14 @@ research-grade reference for guardrail evaluation on symbolic planning agents.
 
 \section*{Executive Summary}
 \addcontentsline{toc}{section}{Executive Summary}
+\begin{sloppypar}
 \begin{itemize}
-  \item \textbf{PlanBench++ guardrails:} dense percentile calibration reaches 5\% coverage per domain while preserving multi-step lead time and twin recall, with new sweeps mapping coverage against permutation significance.
-  \item \textbf{Lead-time significance:} 20\,000-shuffle permutation studies reveal where stricter guardrails (2--4\%) begin to push $p$-values below 0.05, setting targets for dynamic calibration.
+  \item \textbf{PlanBench++ guardrails:} Dense percentile calibration reaches 5\% coverage per domain while preserving multi-step lead time and twin recall. New sweeps map coverage against permutation significance.
+  \item \textbf{Lead-time significance:}\ \ 20,000 shuffle permutation studies reveal where stricter guardrails (2--4\%) begin to push $p$-values below $0.05$, setting targets for dynamic calibration.
   \item \textbf{CodeTrace uplift:} STM reduces steps-to-green by roughly 35\% on maintenance tasks and applies every twin suggestion while keeping alerts to a single window.
   \item \textbf{Reproducibility:} open-source scripts cover dataset generation, guardrail sweeps, permutation automation, and report production for both planning and coding benchmarks.
 \end{itemize}
+\end{sloppypar}
 
 \section{Introduction}
 Large Language Models (LLMs) deliver credible reasoning across open-ended
@@ -129,12 +134,12 @@ experiments.
 \subsection{Datasets}
 We analyse three PlanBench domains (Blocksworld, Mystery Blocksworld, Logistics)
 and the aggregate public corpus. A refreshed generator creates 300 problem
-instances per domain (\texttt{scripts/generate\_planbench\_dataset.py}), which we
-convert into STM artefacts using \texttt{scripts/planbench\_to\_stm.py} with
-window bytes $256$ and stride $128$. Tokens, states, and per-trace lead/twin
-metrics reside in \texttt{output/planbench\_by\_domain/\textit{domain}/}. We
-additionally retain PlanBench aggregate states under
-\texttt{output/planbench\_public/}. To probe transfer, we reuse STM
+instances per domain via \path{scripts/generate_planbench_dataset.py}. We
+convert the outputs into STM artefacts using \path{scripts/planbench_to_stm.py}
+with window bytes $256$ and stride $128$. Tokens, states, and per-trace
+lead/twin metrics reside in \path{output/planbench_by_domain/<domain>/}. We
+additionally retain PlanBench aggregate states under \path{output/planbench_public/}.
+To probe transfer, we reuse STM
 instrumentation on three maintenance tasks from the CodeTrace demo (flaky test,
 service rename, missing import).
 
@@ -258,11 +263,21 @@ We promote that profile to the default, and the calibration tool now evaluates
 permutation statistics in-loop: whenever the $5\%$ router reports
 $p_{\min}>0.05$, the build rewrites the Logistics guardrail to the $2.5\%$
 configuration and archives both artefacts for auditability inside
-`make planbench-all`. The window ablation in Table~\ref{tab:feature-ablation}
+`make planbench-all`. Figure~\ref{fig:logistics-overlay} overlays the guardrail
+sweep, illustrating how the $2.5\%$ target simultaneously maximises lead and
+slides $p_{\min}$ below the $0.05$ threshold. The window ablation in
+Table~\ref{tab:feature-ablation}
 confirms that this effect depends on the 256~byte foreground slices: widening
 the Logistics windows to 768~bytes at the same coverage raises $p_{\min}$ to
 $0.12$ and the dynamic profile never drops below $0.33$, despite a $12$-step
 mean lead.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.6\textwidth]{figures/logistics_guardrail_overlay.png}
+  \caption{Logistics guardrail sweep overlay. Bars show mean lead per target; the line traces the minimum permutation $p$-value with a dashed $p=0.05$ reference. The dynamic $2.5\%$ profile preserves a 10-step lead while achieving $p_{\min}=0.035$.}
+  \label{fig:logistics-overlay}
+\end{figure}
 
 \paragraph{Null results for Blocksworld and Mystery.} Even the lowest guardrail
 settings leave Blocksworld at $p_{\min}=0.62$ and Mystery at
@@ -284,7 +299,7 @@ $p_{\min}=0.62$ despite covering $8.9\%$ of windows, Mystery settles at
 $p_{\min}=0.14$ with $3.0\%$ coverage, and Logistics still slips beneath $0.05$
 at the $5\%$ target ($p_{\min}=0.035$) albeit over just $2.9\%$ of windows.
 
-\begin{table}[h]
+\begin{table}[t]
   \centering
   \caption{Low guardrail sweep (1--5\%) across PlanBench domains. Coverage and lead are averaged over invalid traces; permutation metrics use 20\,000 shuffles.}
   \label{tab:guardrail-dynamic}
@@ -296,7 +311,7 @@ Additional data alone is insufficient, underscoring the need for richer
 foreground features and twin filtering to gain discriminative power before
 pursuing stricter guardrails on those domains.
 
-\begin{table}[h]
+\begin{table}[t]
   \centering
   \caption{Feature/twin ablations on PlanBench guardrails using 20\,000 permutations. Coverage values are reported on invalid traces. Longer windows and a larger Logistics corpus increase lead time but do not recover statistical power for the null domains.}
   \label{tab:feature-ablation}

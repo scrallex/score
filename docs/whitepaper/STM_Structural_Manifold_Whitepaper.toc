@@ -15,13 +15,13 @@
 \contentsline {subsection}{\numberline {5.2}Lead-Time and Guardrail Behaviour}{5}{subsection.5.2}%
 \contentsline {subsection}{\numberline {5.3}Permutation Significance}{6}{subsection.5.3}%
 \contentsline {paragraph}{Why Logistics achieves significance.}{6}{section*.5}%
-\contentsline {paragraph}{Null results for Blocksworld and Mystery.}{6}{section*.6}%
-\contentsline {paragraph}{Feature- and twin-level ablations.}{7}{section*.7}%
+\contentsline {paragraph}{Null results for Blocksworld and Mystery.}{6}{section*.7}%
+\contentsline {paragraph}{Feature- and twin-level ablations.}{7}{section*.8}%
 \contentsline {subsection}{\numberline {5.4}Structural Twin Alignment}{7}{subsection.5.4}%
-\contentsline {subsection}{\numberline {5.5}CodeTrace Maintenance Tasks}{8}{subsection.5.5}%
-\contentsline {section}{\numberline {6}Comparison to PDDL-INSTRUCT}{9}{section.6}%
-\contentsline {section}{\numberline {7}Discussion}{9}{section.7}%
-\contentsline {subsection}{\numberline {7.1}Limitations}{10}{subsection.7.1}%
-\contentsline {subsection}{\numberline {7.2}Future Work}{10}{subsection.7.2}%
+\contentsline {subsection}{\numberline {5.5}CodeTrace Maintenance Tasks}{7}{subsection.5.5}%
+\contentsline {section}{\numberline {6}Comparison to PDDL-INSTRUCT}{8}{section.6}%
+\contentsline {section}{\numberline {7}Discussion}{8}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Limitations}{9}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Future Work}{9}{subsection.7.2}%
 \contentsline {section}{\numberline {8}Conclusion}{10}{section.8}%
-\contentsline {section}{\numberline {A}Reproducibility Checklist}{10}{appendix.A}%
+\contentsline {section}{\numberline {A}Reproducibility Checklist}{11}{appendix.A}%
