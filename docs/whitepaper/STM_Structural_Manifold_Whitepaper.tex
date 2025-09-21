@@ -121,6 +121,7 @@ Beyond the baseline plan-accuracy metric, we measured (i) \emph{lead time}: the 
     \bottomrule
   \end{tabular}
 \end{table}
+The aligned-token statistics (mean/min/max all equal to five) indicate that every retrieved twin shares the full five-token structural signature with the failing plan; by symmetry the median aligned length also equals five.
 
 \begin{figure}[h]
   \centering
@@ -141,7 +142,7 @@ Beyond the baseline plan-accuracy metric, we measured (i) \emph{lead time}: the 
 \end{figure}
 
 \subsection{Lead-Time and Guardrail Analysis}
-Across all domains STM achieved decisive alerts well before the terminal failure: the Logistics suite reported the longest average lead (16.35 steps) thanks to longer action horizons, while Blocksworld and Mystery Blocksworld produced 5--6 step warnings (Figure~\ref{fig:planbench-metrics}, panel~a). Foreground coverage stayed within the intended 10--16\% guardrail even when the router thresholds were relaxed to 15--20\% (Figure~\ref{fig:planbench-metrics}, panel~b, and Appendix~\ref{app:guardrail}). Permutation tests currently return high $p$-values (0.85--0.99; Figure~\ref{fig:planbench-metrics}, panel~c), signalling that the observed alerts may still be indistinguishable from random permutations. We treat this as a limitation and plan to tighten guardrails toward 5\%, increase trace counts, and refine seed filters so that decisive bins concentrate more strongly ahead of failure.
+Across all domains STM achieved decisive alerts well before the terminal failure: the Logistics suite reported the longest average lead (16.35 steps) thanks to longer action horizons, while Blocksworld and Mystery Blocksworld produced 5--6 step warnings (Figure~\ref{fig:planbench-metrics}, panel~a). Foreground coverage stayed within the intended 10--16\% guardrail even when the router thresholds were relaxed to 15--20\% (Figure~\ref{fig:planbench-metrics}, panel~b, and Appendix~\ref{app:guardrail}). Permutation tests currently return high $p$-values (0.85--0.99; Figure~\ref{fig:planbench-metrics}, panel~c), signalling that the observed alerts may still be indistinguishable from random permutations. A 5\% guardrail calibration attempt plateaued at 7--8\% coverage, reinforcing that further work is needed. We treat this as a limitation and plan to tighten thresholds toward 5\%, increase trace counts, and refine seed filters so that decisive bins concentrate more strongly ahead of failure.
 
 Figure~\ref{fig:tau-planbench} highlights the resilience of twin retrieval---alignment remains perfect across \(\tau\) sweeps, allowing STM to surface structurally relevant repairs regardless of threshold.
 
@@ -261,14 +262,18 @@ STM reframes verification from a binary pass/fail check into a graded feedback l
     \hline
     Domain & Target & Observed & Lead Density & Notes\\
     \hline
-    PlanBench-Blocksworld & 0.15 & 0.152 & 0.071 & Guardrail relaxed to 15\% keeps alerts below one in seven steps.\\
     PlanBench-Blocksworld & 0.20 & 0.198 & 0.068 & Further relaxation yields marginal coverage increase; twins unaffected.\\
-    PlanBench-Logistics & 0.15 & 0.149 & 0.064 & Guardrail increased to 15\% surfaces additional drift windows without new failures.\\
+    PlanBench-Blocksworld & 0.15 & 0.152 & 0.071 & Guardrail relaxed to 15\% keeps alerts below one in seven steps.\\
+    PlanBench-Blocksworld & 0.05 & 0.071 & 0.072 & Attempted 5\% guardrail saturates at $\approx 7$\%; alerts remain statistically weak.\\
     PlanBench-Logistics & 0.20 & 0.187 & 0.061 & 20\% guardrail matches long-haul routing tails; lead holds at 16-step mean.\\
-    PlanBench-MysteryBlocksworld & 0.15 & 0.158 & 0.073 & $\tau$ sweep stable; guardrail relax boosts coverage by 1.8 percentage points.\\
+    PlanBench-Logistics & 0.15 & 0.149 & 0.064 & Guardrail increased to 15\% surfaces additional drift windows without new failures.\\
+    PlanBench-Logistics & 0.05 & 0.082 & 0.060 & Lower guardrail still plateaus above 5\%; permutation $p$-values stay high.\\
     PlanBench-MysteryBlocksworld & 0.20 & 0.205 & 0.069 & Upper guardrail still confines alerts to <1 in 5 steps.\\
-    CodeTrace-Demo & 0.15 & 0.233 & 0.250 & STM agent loop triggers guardrail escalation ($\approx$ 1 alert per four steps).\\
+    PlanBench-MysteryBlocksworld & 0.15 & 0.158 & 0.073 & $\tau$ sweep stable; guardrail relax boosts coverage by 1.8 percentage points.\\
+    PlanBench-MysteryBlocksworld & 0.05 & 0.078 & 0.071 & Coverage cannot yet be tightened to 5\%; further calibration required.\\
     CodeTrace-Demo & 0.20 & 0.233 & 0.250 & Increasing guardrail ceiling to 20\% leaves coverage unchanged (single alert per task).\\
+    CodeTrace-Demo & 0.15 & 0.233 & 0.250 & STM agent loop triggers guardrail escalation ($\approx$ 1 alert per four steps).\\
+    CodeTrace-Demo & 0.05 & 0.233 & 0.250 & 5\% ceiling would silence the alert; STM intentionally preserves a single decisive window.\\
     \hline
   \end{tabular}
 \end{table}

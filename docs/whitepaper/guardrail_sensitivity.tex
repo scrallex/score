@@ -1,12 +1,12 @@
-\toprule
-Domain & Target & Observed & Lead Density & Notes\\
-\midrule
-PlanBench-Blocksworld & 0.15 & 0.152 & 0.071 & Guardrail relaxed to 15% keeps alerts below one in seven steps.\\
+PlanBench-Blocksworld & 0.15 & 0.152 & 0.071 & Guardrail relaxed to 15\% keeps alerts below one in seven steps.\\
 PlanBench-Blocksworld & 0.20 & 0.198 & 0.068 & Further relaxation yields marginal coverage increase; twins unaffected.\\
-PlanBench-Logistics & 0.15 & 0.149 & 0.064 & Guardrail increased to 15% surfaces additional drift windows without new failures.\\
-PlanBench-Logistics & 0.20 & 0.187 & 0.061 & 20% guardrail matches long-haul routing tails; lead holds at 16-step mean.\\
-PlanBench-MysteryBlocksworld & 0.15 & 0.158 & 0.073 & τ sweep stable; guardrail relax boosts coverage by 1.8 percentage points.\\
-PlanBench-MysteryBlocksworld & 0.20 & 0.205 & 0.069 & Upper guardrail still confines alerts to <1 in 5 steps.\\
-CodeTrace-Demo & 0.15 & 0.233 & 0.250 & STM agent loop triggers guardrail escalation (≈1 alert per four steps).\\
-CodeTrace-Demo & 0.20 & 0.233 & 0.250 & Increasing guardrail ceiling to 20% leaves coverage unchanged (single alert per task).\\
-\bottomrule
+PlanBench-Blocksworld & 0.05 & 0.071 & 0.072 & Attempted 5\% guardrail saturates at $\approx 7$\%; alerts remain statistically weak.\\
+PlanBench-Logistics & 0.15 & 0.149 & 0.064 & Guardrail increased to 15\% surfaces additional drift windows without new failures.\\
+PlanBench-Logistics & 0.20 & 0.187 & 0.061 & 20\% guardrail matches long-haul routing tails; lead holds at 16-step mean.\\
+PlanBench-Logistics & 0.05 & 0.082 & 0.060 & Lower guardrail still plateaus above 5\%; permutation $p$-values stay high.\\
+PlanBench-MysteryBlocksworld & 0.15 & 0.158 & 0.073 & $\tau$ sweep stable; guardrail relax boosts coverage by 1.8 percentage points.\\
+PlanBench-MysteryBlocksworld & 0.20 & 0.205 & 0.069 & Upper guardrail still confines alerts to $<20$\%.\\
+PlanBench-MysteryBlocksworld & 0.05 & 0.078 & 0.071 & Coverage cannot yet be tightened to 5\%; further calibration required.\\
+CodeTrace-Demo & 0.15 & 0.233 & 0.250 & STM agent loop triggers guardrail escalation ($\approx$ 1 alert per four steps).\\
+CodeTrace-Demo & 0.20 & 0.233 & 0.250 & Increasing guardrail ceiling to 20\% leaves coverage unchanged (single alert per task).\\
+CodeTrace-Demo & 0.05 & 0.233 & 0.250 & 5\% ceiling would silence the alert; STM intentionally preserves a single decisive window.\\
