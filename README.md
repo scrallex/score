@@ -117,6 +117,13 @@ python scripts/calibrate_router.py \
   --pvalue-threshold 0.05 --pvalue-metric min \
   --output analysis/router_config_logistics_invalid_5pct.json
 
+Use `--optimize-permutation` when you want calibration to search nearby
+coverage targets and retain the guardrail with the strongest permutation
+significance. The helper flags `--optimize-width`, `--optimize-span`,
+`--optimize-samples`, and `--optimize-centers` control the search window, letting
+you bias the scan toward bespoke coverage budgets or previously audited
+thresholds without writing additional scripts.
+
 # Enrich Blocksworld or Mystery twins with the Logistics corpus and rerun sweeps.
 # (The make target does this automatically via --enrich-from when rebuilding domains.)
 python scripts/enrich_twin_corpus.py \
@@ -147,6 +154,12 @@ make codetrace-report
 
 This command replays the CodeTrace maintenance tasks and emits the aggregated
 report used in the whitepaper.
+
+The `CodeTraceAdapter` now inspects Python edits for structural cues, parsing
+added snippets into AST categories (functions, branches, context managers,
+etc.) and recording change magnitudes. These features feed directly into the
+manifold, giving the guardrail additional leverage in discriminating noisy
+maintenance edits from meaningful repairs.
 
 ## Repository structure
 

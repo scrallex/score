@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from itertools import chain
 from pathlib import Path
 from typing import Iterable, List, Sequence, Tuple
 
@@ -74,11 +75,68 @@ def encode_pddl_transition(
     if added and removed:
         structural_tokens.append("transition__RUPTURE")
 
+    changes = list(chain(added, removed))
+    change_count = len(changes)
+    persisted_count = len(persisted)
+
+    def _bucket_size(count: int) -> str:
+        if count <= 0:
+            return "none"
+        if count == 1:
+            return "single"
+        if count <= 3:
+            return "few"
+        if count <= 6:
+            return "several"
+        return "many"
+
+    structural_tokens.append(f"transition__delta_size__{_bucket_size(change_count)}")
+    ratio = change_count / max(1, persisted_count)
+    if ratio == 0:
+        structural_tokens.append("transition__relative_change__static")
+    elif ratio < 0.5:
+        structural_tokens.append("transition__relative_change__light")
+    elif ratio < 1.25:
+        structural_tokens.append("transition__relative_change__balanced")
+    else:
+        structural_tokens.append("transition__relative_change__heavy")
+
+    referenced_args = {
+        arg
+        for arg in action_args
+        for predicate in changes
+        if arg and arg in predicate
+    }
+    unused_args = [arg for arg in action_args if arg and arg not in referenced_args]
+    if unused_args:
+        structural_tokens.append("action__argument_dropout__DRIFT")
+    else:
+        structural_tokens.append("action__argument_alignment__ZPOS")
+
+    alignment_hits = 0
+    for predicate in changes:
+        for arg in action_args:
+            if arg and arg in predicate:
+                alignment_hits += 1
+                break
+
+    if change_count:
+        alignment_ratio = alignment_hits / change_count
+        if alignment_ratio < 0.34:
+            structural_tokens.append("action__effect_alignment__low")
+        elif alignment_ratio > 0.67:
+            structural_tokens.append("action__effect_alignment__high")
+        else:
+            structural_tokens.append("action__effect_alignment__medium")
+    else:
+        structural_tokens.append("action__effect_alignment__none")
+
     semantic_tokens: List[str] = []
     if action_name:
         semantic_tokens.append(action_name)
     semantic_tokens.extend(added)
     semantic_tokens.extend(f"not_{pred}" for pred in removed)
+    semantic_tokens.extend(f"arg_unused:{arg}" for arg in unused_args)
 
     return " ".join(structural_tokens), semantic_tokens
 

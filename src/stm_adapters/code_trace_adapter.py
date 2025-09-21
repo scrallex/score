@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import ast
 import json
+import re
+import textwrap
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, MutableSequence, Sequence, Tuple
@@ -66,6 +70,17 @@ class CodeTokenizer:
         language = self._language_for_path(file_path)
         structural = [f"edit__generic__{language}" if language else "edit__generic"]
         semantic = self._path_tokens(file_path)
+
+        patch, content = self._extract_edit_payload(step)
+        diff_tokens, diff_semantic = self._diff_features(patch, language)
+        structural.extend(diff_tokens)
+        semantic.extend(diff_semantic)
+
+        if language in {"py", "python"}:
+            py_tokens, py_semantic = self._python_features(patch, content)
+            structural.extend(py_tokens)
+            semantic.extend(py_semantic)
+
         return TokenBundle(structural, semantic[: self.semantic_limit])
 
     def _encode_tests(self, step: Mapping[str, object]) -> TokenBundle:
@@ -141,6 +156,203 @@ class CodeTokenizer:
             return []
         segments = Path(path).parts
         return [segment for segment in segments if segment]
+
+    def _extract_edit_payload(self, step: Mapping[str, object]) -> Tuple[str, str | None]:
+        metadata = step.get("metadata")
+        if not isinstance(metadata, Mapping):
+            return "", None
+        patch = metadata.get("patch") or metadata.get("diff") or ""
+        content = metadata.get("content") or metadata.get("new_content")
+        return str(patch), str(content) if content is not None else None
+
+    def _diff_features(self, patch: str, language: str) -> Tuple[List[str], List[str]]:
+        if not patch:
+            return [], []
+
+        additions: List[str] = []
+        deletions: List[str] = []
+        for line in patch.splitlines():
+            if line.startswith("+++") or line.startswith("---"):
+                continue
+            if line.startswith("+"):
+                additions.append(line[1:])
+            elif line.startswith("-"):
+                deletions.append(line[1:])
+
+        tokens: List[str] = []
+        semantics: List[str] = []
+
+        def bucket(count: int) -> str:
+            if count <= 0:
+                return "none"
+            if count <= 3:
+                return "small"
+            if count <= 8:
+                return "medium"
+            return "large"
+
+        add_count = len(additions)
+        del_count = len(deletions)
+        tokens.append(f"edit__delta_additions__{bucket(add_count)}")
+        tokens.append(f"edit__delta_deletions__{bucket(del_count)}")
+
+        net = add_count - del_count
+        if net == 0:
+            net_bucket = "balanced"
+        elif net > 0:
+            net_bucket = "positive" if net <= 5 else "large_positive"
+        else:
+            net_bucket = "negative" if net >= -5 else "large_negative"
+        tokens.append(f"edit__delta_net__{net_bucket}")
+
+        if add_count and not del_count:
+            tokens.append("edit__delta_profile__pure_addition")
+        elif del_count and not add_count:
+            tokens.append("edit__delta_profile__pure_deletion")
+        elif add_count and del_count:
+            tokens.append("edit__delta_profile__mixed")
+
+        if language:
+            semantics.append(f"delta:{language}:{add_count}:{del_count}")
+
+        return tokens, semantics
+
+    def _python_features(self, patch: str, content: str | None) -> Tuple[List[str], List[str]]:
+        additions: List[str] = []
+        deletions: List[str] = []
+        if patch:
+            for line in patch.splitlines():
+                if line.startswith("+++") or line.startswith("---"):
+                    continue
+                if line.startswith("+"):
+                    additions.append(line[1:])
+                elif line.startswith("-"):
+                    deletions.append(line[1:])
+
+        tokens: List[str] = []
+        semantics: List[str] = []
+
+        if additions:
+            if any(self._looks_like_signature(line, "def") for line in additions):
+                tokens.append("edit__py__add_function_signature")
+            if any(self._looks_like_signature(line, "class") for line in additions):
+                tokens.append("edit__py__add_class_signature")
+            if any("import " in line for line in additions):
+                tokens.append("edit__py__add_import")
+        if deletions:
+            if any(self._looks_like_signature(line, "def") for line in deletions):
+                tokens.append("edit__py__remove_function_signature")
+            if any(self._looks_like_signature(line, "class") for line in deletions):
+                tokens.append("edit__py__remove_class_signature")
+
+        ast_tokens, ast_semantics = self._python_ast_tokens(additions, content)
+        tokens.extend(ast_tokens)
+        semantics.extend(ast_semantics)
+        return tokens, semantics
+
+    def _python_ast_tokens(self, additions: Sequence[str], content: str | None) -> Tuple[List[str], List[str]]:
+        sources: List[str] = []
+        snippet = "\n".join(additions).strip()
+        if snippet:
+            sources.append(textwrap.dedent(snippet))
+            indented = "\n".join(f"    {line}" if line.strip() else "" for line in snippet.splitlines())
+            sources.append(f"def _stm_patch_stub():\n{indented}\n")
+        if content:
+            sources.insert(0, str(content))
+
+        best_tree: ast.AST | None = None
+        for source in sources:
+            if not source.strip():
+                continue
+            try:
+                best_tree = ast.parse(source)
+                break
+            except SyntaxError:
+                continue
+
+        if best_tree is None:
+            if additions:
+                return ["edit__py__ast_invalid"], []
+            return [], []
+
+        tokens: List[str] = []
+        semantics: List[str] = []
+
+        category_counts: Counter[str] = Counter()
+        node_total = 0
+        max_depth = 0
+
+        def walk(node: ast.AST, depth: int) -> None:
+            nonlocal node_total, max_depth
+            node_total += 1
+            max_depth = max(max_depth, depth)
+            category = self._ast_category(node)
+            if category:
+                category_counts[category] += 1
+                if category == "function_def" and isinstance(node, ast.FunctionDef):
+                    semantics.append(f"func:{node.name}")
+                if category == "class_def" and isinstance(node, ast.ClassDef):
+                    semantics.append(f"class:{node.name}")
+            for child in ast.iter_child_nodes(node):
+                walk(child, depth + 1)
+
+        walk(best_tree, 0)
+
+        tokens.extend(f"edit__py__ast_{key}" for key in sorted(category_counts))
+
+        def bucket_nodes(count: int) -> str:
+            if count <= 15:
+                return "tiny"
+            if count <= 45:
+                return "small"
+            if count <= 120:
+                return "medium"
+            return "large"
+
+        def bucket_depth(depth: int) -> str:
+            if depth <= 2:
+                return "shallow"
+            if depth <= 4:
+                return "moderate"
+            if depth <= 6:
+                return "deep"
+            return "very_deep"
+
+        tokens.append(f"edit__py__ast_node_count__{bucket_nodes(node_total)}")
+        tokens.append(f"edit__py__ast_depth__{bucket_depth(max_depth)}")
+
+        return tokens, semantics
+
+    def _looks_like_signature(self, line: str, keyword: str) -> bool:
+        pattern = rf"^{keyword}\s+([A-Za-z_][A-Za-z0-9_]*)"
+        return bool(re.match(pattern, line.strip()))
+
+    def _ast_category(self, node: ast.AST) -> str | None:
+        if isinstance(node, ast.FunctionDef):
+            return "function_def"
+        if isinstance(node, ast.AsyncFunctionDef):
+            return "async_function_def"
+        if isinstance(node, ast.ClassDef):
+            return "class_def"
+        if isinstance(node, (ast.For, ast.While, ast.AsyncFor)):
+            return "loop"
+        if isinstance(node, ast.If):
+            return "branch"
+        if isinstance(node, ast.Try):
+            return "try"
+        if isinstance(node, ast.With):
+            return "context"
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            return "import"
+        if isinstance(node, ast.Call):
+            return "call"
+        if isinstance(node, ast.Return):
+            return "return"
+        if isinstance(node, ast.Assert):
+            return "assert"
+        if isinstance(node, ast.Raise):
+            return "raise"
+        return None
 
 
 @dataclass

@@ -8,6 +8,12 @@ This demo package ships three curated engineering scenarios derived from real ag
 
 Use the helper scripts to compare baseline vs. STM runs and regenerate STM-ready corpora via the `CodeTraceAdapter`.
 
+The adapter now extracts syntax-aware features for Python edits. Diff chunks are
+classified by their change profile (additions vs. deletions, delta size) and
+parsed into AST categories so the guardrail can reason about new function
+definitions, control-flow additions, imports, and other semantic cues when
+ranking foreground windows.
+
 ## Prerequisites
 
 * Python 3.10+
@@ -38,4 +44,3 @@ Reports are written under `demo/coding/output/<task>/<variant>/` mirroring the a
 | `resolve_missing_import` | Introduce missing dependency in build. | 5 steps, repeated lint failures. | 3 steps, STM proposes import fix. |
 
 Each replay can be fed into `/stm/enrich` or `/stm/seen` directly to validate dilution, coverage, and twin proposals.
-
