@@ -1,0 +1,55 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{planbench}
+\citation{stm-manifold}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{3}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Background and Related Work}{3}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Structural Manifold Coprocessor}{3}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Architecture Overview}{3}{subsection.3.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces STM sits alongside an LLM agent. It ingests structured telemetry from the agent's tool calls, scores each window, and returns guardrail alerts and structural twin repairs.}}{3}{figure.caption.2}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:architecture}{{1}{3}{STM sits alongside an LLM agent. It ingests structured telemetry from the agent's tool calls, scores each window, and returns guardrail alerts and structural twin repairs}{figure.caption.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Implementation Details}{4}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}PlanBench++ Evaluation}{4}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Dataset Construction}{4}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Metrics}{4}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Results Summary}{4}{subsection.4.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces PlanBench scorecard excerpt (full table in Appendix~\ref {app:scorecard}).}}{4}{table.caption.3}\protected@file@percent }
+\newlabel{tab:planbench-scorecard}{{1}{4}{PlanBench scorecard excerpt (full table in Appendix~\ref {app:scorecard})}{table.caption.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Lead-Time and Guardrail Analysis}{4}{subsection.4.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Structural metrics across PlanBench domains. Logistics enjoys the longest warning horizon while all domains respect the 10--16\% guardrail and exhibit non-random late-bin enrichment.}}{5}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:planbench-metrics}{{2}{5}{Structural metrics across PlanBench domains. Logistics enjoys the longest warning horizon while all domains respect the 10--16\% guardrail and exhibit non-random late-bin enrichment}{figure.caption.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces PlanBench twin acceptance across \(\tau \) thresholds. STM retains 100\% twin recall as alignment strictness increases.}}{5}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:tau-planbench}{{3}{5}{PlanBench twin acceptance across \(\tau \) thresholds. STM retains 100\% twin recall as alignment strictness increases}{figure.caption.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}CodeTrace Coding Demo}{5}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Demo Setup}{5}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Baseline vs STM Outcomes}{6}{subsection.5.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Per-task comparison between baseline and STM-assisted runs. Alert ratio denotes the fraction of steps flagged as foreground.}}{6}{table.caption.6}\protected@file@percent }
+\newlabel{tab:codetrace-per-task}{{2}{6}{Per-task comparison between baseline and STM-assisted runs. Alert ratio denotes the fraction of steps flagged as foreground}{table.caption.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Aggregate metrics across the three coding tasks.}}{6}{table.caption.7}\protected@file@percent }
+\newlabel{tab:codetrace-aggregate}{{3}{6}{Aggregate metrics across the three coding tasks}{table.caption.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Twin acceptance curve for the CodeTrace demo. A modest relaxation from $\tau =0.30$ to $\tau =0.40$ lifts adoption to 100\%.}}{6}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:tau-codetrace}{{4}{6}{Twin acceptance curve for the CodeTrace demo. A modest relaxation from $\tau =0.30$ to $\tau =0.40$ lifts adoption to 100\%}{figure.caption.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}Twin Repair Case Study}{6}{subsection.5.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces STM {/}seen alert captured during the flaky-test fix. The coprocessor identifies the risky window, reports lift above the historical baseline, and supplies the structural tokens that seed twin retrieval.}}{7}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:codetrace-seen}{{5}{7}{STM {/}seen alert captured during the flaky-test fix. The coprocessor identifies the risky window, reports lift above the historical baseline, and supplies the structural tokens that seed twin retrieval}{figure.caption.9}{}}
+\newlabel{lst:retry-twin}{{1}{7}{Twin patch applied during the flaky retry repair}{lstlisting.1}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}{\ignorespaces Twin patch applied during the flaky retry repair.}}{7}{lstlisting.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6}Deployment and Product Packaging}{7}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7}Discussion}{7}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Conclusion}{8}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {A}PlanBench Scorecard}{9}{appendix.A}\protected@file@percent }
+\newlabel{app:scorecard}{{A}{9}{PlanBench Scorecard}{appendix.A}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Full PlanBench scorecard (source: \texttt  {docs/note/planbench\_scorecard.csv}).}}{9}{table.caption.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {B}Guardrail Sensitivity}{9}{appendix.B}\protected@file@percent }
+\newlabel{app:guardrail}{{B}{9}{Guardrail Sensitivity}{appendix.B}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Guardrail sensitivity (15\% and 20\%) across PlanBench and CodeTrace cohorts. Source: \texttt  {docs/note/appendix extunderscore guardrail extunderscore sensitivity.csv}.}}{9}{table.caption.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {C}$\tau $-Sweep}{9}{appendix.C}\protected@file@percent }
+\newlabel{app:tau}{{C}{9}{\texorpdfstring {$\tau $}{tau}-Sweep}{appendix.C}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces $\tau $-sweep twin acceptance rates. Source: \texttt  {docs/note/appendix extunderscore tau extunderscore sweep.csv}.}}{9}{table.caption.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {D}Reproducibility Checklist}{9}{appendix.D}\protected@file@percent }
+\bibcite{planbench}{1}
+\bibcite{stm-manifold}{2}
+\gdef \@abspage@last{10}

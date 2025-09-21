@@ -1,10 +1,6 @@
-\toprule
-Cohort & $\tau$ & Twin Rate & Notes\\
-\midrule
-PlanBench & 0.30 & 1.00 & All three benchmark domains report full twin coverage at τ=0.30.\\
-PlanBench & 0.40 & 1.00 & No degradation; ANN filters remain within 2e-3.\\
-PlanBench & 0.50 & 1.00 & Twin recall unchanged, confirming structural alignment headroom.\\
-CodeTrace & 0.30 & 0.67 & Two of three coding tasks adopt the twin patch under the strictest threshold.\\
-CodeTrace & 0.40 & 1.00 & Relaxed τ lets all tasks accept the recommended twin repairs.\\
-CodeTrace & 0.50 & 1.00 & Saturation sustained; higher τ adds no false positives in the demo set.\\
-\bottomrule
+PlanBench & 0.30 & 1.00 & All domains retain perfect twin coverage.\\
+PlanBench & 0.40 & 1.00 & ANN filters remain within $2\times10^{-3}$.\\
+PlanBench & 0.50 & 1.00 & Structural alignment headroom persists.\\
+CodeTrace & 0.30 & 0.67 & Two of three tasks adopt the twin patch.\\
+CodeTrace & 0.40 & 1.00 & Relaxed threshold enables universal adoption.\\
+CodeTrace & 0.50 & 1.00 & No false positives introduced.\\

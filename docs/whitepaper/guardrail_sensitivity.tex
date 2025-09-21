@@ -1,6 +1,3 @@
-\toprule
-Domain & Target & Observed & Lead Density & Notes\\
-\midrule
 PlanBench-Blocksworld & 0.15 & 0.152 & 0.071 & Guardrail relaxed to 15% keeps alerts below one in seven steps.\\
 PlanBench-Blocksworld & 0.20 & 0.198 & 0.068 & Further relaxation yields marginal coverage increase; twins unaffected.\\
 PlanBench-Logistics & 0.15 & 0.149 & 0.064 & Guardrail increased to 15% surfaces additional drift windows without new failures.\\
@@ -9,4 +6,3 @@ PlanBench-MysteryBlocksworld & 0.15 & 0.158 & 0.073 & τ sweep stable; guardrail
 PlanBench-MysteryBlocksworld & 0.20 & 0.205 & 0.069 & Upper guardrail still confines alerts to <1 in 5 steps.\\
 CodeTrace-Demo & 0.15 & 0.233 & 0.250 & STM agent loop triggers guardrail escalation (≈1 alert per four steps).\\
 CodeTrace-Demo & 0.20 & 0.233 & 0.250 & Increasing guardrail ceiling to 20% leaves coverage unchanged (single alert per task).\\
-\bottomrule
