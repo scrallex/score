@@ -10,6 +10,7 @@ PERMUTATION_ITERS ?= 20000
 PLANBENCH_ENRICH_BASE ?= output/planbench_by_domain/logistics/gold_state.json
 PLANBENCH_EXTRA_TWINS ?=
 PLANBENCH_ENRICH_NOTE ?= logistics-twin-enrichment
+PLANBENCH_MATCH_SIGNATURE ?= 0
 
 comma := ,
 empty :=
@@ -73,6 +74,10 @@ planbench-all:
 	      fi; \
 	    done; \
 	  fi; \
+	  match_args=""; \
+	  if [ "$(PLANBENCH_MATCH_SIGNATURE)" = "1" ] && ( [ "$$dom" = "blocksworld" ] || [ "$$dom" = "mystery_bw" ] ); then \
+	    match_args="--match-signature"; \
+	  fi; \
 	  .venv/bin/python scripts/planbench_to_stm.py \
 	    --input-root data/planbench_public \
 	    --domains $$dom \
@@ -80,7 +85,7 @@ planbench-all:
 	    --window-bytes $(PLANBENCH_WINDOW_BYTES) \
 	    --stride $(PLANBENCH_STRIDE) \
 	    --path-threshold 0.10 --signal-threshold 0.10 \
-	    --twin-distance 0.40 --twin-top-k 3 --verbose $$enrich_args; \
+	    --twin-distance 0.40 --twin-top-k 3 --verbose $$match_args $$enrich_args; \
 	  calibrate_args="--target-low 0.05 --target-high 0.07 --output analysis/router_config_$${dom}_invalid_5pct.json"; \
 	  if [ "$$dom" = "logistics" ]; then \
 	    calibrate_args="$$calibrate_args --domain-root output/planbench_by_domain/$$dom --dynamic-target 0.025 --dynamic-window 0.005 --pvalue-threshold 0.05 --pvalue-metric min"; \
