@@ -49,9 +49,9 @@ This whitepaper introduces the Structural Manifold (STM) coprocessor and demonst
   \item \textbf{What STM adds:} percentile-calibrated dilution metrics, guardrails that bound alert volume, and structural twin suggestions that act as repair snippets for planning and coding agents.
   \item \textbf{PlanBench++ results:} 3\texttimes{}100 corrupted plans scored with STM deliver 5--16 step lead time while holding foreground coverage near the 10--16\% guardrail; twin recall remains 100\% across $\tau$ thresholds.
   \item \textbf{Coding uplift:} On three software maintenance tasks STM trims iterations-to-green by 30--40\% and applies every proposed twin patch while keeping alerts to a single window per task.
-  \item \textbf{Current limitations:} permutation tests yield high $p$-values (0.85--0.99), signalling that alerts may still look random; adapters cover PDDL and Python traces only.
-  \item \textbf{Commercial path:} Dockerised coprocessor + Python client shipped as Pilot ($\$50$--$\$150$k), Enterprise ($\$100$--$\$300$k/yr), and OEM licensing for agent vendors.
-  \item \textbf{Roadmap:} tighten guardrails toward 5\%, expand the twin library with larger corpora, and add adapters for additional ecosystems (TypeScript, JVM, robotics telemetry).
+  \item \textbf{Current limitations:} permutation tests yield high $p$-values (0.85--0.99) even after 5\% guardrail calibration; adapters currently cover only PDDL and Python traces.
+  \item \textbf{Scope tested:} 100 problems per PlanBench domain (Blocksworld, Mystery BW, Logistics) with failures injected at 40--85\% of plan length; three curated coding tasks spanning flaky tests, renames, and missing imports.
+  \item \textbf{Roadmap:} tighten guardrails toward 5\% with broader trace corpora, expand the twin library (TypeScript, JVM, robotics), and explore adaptive guardrails that lower permutation $p$-values.
 \end{itemize}
 
 \newpage
@@ -142,7 +142,7 @@ The aligned-token statistics (mean/min/max all equal to five) indicate that ever
 \end{figure}
 
 \subsection{Lead-Time and Guardrail Analysis}
-Across all domains STM achieved decisive alerts well before the terminal failure: the Logistics suite reported the longest average lead (16.35 steps) thanks to longer action horizons, while Blocksworld and Mystery Blocksworld produced 5--6 step warnings (Figure~\ref{fig:planbench-metrics}, panel~a). Foreground coverage stayed within the intended 10--16\% guardrail even when the router thresholds were relaxed to 15--20\% (Figure~\ref{fig:planbench-metrics}, panel~b, and Appendix~\ref{app:guardrail}). Permutation tests currently return high $p$-values (0.85--0.99; Figure~\ref{fig:planbench-metrics}, panel~c), signalling that the observed alerts may still be indistinguishable from random permutations. A 5\% guardrail calibration attempt plateaued at 7--8\% coverage, reinforcing that further work is needed. We treat this as a limitation and plan to tighten thresholds toward 5\%, increase trace counts, and refine seed filters so that decisive bins concentrate more strongly ahead of failure.
+Across all domains STM achieved decisive alerts well before the terminal failure: the Logistics suite reported the longest average lead (16.35 steps) thanks to longer action horizons, while Blocksworld and Mystery Blocksworld produced 5--6 step warnings (Figure~\ref{fig:planbench-metrics}, panel~a). Foreground coverage stayed within the intended 10--16\% guardrail even when the router thresholds were relaxed to 15--20\% (Figure~\ref{fig:planbench-metrics}, panel~b, and Appendix~\ref{app:guardrail}). Using the expanded percentile search we can now calibrate each domain to \textasciitilde5\% coverage, yet permutation tests still return high $p$-values (0.85--0.99; Figure~\ref{fig:planbench-metrics}, panel~c), signalling that the observed alerts may be statistically indistinguishable from random permutations. This remains a limitation; future work will explore alternative guardrail heuristics, larger trace corpora, and seed filtering so decisive bins concentrate more strongly ahead of failure.
 
 Figure~\ref{fig:tau-planbench} highlights the resilience of twin retrieval---alignment remains perfect across \(\tau\) sweeps, allowing STM to surface structurally relevant repairs regardless of threshold.
 
