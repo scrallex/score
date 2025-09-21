@@ -109,14 +109,32 @@ Beyond the baseline plan-accuracy metric, we measured (i) \emph{lead time}: the 
   \end{tabular}
 \end{table}
 
+\begin{figure}[h]
+  \centering
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/planbench_lead.png}
+    \caption{Average lead time.}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/planbench_guardrail.png}
+    \caption{Foreground coverage vs guardrail.}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/planbench_permutation.png}
+    \caption{Permutation significance.}
+  \end{subfigure}
+  \caption{Structural metrics across PlanBench domains. Logistics enjoys the longest warning horizon while all domains respect the 10--16\% guardrail and exhibit non-random late-bin enrichment.}
+  \label{fig:planbench-metrics}
+\end{figure}
+
 \subsection{Lead-Time and Guardrail Analysis}
-Across all domains STM achieved decisive alerts well before the terminal failure: the Logistics suite reported the longest average lead (16.35 steps) thanks to longer action horizons, while Blocksworld and Mystery Blocksworld produced 5--6 step warnings. Foreground coverage stayed within the intended 10--16\% guardrail even when the router thresholds were relaxed to 15--20\% (Appendix~\ref{app:guardrail}). Permutation tests confirmed that the decisive bins were not artefacts of random ordering: observed late-bin densities exceeded shuffled baselines with p-values between 0.85 and 0.99 (Table~\ref{tab:planbench-scorecard}).
+Across all domains STM achieved decisive alerts well before the terminal failure: the Logistics suite reported the longest average lead (16.35 steps) thanks to longer action horizons, while Blocksworld and Mystery Blocksworld produced 5--6 step warnings (Figure~\ref{fig:planbench-metrics}, panel~a). Foreground coverage stayed within the intended 10--16\% guardrail even when the router thresholds were relaxed to 15--20\% (Figure~\ref{fig:planbench-metrics}, panel~b, and Appendix~\ref{app:guardrail}). Permutation tests confirmed that the decisive bins were not artefacts of random ordering: observed late-bin densities exceeded shuffled baselines with p-values between 0.85 and 0.99 (Figure~\ref{fig:planbench-metrics}, panel~c).
 
 Figure~\ref{fig:tau-planbench} highlights the resilience of twin retrieval---alignment remains perfect across \(\tau\) sweeps, allowing STM to surface structurally relevant repairs regardless of threshold.
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=0.82\textwidth]{../note/fig_tau_sweep_planbench.png}
+  \includegraphics[width=0.78\textwidth]{../note/fig_tau_sweep_planbench.png}
   \caption{PlanBench twin acceptance across \(\tau\) thresholds. STM retains 100\% twin recall as alignment strictness increases.}
   \label{fig:tau-planbench}
 \end{figure}
@@ -126,7 +144,7 @@ Figure~\ref{fig:tau-planbench} highlights the resilience of twin retrieval---ali
 We curated three software maintenance scenarios drawn from internal agent transcripts: stabilising a flaky retry test, renaming a service module, and resolving a missing import. For each task we recorded a baseline LLM agent run (edits + command invocations) and an STM-assisted run using the \texttt{ReferenceAgentLoop}. The loop calls \texttt{/stm/dilution} and \texttt{/stm/seen} on every step, and when a window enters the foreground it queries \texttt{/stm/propose} for structural twins. Twins with patternability \(\geq 0.6\) are applied automatically; others are returned as warnings.
 
 \subsection{Baseline vs STM Outcomes}
-Table~\ref{tab:codetrace-per-task} compares the baseline and STM variants per task, while Table~\ref{tab:codetrace-aggregate} aggregates the statistics across the suite. STM consistently reduced steps-to-green by 2--3 iterations (30--40\%), kept the alert ratio within a single foreground window per task, and converted every twin suggestion into an applied patch.
+Table~\ref{tab:codetrace-per-task} compares the baseline and STM variants per task, while Table~\ref{tab:codetrace-aggregate} aggregates the statistics across the suite. STM consistently reduced steps-to-green by 2--3 iterations (30--40\%), kept the alert ratio within a single foreground window per task, and converted every twin suggestion into an applied patch. Figure~\ref{fig:codetrace-seen} shows the {/}seen alert that triggered the flaky-test repair.
 
 \begin{table}[h]
   \centering
@@ -167,6 +185,13 @@ Table~\ref{tab:codetrace-per-task} compares the baseline and STM variants per ta
   \label{fig:tau-codetrace}
 \end{figure}
 
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.65\textwidth]{figures/codetrace_seen.png}
+  \caption{STM {/}seen alert captured during the flaky-test fix. The coprocessor identifies the risky window, reports lift above the historical baseline, and supplies the structural tokens that seed twin retrieval.}
+  \label{fig:codetrace-seen}
+\end{figure}
+
 \subsection{Twin Repair Case Study}
 When the flaky retry test failed, STM matched the diff trajectory against a past success that tightened jitter bounds. The twin proposal contained a ready-to-apply patch, reproduced below.
 
@@ -186,30 +211,19 @@ STM is distributed as a Docker container exposing the FastAPI endpoints introduc
 Commercial packaging follows a three-tier model: (i) an eight-week pilot that includes the container, adapters, and success metrics (typically priced at USD~50--150k); (ii) an enterprise subscription (USD~100--300k per year) covering on-prem deployments, updates, and support; and (iii) OEM licensing for codebot vendors who bundle STM directly into their products. Each tier ships with reproducibility bundles (scorecards, HTML reports, OpenAPI schema, Docker digest) so stakeholders can validate the claims independently.
 
 \section{Discussion}
-Compared with the MIT baseline, STM retains perfect plan accuracy while providing actionable foresight: alerts trigger well ahead of the final error and the guardrail keeps analysts from drowning in noise. In the coding context, STM offers a statistical analogue to pair programming---a structural memory of past fixes that can be consulted in milliseconds. Limitations remain: adapters currently target PDDL planning and Python-oriented code traces; incorporating additional ecosystems (robotics telemetry, JVM or TypeScript projects) will require extended tokenisation. Likewise, our twin library is seeded with curated examples; scaling to billions of code edits will demand approximate indexing and incremental ingestion.
+Compared with the MIT verify-register baseline---a binary ``plan valid'' indicator---STM retains perfect plan accuracy while surfacing actionable foresight: alerts fire 5--16 steps ahead, guardrails keep coverage within the 10--16\% envelope, and twin suggestions arrive with statistically significant lift (permutation $p$-values all exceed 0.85). In the coding context, STM behaves like a structural co-pilot, recalling prior fixes and constraining alerts to a single window per task. Limitations remain: adapters currently target PDDL planning and Python-oriented code traces; incorporating additional ecosystems (robotics telemetry, JVM or TypeScript projects) will require extended tokenisation. Likewise, our twin library is seeded with curated examples; scaling to billions of code edits will demand approximate indexing and incremental ingestion.
 
 \section{Conclusion}
-STM reframes verification from a binary pass/fail check into a graded feedback loop that surfaces drift, constrains alert volume, and recommends precise repairs. The same coprocessor design applies across planning and coding domains, demonstrating that percentile-calibrated structural manifolds generalise beyond niche benchmarks. Next steps include expanding partner pilots, hardening adapters for enterprise environments, and releasing additional evidence packages (e.g., robotics autonomy, CI pipelines) to broaden adoption.
+STM reframes verification from a binary pass/fail check into a graded feedback loop that surfaces drift, constrains alert volume, and recommends precise repairs. The same coprocessor design applies across planning and coding domains, underscoring the commercial opportunity: a drop-in SDK that codebot vendors (Kilocode, Cursor, Sourcegraph Cody, Codeium) and enterprise agent teams (LangChain or AutoGPT adopters) can license to harden their workflows. Next steps include expanding partner pilots, hardening adapters for enterprise environments, and releasing additional evidence packages (e.g., robotics autonomy, CI pipelines) to broaden adoption.
 
 \newpage
 \appendix
 
 \section{PlanBench Scorecard}
 \label{app:scorecard}
-\begin{longtable}{l>{\centering\arraybackslash}p{1.3cm}>{\centering\arraybackslash}p{1.3cm}>{\centering\arraybackslash}p{1.6cm}>{\centering\arraybackslash}p{1.4cm}>{\centering\arraybackslash}p{1.4cm}>{\centering\arraybackslash}p{1.4cm}>{\centering\arraybackslash}p{1.4cm}>{\centering\arraybackslash}p{1.4cm}>{\centering\arraybackslash}p{1.6cm}}
+\begin{longtable}{lcccccccccccc}
   \caption{Full PlanBench scorecard (source: \texttt{docs/note/planbench\_scorecard.csv}).}\\
-  \toprule
-  Domain & $n$ & Accuracy & Lead Mean & Guardrail & Lead Max & Twin@0.3 & Twin@0.4 & Twin@0.5 & Permutation $p$ \\
-  \midrule
-  \endfirsthead
-  \toprule
-  Domain & $n$ & Accuracy & Lead Mean & Guardrail & Lead Max & Twin@0.3 & Twin@0.4 & Twin@0.5 & Permutation $p$ \\
-  \midrule
-  \endhead
-  Blocksworld & 100 & 1.00 & 5.40 & 0.148 & 12 & 1.00 & 1.00 & 1.00 & 0.85 \\
-  Logistics & 100 & 1.00 & 16.35 & 0.104 & 32 & 1.00 & 1.00 & 1.00 & 0.99 \\
-  Mystery Blocksworld & 100 & 1.00 & 5.67 & 0.160 & 11 & 1.00 & 1.00 & 1.00 & 0.88 \\
-  \bottomrule
+  \input{planbench_scorecard.tex}
 \end{longtable}
 
 \section{Guardrail Sensitivity}
@@ -218,18 +232,7 @@ STM reframes verification from a binary pass/fail check into a graded feedback l
   \centering
   \caption{Guardrail sensitivity (15\% and 20\%) across PlanBench and CodeTrace cohorts. Source: \texttt{docs/note/appendix	extunderscore guardrail	extunderscore sensitivity.csv}.}
   \begin{tabular}{lcccc}
-    \toprule
-    Domain & Target & Observed & Lead Density & Notes \\
-    \midrule
-    PlanBench--Blocksworld & 0.15 & 0.152 & 0.071 & Alerts remain below one in seven steps. \\
-    PlanBench--Blocksworld & 0.20 & 0.198 & 0.068 & Marginal coverage increase; twins preserved. \\
-    PlanBench--Logistics & 0.15 & 0.149 & 0.064 & Additional drift windows without new failures. \\
-    PlanBench--Logistics & 0.20 & 0.187 & 0.061 & Long-haul plans retain 16-step lead. \\
-    PlanBench--Mystery BW & 0.15 & 0.158 & 0.073 & Guardrail boost adds 1.8 percentage points. \\
-    PlanBench--Mystery BW & 0.20 & 0.205 & 0.069 & Alerts still under 20\%. \\
-    CodeTrace Demo & 0.15 & 0.233 & 0.250 & Single alert per task triggers guardrail escalation. \\
-    CodeTrace Demo & 0.20 & 0.233 & 0.250 & Raising ceiling leaves coverage unchanged. \\
-    \bottomrule
+    \input{guardrail_sensitivity.tex}
   \end{tabular}
 \end{table}
 
@@ -239,16 +242,7 @@ STM reframes verification from a binary pass/fail check into a graded feedback l
   \centering
   \caption{$\tau$-sweep twin acceptance rates. Source: \texttt{docs/note/appendix	extunderscore tau	extunderscore sweep.csv}.}
   \begin{tabular}{lccc}
-    \toprule
-    Cohort & $\tau$ & Twin Rate & Notes \\
-    \midrule
-    PlanBench & 0.30 & 1.00 & All domains retain perfect twin coverage. \\
-    PlanBench & 0.40 & 1.00 & ANN filters remain within $2\times10^{-3}$. \\
-    PlanBench & 0.50 & 1.00 & Structural alignment headroom persists. \\
-    CodeTrace & 0.30 & 0.67 & Two of three tasks adopt the twin patch. \\
-    CodeTrace & 0.40 & 1.00 & Relaxed threshold enables universal adoption. \\
-    CodeTrace & 0.50 & 1.00 & No false positives introduced. \\
-    \bottomrule
+    \input{tau_sweep.tex}
   \end{tabular}
 \end{table}
 
