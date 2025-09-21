@@ -1,6 +1,6 @@
 .PHONY: scorecard plots lead twins onset all
 .PHONY: demo-payload demo-up demo-down
-.PHONY: planbench-all codetrace-report
+.PHONY: planbench-all planbench-scale codetrace-report
 
 PLANBENCH_COUNT ?= 300
 PLANBENCH_TARGETS ?= logistics blocksworld mystery_bw
@@ -11,6 +11,16 @@ PLANBENCH_ENRICH_BASE ?= output/planbench_by_domain/logistics/gold_state.json
 PLANBENCH_EXTRA_TWINS ?=
 PLANBENCH_ENRICH_NOTE ?= logistics-twin-enrichment
 PLANBENCH_MATCH_SIGNATURE ?= 0
+PLANBENCH_VALIDATOR ?= external/VAL/build/bin/Validate
+
+PLANBENCH_SCALE_ROOT ?= data/planbench_scale500
+PLANBENCH_SCALE_OUTPUT ?= output/planbench_scale500
+PLANBENCH_SCALE_TARGETS ?= logistics blocksworld mystery_bw
+PLANBENCH_SCALE_COUNT ?= 500
+PLANBENCH_SCALE_WINDOW_BYTES ?= $(PLANBENCH_WINDOW_BYTES)
+PLANBENCH_SCALE_STRIDE ?= $(PLANBENCH_STRIDE)
+PLANBENCH_SCALE_ITERATIONS ?= $(PERMUTATION_ITERS)
+PLANBENCH_SCALE_WINDOW ?= 0.005
 
 comma := ,
 empty :=
@@ -117,6 +127,35 @@ planbench-all:
 	  --prefix planbench_invalid \
 	  --label PlanBench-Aggregate \
 	  --appendix docs/note/appendix_guardrail_sweep.csv
+
+planbench-scale:
+	.venv/bin/python scripts/generate_planbench_dataset.py --root $(PLANBENCH_SCALE_ROOT) --count $(PLANBENCH_SCALE_COUNT)
+	.venv/bin/python scripts/inject_plan_corruption.py --root $(PLANBENCH_SCALE_ROOT) \
+	  --domains $(subst $(space),$(comma),$(PLANBENCH_SCALE_TARGETS)) --validator $(PLANBENCH_VALIDATOR)
+	.venv/bin/python scripts/val_to_trace.py --root $(PLANBENCH_SCALE_ROOT) \
+	  --domains $(subst $(space),$(comma),$(PLANBENCH_SCALE_TARGETS)) --validator $(PLANBENCH_VALIDATOR)
+	for dom in $(PLANBENCH_SCALE_TARGETS); do \
+	  label=$$(python -c 'import sys; parts=sys.argv[1].split("_");\
+	def fmt(token):\
+	    return token.upper() if len(token) <= 2 else token.capitalize();\
+	print("-".join(fmt(p) for p in parts))' "$$dom"); \
+	  .venv/bin/python scripts/planbench_to_stm.py \
+	    --input-root $(PLANBENCH_SCALE_ROOT) \
+	    --domains $$dom \
+	    --output $(PLANBENCH_SCALE_OUTPUT)/$$dom \
+	    --window-bytes $(PLANBENCH_SCALE_WINDOW_BYTES) \
+	    --stride $(PLANBENCH_SCALE_STRIDE) \
+	    --path-threshold 0.10 --signal-threshold 0.10 \
+	    --twin-distance 0.40 --twin-top-k 3 --verbose; \
+	  .venv/bin/python scripts/guardrail_sweep.py \
+	    $(PLANBENCH_SCALE_OUTPUT)/$$dom/invalid_state.json \
+	    $(PLANBENCH_SCALE_OUTPUT)/$$dom \
+	    --prefix $${dom}_scale$(PLANBENCH_SCALE_COUNT)_invalid \
+	    --label PlanBench-$$label-$(PLANBENCH_SCALE_COUNT) \
+	    --iteration $(PLANBENCH_SCALE_ITERATIONS) \
+	    --window $(PLANBENCH_SCALE_WINDOW) \
+	    --summary-json analysis/guardrail_sweep_$${dom}_scale$(PLANBENCH_SCALE_COUNT)_invalid.summary.json; \
+	done
 
 codetrace-report:
 	PYTHONPATH=src .venv/bin/python demo/coding/run_comparison.py

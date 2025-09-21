@@ -2,6 +2,15 @@ Here’s the straight read on where your work stands today, plus the exact moves
 
 ---
 
+## 2024-xx-xx updates (Codex run)
+
+* ✅ Ran 768 B window ablations for Blocksworld and Logistics; table + narrative updated in `docs/whitepaper/STM_Structural_Manifold_Whitepaper.tex` (Logistics $p_{\min}$ rises to 0.12 at 5\% coverage; dynamic 2.5\% sits at 0.33).
+* ✅ Extended Logistics corpus to 500 traces (new root `data/planbench_scale500`), recalibrated guardrails, and appended sweep results (5\% target still hits $p_{\min}=0.035$ at \~2.9\% coverage; 2.5\% target reverts to $p_{\min}=0.33$).
+* ✅ Scaled Blocksworld and Mystery to 500 traces via `make planbench-scale`; both domains stay null (Blocksworld $p_{\min}=0.62$, Mystery $p_{\min}=0.14$) while preserving $\leq 9\%$ coverage.
+* ✅ Regenerated appendix sweep CSV + feature ablation table to capture the new window and scale probes; whitepaper recompiles cleanly.
+
+---
+
 ## Where it stands (research-ready)
 
 * **Guardrail calibration + permutation auditing:**

@@ -198,6 +198,8 @@ reports/
 # Large test data files
 data/large/
 datasets/
+data/planbench_scale500/
+data/planbench_public/
 *.csv
 !tests/data/*.csv
 *.json.gz

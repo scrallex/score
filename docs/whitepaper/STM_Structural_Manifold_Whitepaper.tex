@@ -258,12 +258,16 @@ We promote that profile to the default, and the calibration tool now evaluates
 permutation statistics in-loop: whenever the $5\%$ router reports
 $p_{\min}>0.05$, the build rewrites the Logistics guardrail to the $2.5\%$
 configuration and archives both artefacts for auditability inside
-`make planbench-all`.
+`make planbench-all`. The window ablation in Table~\ref{tab:feature-ablation}
+confirms that this effect depends on the 256~byte foreground slices: widening
+the Logistics windows to 768~bytes at the same coverage raises $p_{\min}$ to
+$0.12$ and the dynamic profile never drops below $0.33$, despite a $12$-step
+mean lead.
 
 \paragraph{Null results for Blocksworld and Mystery.} Even the lowest guardrail
 settings leave Blocksworld at $p_{\min}=0.62$ and Mystery at
 $p_{\min}=0.14$ (Table~\ref{tab:guardrail-dynamic}). We repeated the sweep with
-longer 512-byte foreground windows, signature-locked twin retrieval, and twin
+longer 768-byte foreground windows, signature-locked twin retrieval, and twin
 libraries enriched with Logistics, aggregate PlanBench, and robotics telemetry
 runs; the additional structure did not move the permutation tails below 0.05.
 Alert precision remains $1.0$, so improving discriminative power requires
@@ -271,10 +275,14 @@ stronger foreground features rather than stricter timing alone.
 
 \paragraph{Feature- and twin-level ablations.} The summary in
 Table~\ref{tab:feature-ablation} groups the ablation probes we ran on
-Blocksworld and Logistics. The rows contrast the baseline $5\%$ calibration with
-dynamic guardrails and the tighter twin filtering described above. The Logistic
-profile exhibits the expected gain at $2.5\%$, whereas Blocksworld continues to
-mirror the random schedule despite the added structure.
+Blocksworld and Logistics. The 256~byte rows reproduce the guardrail and
+twin-filter settings used in the main results; the 768~byte rows demonstrate
+that simply widening the foreground window increases lead time but pushes Logistics
+$p_{\min}$ back above $0.10$ while leaving Blocksworld entirely null. The scale
+rows extend each domain to $n=500$ traces: Blocksworld remains flat at
+$p_{\min}=0.62$ despite covering $8.9\%$ of windows, Mystery settles at
+$p_{\min}=0.14$ with $3.0\%$ coverage, and Logistics still slips beneath $0.05$
+at the $5\%$ target ($p_{\min}=0.035$) albeit over just $2.9\%$ of windows.
 
 \begin{table}[h]
   \centering
@@ -283,14 +291,14 @@ mirror the random schedule despite the added structure.
   \input{guardrail_sensitivity_dynamic.tex}
 \end{table}
 
-Despite these attempts, Blocksworld and Mystery still report $p_{\min} > 0.05$.
+Despite these attempts and the $n=500$ expansions, Blocksworld and Mystery still report $p_{\min} > 0.05$.
 Additional data alone is insufficient, underscoring the need for richer
 foreground features and twin filtering to gain discriminative power before
 pursuing stricter guardrails on those domains.
 
 \begin{table}[h]
   \centering
-  \caption{Feature/twin ablations on PlanBench guardrails using 20\,000 permutations. Coverage values are reported on invalid traces. Additional twin structure (longer windows, signature matches, and external corpora) failed to move Blocksworld or Mystery below the significance threshold.}
+  \caption{Feature/twin ablations on PlanBench guardrails using 20\,000 permutations. Coverage values are reported on invalid traces. Longer windows and a larger Logistics corpus increase lead time but do not recover statistical power for the null domains.}
   \label{tab:feature-ablation}
   \input{feature_ablation.tex}
 \end{table}
@@ -386,19 +394,25 @@ coverage, actionable lead-time, and structural repair suggestions. The $5\%$
 calibration confirms that dense percentile sweeps can reach low foreground
 budgets without degrading twin recall, and the Logistics guardrail now drops to
 $2.5\%$ whenever permutation tails exceed $0.05$, preserving a $10$-step lead in
-exchange for a $1.3\%$ alert budget. Blocksworld and Mystery remain null even
-after tighter twin filters and longer windows, so the outstanding challenge is
-to convert coverage control into statistically significant foresight without
-sacrificing precision.
+exchange for a $1.3\%$ alert budget on the 256~byte windows. The new ablations
+show how fragile that significance is: wider 768~byte windows or scaled-up
+corpora push $p_{\min}$ back toward unity even as lead time climbs, reinforcing
+the need for stronger structural features rather than narrower alert budgets.
+Blocksworld and Mystery remain null even after tighter twin filters and longer
+windows, so the outstanding challenge is to convert coverage control into
+statistically significant foresight without sacrificing precision.
 
 \subsection{Limitations}
 Permutation $p$-values stay high at 5\% coverage, and the feature/twin ablations
 in Table~\ref{tab:feature-ablation} show that even 2.5\% guardrails with enriched
 twins leave Blocksworld at $p_{\min}=0.62$ and Mystery at $p_{\min}=0.14$.
-Current adapters cover PDDL traces and Python-heavy CodeTrace telemetry; twin
-corpora are still curated from synthetic runs and a handful of maintenance
-tasks. Dataset scale (300 problems per PlanBench domain, three CodeTrace tasks)
-limits statistical confidence.
+Logistics only clears the $0.05$ bar when the guardrail stays near $5\%$ on the
+shorter 256~byte windows; widening the window or running on 500 traces either
+raises $p_{\min}$ to $0.12$ or constrains coverage to $\approx 3\%$. Current
+adapters cover PDDL traces and Python-heavy CodeTrace telemetry; twin corpora
+are still curated from synthetic runs and a handful of maintenance tasks.
+Dataset scale (300 problems per PlanBench domain, 500 for the Logistics probe,
+three CodeTrace tasks) limits statistical confidence.
 
 \subsection{Future Work}
 To tighten significance and improve robustness we will:
@@ -441,6 +455,9 @@ make planbench-all    # regenerate dataset, manifolds, guardrail sweeps
 #   (optional) merge additional gold states into Blocksworld/Mystery twins
 make codetrace-report # rebuild CodeTrace comparison report
 .venv/bin/pytest      # regression suite (17 passed, 1 skipped)
+# PlanBench scale probes (Section~\ref{subsec:permutation})
+PLANBENCH_SCALE_TARGETS="logistics blocksworld mystery_bw" make planbench-scale
+# To regenerate a single domain, override PLANBENCH_SCALE_TARGETS (e.g. "logistics")
 \end{lstlisting}
 
 \begin{thebibliography}{9}

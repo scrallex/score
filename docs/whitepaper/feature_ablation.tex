@@ -2,11 +2,18 @@
 \toprule
 Domain & Configuration & Coverage (\%) & Lead (steps) & Mean $p$ & Min $p$ \\
 \midrule
-Blocksworld & Baseline 5\% guardrail & 8.08 & 4.36 & 0.848 & 0.615 \\
-Blocksworld & 2.5\% guardrail (tight twins) & 5.83 & 4.66 & 0.865 & 0.615 \\
-Mystery BW & Baseline 5\% guardrail & 8.53 & 1.76 & 0.872 & 0.250 \\
-Mystery BW & 2.5\% guardrail (tight twins) & 2.03 & 1.36 & 0.924 & 0.140 \\
-Logistics & Baseline 5\% guardrail & 4.24 & 10.86 & 0.751 & 0.070 \\
-Logistics & Dynamic 2.5\% guardrail & 1.38 & 10.00 & 0.901 & 0.035 \\
+Blocksworld & 256 B window, 5\% target & 8.08 & 4.36 & 0.848 & 0.615 \\
+Blocksworld & 256 B window, 2.5\% (tight twins) & 5.83 & 4.66 & 0.865 & 0.615 \\
+Blocksworld & 768 B window, 5\% target & 2.76 & 4.00 & 1.000 & 1.000 \\
+Blocksworld & 768 B window, 2.5\% (tight twins) & 1.10 & 5.43 & 1.000 & 1.000 \\
+Blocksworld (500 traces) & 256 B window, 5\% target & 8.90 & 4.35 & 0.853 & 0.615 \\
+Mystery BW & 256 B window, 5\% target & 8.53 & 1.76 & 0.872 & 0.250 \\
+Mystery BW & 256 B window, 2.5\% (tight twins) & 2.03 & 1.36 & 0.924 & 0.140 \\
+Mystery BW (500 traces) & 256 B window, 5\% target & 3.04 & 2.49 & 0.845 & 0.140 \\
+Logistics & 256 B window, 5\% target & 4.24 & 10.86 & 0.751 & 0.070 \\
+Logistics & 256 B window, dynamic 2.5\% & 1.38 & 10.00 & 0.901 & 0.035 \\
+Logistics & 768 B window, 5\% target & 2.98 & 5.17 & 0.750 & 0.119 \\
+Logistics & 768 B window, dynamic 2.5\% & 0.81 & 12.38 & 0.916 & 0.333 \\
+Logistics (500 traces) & 256 B window, 5\% target & 2.89 & 2.62 & 0.804 & 0.035 \\
 \bottomrule
 \end{tabular}
