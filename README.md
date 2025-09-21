@@ -106,6 +106,22 @@ python scripts/guardrail_sweep.py \
   --prefix blocksworld_low_guardrail \
   --summary-json analysis/blocksworld_guardrail_sweep.json \
   --label Blocksworld
+
+# Drop the Logistics guardrail to 2.5% automatically when the 5% config
+# fails permutation significance (writes both base and dynamic artefacts).
+python scripts/calibrate_router.py \
+  output/planbench_by_domain/logistics/invalid_state.json \
+  --target-low 0.05 --target-high 0.07 \
+  --domain-root output/planbench_by_domain/logistics \
+  --dynamic-target 0.025 --dynamic-window 0.005 \
+  --pvalue-threshold 0.05 --pvalue-metric min \
+  --output analysis/router_config_logistics_invalid_5pct.json
+
+# Enrich Blocksworld or Mystery twins with the Logistics corpus and rerun sweeps.
+python scripts/enrich_twin_corpus.py \
+  output/planbench_by_domain/blocksworld/gold_state.json \
+  --extra output/planbench_by_domain/logistics/gold_state.json \
+  --note "logistics twin enrichment"
 ```
 
 ### CodeTrace comparison suite

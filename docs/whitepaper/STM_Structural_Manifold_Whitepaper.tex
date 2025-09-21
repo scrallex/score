@@ -259,6 +259,10 @@ analysis across 1--5\% guardrails; only Logistics crosses the $0.05$
 threshold when the guardrail drops to 2.5\%, while Blocksworld and Mystery
 remain statistically indistinguishable from random schedules despite severe
 coverage reductions.
+The calibration tool now evaluates permutation statistics in-loop and
+automatically rewrites the Logistics router to the 2.5\% profile whenever the
+5\% configuration exhibits $p_{\min} > 0.05$, retaining the baseline artefacts
+for audit.
 
 \begin{table}[h]
   \centering
