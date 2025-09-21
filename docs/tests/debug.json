@@ -1,0 +1,19 @@
+{
+  "config": "analysis/router_config_blocksworld_invalid_5pct.json",
+  "thresholds": {
+    "min_coh": 6.879415382299303e-05,
+    "max_ent": 0.9996037156868482,
+    "min_stab": 0.0
+  },
+  "records": [],
+  "summary": {
+    "trace_count": 0,
+    "coverage_mean": 0.0,
+    "coverage_min": 0.0,
+    "coverage_max": 0.0,
+    "lead_mean": 0.0,
+    "lead_min": 0.0,
+    "lead_max": 0.0,
+    "p_value_mean": 1.0
+  }
+}

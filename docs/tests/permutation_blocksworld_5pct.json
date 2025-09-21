@@ -1,0 +1,827 @@
+{
+  "config": "analysis/router_config_blocksworld_invalid_5pct.json",
+  "thresholds": {
+    "min_coh": 6.879415382299303e-05,
+    "max_ent": 0.9996037156868482,
+    "min_stab": 0.0
+  },
+  "records": [
+    {
+      "trace": "bw_0001_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 5,
+      "p_value": 0.6638,
+      "alerts": 1,
+      "window_count": 9
+    },
+    {
+      "trace": "bw_0002_corrupt.trace",
+      "coverage": 0.2,
+      "lead": 3,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "window_count": 5
+    },
+    {
+      "trace": "bw_0003_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "bw_0004_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0005_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "bw_0006_corrupt.trace",
+      "coverage": 0.14285714285714285,
+      "lead": 4,
+      "p_value": 0.7119,
+      "alerts": 1,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0007_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0008_corrupt.trace",
+      "coverage": 0.09090909090909091,
+      "lead": 6,
+      "p_value": 0.6352,
+      "alerts": 1,
+      "window_count": 11
+    },
+    {
+      "trace": "bw_0009_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0010_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "bw_0011_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 6
+    },
+    {
+      "trace": "bw_0012_corrupt.trace",
+      "coverage": 0.2,
+      "lead": 3,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "window_count": 5
+    },
+    {
+      "trace": "bw_0013_corrupt.trace",
+      "coverage": 0.07692307692307693,
+      "lead": 7,
+      "p_value": 0.61535,
+      "alerts": 1,
+      "window_count": 13
+    },
+    {
+      "trace": "bw_0014_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "bw_0015_corrupt.trace",
+      "coverage": 0.2857142857142857,
+      "lead": 3,
+      "p_value": 0.85645,
+      "alerts": 2,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0016_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 5,
+      "p_value": 0.6638,
+      "alerts": 1,
+      "window_count": 9
+    },
+    {
+      "trace": "bw_0017_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "bw_0018_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 10
+    },
+    {
+      "trace": "bw_0019_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 11
+    },
+    {
+      "trace": "bw_0020_corrupt.trace",
+      "coverage": 0.2,
+      "lead": 3,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "window_count": 5
+    },
+    {
+      "trace": "bw_0021_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 6
+    },
+    {
+      "trace": "bw_0022_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0023_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "bw_0024_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0025_corrupt.trace",
+      "coverage": 0.2857142857142857,
+      "lead": 3,
+      "p_value": 0.85645,
+      "alerts": 2,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0026_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "bw_0027_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "bw_0028_corrupt.trace",
+      "coverage": 0.14285714285714285,
+      "lead": 4,
+      "p_value": 0.7119,
+      "alerts": 1,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0029_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0030_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 3
+    },
+    {
+      "trace": "bw_0031_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 5,
+      "p_value": 0.6638,
+      "alerts": 1,
+      "window_count": 9
+    },
+    {
+      "trace": "bw_0032_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "bw_0033_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 5,
+      "p_value": 0.6638,
+      "alerts": 1,
+      "window_count": 9
+    },
+    {
+      "trace": "bw_0034_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 5,
+      "p_value": 0.6638,
+      "alerts": 1,
+      "window_count": 9
+    },
+    {
+      "trace": "bw_0035_corrupt.trace",
+      "coverage": 0.2,
+      "lead": 3,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "window_count": 5
+    },
+    {
+      "trace": "bw_0036_corrupt.trace",
+      "coverage": 0.14285714285714285,
+      "lead": 4,
+      "p_value": 0.7119,
+      "alerts": 1,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0037_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "bw_0038_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 5,
+      "p_value": 0.6638,
+      "alerts": 1,
+      "window_count": 9
+    },
+    {
+      "trace": "bw_0039_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "bw_0040_corrupt.trace",
+      "coverage": 0.2857142857142857,
+      "lead": 3,
+      "p_value": 0.85645,
+      "alerts": 2,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0041_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 6
+    },
+    {
+      "trace": "bw_0042_corrupt.trace",
+      "coverage": 0.2,
+      "lead": 3,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "window_count": 5
+    },
+    {
+      "trace": "bw_0043_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 6
+    },
+    {
+      "trace": "bw_0044_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 13
+    },
+    {
+      "trace": "bw_0045_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "bw_0046_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 5,
+      "p_value": 0.6638,
+      "alerts": 1,
+      "window_count": 9
+    },
+    {
+      "trace": "bw_0047_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "bw_0048_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "bw_0049_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 5,
+      "p_value": 0.6638,
+      "alerts": 1,
+      "window_count": 9
+    },
+    {
+      "trace": "bw_0050_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "bw_0051_corrupt.trace",
+      "coverage": 0.2,
+      "lead": 3,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "window_count": 5
+    },
+    {
+      "trace": "bw_0052_corrupt.trace",
+      "coverage": 0.09090909090909091,
+      "lead": 6,
+      "p_value": 0.6352,
+      "alerts": 1,
+      "window_count": 11
+    },
+    {
+      "trace": "bw_0053_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 6
+    },
+    {
+      "trace": "bw_0054_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0055_corrupt.trace",
+      "coverage": 0.2,
+      "lead": 3,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "window_count": 5
+    },
+    {
+      "trace": "bw_0056_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 5,
+      "p_value": 0.6638,
+      "alerts": 1,
+      "window_count": 9
+    },
+    {
+      "trace": "bw_0057_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "bw_0058_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 6
+    },
+    {
+      "trace": "bw_0059_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 12
+    },
+    {
+      "trace": "bw_0060_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "bw_0061_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 5,
+      "p_value": 0.6638,
+      "alerts": 1,
+      "window_count": 9
+    },
+    {
+      "trace": "bw_0062_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 5,
+      "p_value": 0.6638,
+      "alerts": 1,
+      "window_count": 9
+    },
+    {
+      "trace": "bw_0063_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 6
+    },
+    {
+      "trace": "bw_0064_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "bw_0065_corrupt.trace",
+      "coverage": 0.2,
+      "lead": 3,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "window_count": 5
+    },
+    {
+      "trace": "bw_0066_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "bw_0067_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 5,
+      "p_value": 0.6638,
+      "alerts": 1,
+      "window_count": 9
+    },
+    {
+      "trace": "bw_0068_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 5,
+      "p_value": 0.6638,
+      "alerts": 1,
+      "window_count": 9
+    },
+    {
+      "trace": "bw_0069_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 12
+    },
+    {
+      "trace": "bw_0070_corrupt.trace",
+      "coverage": 0.2857142857142857,
+      "lead": 3,
+      "p_value": 0.85645,
+      "alerts": 2,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0071_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 6
+    },
+    {
+      "trace": "bw_0072_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "bw_0073_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "bw_0074_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0075_corrupt.trace",
+      "coverage": 0.2857142857142857,
+      "lead": 3,
+      "p_value": 0.85645,
+      "alerts": 2,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0076_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 5,
+      "p_value": 0.6638,
+      "alerts": 1,
+      "window_count": 9
+    },
+    {
+      "trace": "bw_0077_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 6
+    },
+    {
+      "trace": "bw_0078_corrupt.trace",
+      "coverage": 0.07692307692307693,
+      "lead": 7,
+      "p_value": 0.61535,
+      "alerts": 1,
+      "window_count": 13
+    },
+    {
+      "trace": "bw_0079_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0080_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "bw_0081_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 5,
+      "p_value": 0.6638,
+      "alerts": 1,
+      "window_count": 9
+    },
+    {
+      "trace": "bw_0082_corrupt.trace",
+      "coverage": 0.09090909090909091,
+      "lead": 6,
+      "p_value": 0.6352,
+      "alerts": 1,
+      "window_count": 11
+    },
+    {
+      "trace": "bw_0083_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 10
+    },
+    {
+      "trace": "bw_0084_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 10
+    },
+    {
+      "trace": "bw_0085_corrupt.trace",
+      "coverage": 0.2,
+      "lead": 3,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "window_count": 5
+    },
+    {
+      "trace": "bw_0086_corrupt.trace",
+      "coverage": 0.14285714285714285,
+      "lead": 4,
+      "p_value": 0.7119,
+      "alerts": 1,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0087_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 5,
+      "p_value": 0.6638,
+      "alerts": 1,
+      "window_count": 9
+    },
+    {
+      "trace": "bw_0088_corrupt.trace",
+      "coverage": 0.09090909090909091,
+      "lead": 6,
+      "p_value": 0.6352,
+      "alerts": 1,
+      "window_count": 11
+    },
+    {
+      "trace": "bw_0089_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 10
+    },
+    {
+      "trace": "bw_0090_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 3
+    },
+    {
+      "trace": "bw_0091_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "bw_0092_corrupt.trace",
+      "coverage": 0.09090909090909091,
+      "lead": 6,
+      "p_value": 0.6352,
+      "alerts": 1,
+      "window_count": 11
+    },
+    {
+      "trace": "bw_0093_corrupt.trace",
+      "coverage": 0.09090909090909091,
+      "lead": 6,
+      "p_value": 0.6352,
+      "alerts": 1,
+      "window_count": 11
+    },
+    {
+      "trace": "bw_0094_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 11
+    },
+    {
+      "trace": "bw_0095_corrupt.trace",
+      "coverage": 0.2,
+      "lead": 3,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "window_count": 5
+    },
+    {
+      "trace": "bw_0096_corrupt.trace",
+      "coverage": 0.2,
+      "lead": 3,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "window_count": 5
+    },
+    {
+      "trace": "bw_0097_corrupt.trace",
+      "coverage": 0.09090909090909091,
+      "lead": 6,
+      "p_value": 0.6352,
+      "alerts": 1,
+      "window_count": 11
+    },
+    {
+      "trace": "bw_0098_corrupt.trace",
+      "coverage": 0.14285714285714285,
+      "lead": 4,
+      "p_value": 0.7119,
+      "alerts": 1,
+      "window_count": 7
+    },
+    {
+      "trace": "bw_0099_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 5,
+      "p_value": 0.6638,
+      "alerts": 1,
+      "window_count": 9
+    },
+    {
+      "trace": "bw_0100_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    }
+  ],
+  "summary": {
+    "trace_count": 100,
+    "total_windows": 755,
+    "total_alerts": 52,
+    "coverage_weighted": 0.06887417218543046,
+    "coverage_mean": 0.07021955821955822,
+    "coverage_min": 0.0,
+    "coverage_max": 0.2857142857142857,
+    "lead_mean": 4.446808510638298,
+    "lead_min": 3,
+    "lead_max": 7,
+    "lead_hits": 47,
+    "p_value_mean": 0.865809,
+    "p_value_median": 1.0,
+    "p_value_min": 0.61535,
+    "p_value_max": 1.0
+  }
+}

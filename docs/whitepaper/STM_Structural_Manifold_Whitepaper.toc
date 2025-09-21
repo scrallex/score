@@ -1,24 +1,21 @@
-\contentsline {section}{Executive Summary}{3}{section*.2}%
-\contentsline {section}{\numberline {1}Introduction}{4}{section.1}%
-\contentsline {section}{\numberline {2}Background and Related Work}{4}{section.2}%
-\contentsline {section}{\numberline {3}Structural Manifold Coprocessor}{4}{section.3}%
-\contentsline {subsection}{\numberline {3.1}Architecture Overview}{4}{subsection.3.1}%
-\contentsline {subsection}{\numberline {3.2}Implementation Details}{5}{subsection.3.2}%
-\contentsline {section}{\numberline {4}PlanBench++ Evaluation}{5}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Dataset Construction}{5}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Metrics}{5}{subsection.4.2}%
-\contentsline {subsection}{\numberline {4.3}Results Summary}{5}{subsection.4.3}%
-\contentsline {subsection}{\numberline {4.4}Lead-Time and Guardrail Analysis}{5}{subsection.4.4}%
-\contentsline {section}{\numberline {5}CodeTrace Coding Demo}{7}{section.5}%
-\contentsline {subsection}{\numberline {5.1}Demo Setup}{7}{subsection.5.1}%
-\contentsline {subsection}{\numberline {5.2}Baseline vs STM Outcomes}{7}{subsection.5.2}%
-\contentsline {subsection}{\numberline {5.3}Twin Repair Case Study}{7}{subsection.5.3}%
-\contentsline {section}{\numberline {6}Deployment and Product Packaging}{8}{section.6}%
-\contentsline {section}{\numberline {7}Discussion}{8}{section.7}%
-\contentsline {paragraph}{Limitations.}{8}{section*.11}%
-\contentsline {paragraph}{Next steps.}{9}{section*.12}%
-\contentsline {section}{\numberline {8}Conclusion}{9}{section.8}%
-\contentsline {section}{\numberline {A}PlanBench Scorecard}{10}{appendix.A}%
-\contentsline {section}{\numberline {B}Guardrail Sensitivity}{10}{appendix.B}%
-\contentsline {section}{\numberline {C}$\tau $-Sweep}{10}{appendix.C}%
-\contentsline {section}{\numberline {D}Reproducibility Checklist}{10}{appendix.D}%
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
+\contentsline {section}{\numberline {2}Related Work}{3}{section.2}%
+\contentsline {section}{\numberline {3}Structural Manifold Guardrails}{3}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Dilution Signals}{3}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Router Calibration}{3}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Twin Retrieval}{4}{subsection.3.3}%
+\contentsline {section}{\numberline {4}Experimental Setup}{4}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Datasets}{4}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Calibration Protocol}{4}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Permutation Testing}{4}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}CodeTrace Evaluation}{5}{subsection.4.4}%
+\contentsline {section}{\numberline {5}Results}{5}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Guardrail Coverage}{5}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Lead-Time and Guardrail Behaviour}{5}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Permutation Significance}{5}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Structural Twin Alignment}{6}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.5}CodeTrace Maintenance Tasks}{6}{subsection.5.5}%
+\contentsline {section}{\numberline {6}Discussion}{6}{section.6}%
+\contentsline {section}{\numberline {7}Limitations and Future Work}{7}{section.7}%
+\contentsline {section}{\numberline {8}Conclusion}{7}{section.8}%
+\contentsline {section}{\numberline {A}Reproducibility Checklist}{7}{appendix.A}%

@@ -1,0 +1,827 @@
+{
+  "config": "analysis/router_config_mystery_bw_invalid_5pct.json",
+  "thresholds": {
+    "min_coh": 0.0006192261418636047,
+    "max_ent": 0.9994213730010078,
+    "min_stab": 0.4592085979482169
+  },
+  "records": [
+    {
+      "trace": "mystery_0001_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0002_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0003_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 13
+    },
+    {
+      "trace": "mystery_0004_corrupt.trace",
+      "coverage": 0.3,
+      "lead": 1,
+      "p_value": 0.5285,
+      "alerts": 3,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0005_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0006_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0007_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0008_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0009_corrupt.trace",
+      "coverage": 0.36363636363636365,
+      "lead": 2,
+      "p_value": 0.78905,
+      "alerts": 4,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0010_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0011_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0012_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0013_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0014_corrupt.trace",
+      "coverage": 0.25,
+      "lead": 0,
+      "p_value": 0.2503,
+      "alerts": 3,
+      "window_count": 12
+    },
+    {
+      "trace": "mystery_0015_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0016_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0017_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0018_corrupt.trace",
+      "coverage": 0.125,
+      "lead": 1,
+      "p_value": 0.251,
+      "alerts": 1,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0019_corrupt.trace",
+      "coverage": 0.375,
+      "lead": 0,
+      "p_value": 0.37485,
+      "alerts": 3,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0020_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0021_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0022_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0023_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0024_corrupt.trace",
+      "coverage": 0.36363636363636365,
+      "lead": 2,
+      "p_value": 0.78905,
+      "alerts": 4,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0025_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0026_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0027_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0028_corrupt.trace",
+      "coverage": 0.1,
+      "lead": 2,
+      "p_value": 0.29455,
+      "alerts": 1,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0029_corrupt.trace",
+      "coverage": 0.2857142857142857,
+      "lead": 0,
+      "p_value": 0.284,
+      "alerts": 2,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0030_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0031_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0032_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0033_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0034_corrupt.trace",
+      "coverage": 0.2857142857142857,
+      "lead": 0,
+      "p_value": 0.284,
+      "alerts": 2,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0035_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0036_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0037_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0038_corrupt.trace",
+      "coverage": 0.125,
+      "lead": 1,
+      "p_value": 0.251,
+      "alerts": 1,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0039_corrupt.trace",
+      "coverage": 0.25,
+      "lead": 0,
+      "p_value": 0.2503,
+      "alerts": 3,
+      "window_count": 12
+    },
+    {
+      "trace": "mystery_0040_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0041_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0042_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0043_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0044_corrupt.trace",
+      "coverage": 0.3,
+      "lead": 1,
+      "p_value": 0.5285,
+      "alerts": 3,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0045_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0046_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0047_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0048_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0049_corrupt.trace",
+      "coverage": 0.36363636363636365,
+      "lead": 2,
+      "p_value": 0.78905,
+      "alerts": 4,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0050_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0051_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0052_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0053_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0054_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 1,
+      "p_value": 0.58525,
+      "alerts": 3,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0055_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0056_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0057_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0058_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0059_corrupt.trace",
+      "coverage": 0.3,
+      "lead": 1,
+      "p_value": 0.5285,
+      "alerts": 3,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0060_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0061_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0062_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0063_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 13
+    },
+    {
+      "trace": "mystery_0064_corrupt.trace",
+      "coverage": 0.3,
+      "lead": 1,
+      "p_value": 0.5285,
+      "alerts": 3,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0065_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0066_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0067_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0068_corrupt.trace",
+      "coverage": 0.1,
+      "lead": 2,
+      "p_value": 0.29455,
+      "alerts": 1,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0069_corrupt.trace",
+      "coverage": 0.2857142857142857,
+      "lead": 0,
+      "p_value": 0.284,
+      "alerts": 2,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0070_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0071_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0072_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0073_corrupt.trace",
+      "coverage": 0.1,
+      "lead": 2,
+      "p_value": 0.29455,
+      "alerts": 1,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0074_corrupt.trace",
+      "coverage": 0.36363636363636365,
+      "lead": 2,
+      "p_value": 0.78905,
+      "alerts": 4,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0075_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0076_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0077_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0078_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0079_corrupt.trace",
+      "coverage": 0.15384615384615385,
+      "lead": 11,
+      "p_value": 1.0,
+      "alerts": 2,
+      "window_count": 13
+    },
+    {
+      "trace": "mystery_0080_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0081_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0082_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0083_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0084_corrupt.trace",
+      "coverage": 0.15384615384615385,
+      "lead": 11,
+      "p_value": 1.0,
+      "alerts": 2,
+      "window_count": 13
+    },
+    {
+      "trace": "mystery_0085_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0086_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0087_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0088_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 13
+    },
+    {
+      "trace": "mystery_0089_corrupt.trace",
+      "coverage": 0.2857142857142857,
+      "lead": 0,
+      "p_value": 0.284,
+      "alerts": 2,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0090_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0091_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0092_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0093_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 13
+    },
+    {
+      "trace": "mystery_0094_corrupt.trace",
+      "coverage": 0.375,
+      "lead": 0,
+      "p_value": 0.37485,
+      "alerts": 3,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0095_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0096_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0097_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0098_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0099_corrupt.trace",
+      "coverage": 0.3,
+      "lead": 1,
+      "p_value": 0.5285,
+      "alerts": 3,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0100_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "window_count": 3
+    }
+  ],
+  "summary": {
+    "trace_count": 100,
+    "total_windows": 739,
+    "total_alerts": 63,
+    "coverage_weighted": 0.08525033829499323,
+    "coverage_mean": 0.06538428238428239,
+    "coverage_min": 0.0,
+    "coverage_max": 0.375,
+    "lead_mean": 1.76,
+    "lead_min": 0,
+    "lead_max": 11,
+    "lead_hits": 25,
+    "p_value_mean": 0.871559,
+    "p_value_median": 1.0,
+    "p_value_min": 0.2503,
+    "p_value_max": 1.0
+  }
+}

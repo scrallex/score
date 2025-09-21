@@ -1,18 +1,18 @@
 # Guardrail Calibration (5% Target)
 
-Commands executed on Ubuntu 24.04 droplet (virtualenv `.venv`):
+## Router calibration runs
+
+Calibrations ran on the Ubuntu 24.04 droplet inside `.venv`, using the densified percentile grid baked into `scripts/calibrate_router.py` (coherence 55–99th, entropy 2–60th, stability optional/55–90th). The tighter sweep made the 5% coverage window reachable across every corpus.
 
 ```bash
 .venv/bin/python scripts/calibrate_router.py output/planbench_public/gold_state.json \
-  --target-low 0.05 --target-high 0.07 --output analysis/router_config_gold_5pct.json
+  --target-low 0.05 --target-high 0.07 \
+  --output analysis/router_config_gold_5pct.json
 
 .venv/bin/python scripts/calibrate_router.py output/planbench_public/invalid_state.json \
-  --target-low 0.05 --target-high 0.07 --output analysis/router_config_invalid_5pct.json
-```
+  --target-low 0.05 --target-high 0.07 \
+  --output analysis/router_config_invalid_5pct.json
 
-Outputs: `analysis/router_config_gold_5pct.json` / `.coverage.json` and `analysis/router_config_invalid_5pct.json` / `.coverage.json` for the aggregated corpus, plus domain-specific calibrations:
-
-```bash
 for dom in blocksworld mystery_bw logistics; do
   .venv/bin/python scripts/calibrate_router.py \
     output/planbench_by_domain/$dom/gold_state.json \
@@ -25,15 +25,75 @@ for dom in blocksworld mystery_bw logistics; do
 done
 ```
 
-Summary:
+Each invocation writes both the router configuration (`*.json`) and the associated coverage/percentile dump (`*.coverage.json`). Verified coverage values:
 
-- **PlanBench (aggregate gold traces)** – thresholds: coherence ≥ 1.76e-4, entropy ≤ 0.999884, stability ≥ 0.4729 → coverage **11.54%**.
-- **PlanBench (aggregate invalid traces)** – thresholds: coherence ≥ 1.99e-4, entropy ≤ 0.999845, stability ≥ 0.4729 → coverage **11.50%**.
-- **Blocksworld (gold)** – coherence ≥ 5.57e-5, entropy ≤ 0.999725, stability ≥ 0.4660 → coverage **5.02%**.
-- **Mystery Blocksworld (gold)** – coherence ≥ 6.19e-4, entropy ≤ 0.999535, stability ≥ 0.4577 → coverage **5.03%**.
-- **Logistics (gold)** – coherence ≥ 8.32e-5, entropy ≤ 0.999824, stability ≥ 0.4802 → coverage **5.07%**.
-- Invalid-trace calibrations show similar 5.0–5.1% coverage per domain (see corresponding JSON files).
+- **Aggregate gold** (`analysis/router_config_gold_5pct.json`) → min_coh 8.32e-5, max_ent 0.99970, min_stab 0.47096, coverage **5.09%**.
+- **Aggregate invalid** (`analysis/router_config_invalid_5pct.json`) → min_coh 1.16e-4, max_ent 0.99972, min_stab 0.47582, coverage **5.01%**.
+- **Blocksworld gold** (`analysis/router_config_blocksworld_gold_5pct.json`) → coverage **5.02%**; invalid set at **5.10%**.
+- **Mystery Blocksworld gold** (`analysis/router_config_mystery_bw_gold_5pct.json`) → coverage **5.03%**; invalid set at **5.07%**.
+- **Logistics gold** (`analysis/router_config_logistics_gold_5pct.json`) → coverage **5.07%**; invalid set at **5.05%**.
+- Percentile tables in the `.coverage.json` companions confirm smooth quantile ramps for coherence, entropy, and stability.
 
-The expanded quantile grid now reaches the 5% coverage target per domain, while the previously published
-aggregate (gold/invalid combined) still sits around 11.5%. The domain-level configs and results feed the
-updated guardrail sensitivity appendix and whitepaper discussion of remaining limitations.
+The 5% guardrail now holds per domain and on the aggregate corpora without sacrificing the ANN trigger defaults (`min_sig_qgrams = 2`, `max_ann_dist = 0.2`). Permutation p-values, however, remain elevated (0.85–0.99) and are still called out as a limitation in the whitepaper refresh.
+
+## Regenerated STM states
+
+Regenerated domain-specific STM artefacts to ensure router configs reference the latest tokens, states, and lead/twin metrics:
+
+```bash
+for dom in blocksworld mystery_bw logistics; do
+  .venv/bin/python scripts/planbench_to_stm.py \
+    --input-root data/planbench_public \
+    --domains $dom \
+    --output output/planbench_by_domain/$dom \
+    --window-bytes 256 \
+    --stride 128 \
+    --path-threshold 0.10 \
+    --signal-threshold 0.10 \
+    --twin-distance 0.40 \
+    --twin-top-k 3 \
+    --verbose
+done
+```
+
+Each run produces per-trace token archives (`tokens/`), STM states (`gold_state.json`, `invalid_state.json`), detailed lead/twin metrics under `invalid/metrics/`, and an execution manifest (e.g. `output/planbench_by_domain/blocksworld/run_summary.json`).
+
+## Permutation tests
+
+Automated guardrail permutation tests with the new 5% configs to quantify how often a random alert schedule would outrun the observed lead times:
+
+```bash
+for dom in blocksworld mystery_bw logistics; do
+  .venv/bin/python scripts/run_permutation_guardrail.py \
+    output/planbench_by_domain/$dom \
+    analysis/router_config_${dom}_invalid_5pct.json \
+    --iterations 5000 \
+    --output docs/tests/permutation_${dom}_5pct.json
+done
+
+.venv/bin/python scripts/run_permutation_guardrail.py \
+  output/planbench_public \
+  analysis/router_config_invalid_5pct.json \
+  --iterations 5000 \
+  --output docs/tests/permutation_planbench_invalid_5pct.json
+```
+
+Highlights (weighting coverage by total windows):
+
+- **Blocksworld invalid** (`docs/tests/permutation_blocksworld_5pct.json`) → coverage **6.9%**, mean lead **4.4** steps (alerts on 47/100 traces), mean permutation $p$ **0.87** (min 0.61).
+- **Mystery Blocksworld invalid** (`docs/tests/permutation_mystery_bw_5pct.json`) → coverage **8.5%**, mean lead **1.8** steps (25/100 traces), mean $p$ **0.87** (min 0.24).
+- **Logistics invalid** (`docs/tests/permutation_logistics_5pct.json`) → coverage **4.4%**, mean lead **2.9** steps (43/100 traces), mean $p$ **0.69** (min 0.065).
+- **Aggregate PlanBench invalid** (`docs/tests/permutation_planbench_invalid_5pct.json`) → coverage **5.5%**, mean lead **7.6** steps (alerts on 158/300 traces), mean $p$ **0.89** (min 0.10).
+
+Even with the calibrated 5% coverage, permutation significance remains weak (high $p$-values), reinforcing the roadmap item to expand corpora and harden the guardrail heuristics.
+
+
+## Whitepaper refresh
+
+Updated `docs/whitepaper/STM_Structural_Manifold_Whitepaper.tex` to cite the successful 5% calibrations while noting that permutation significance remains weak. Recompiled the PDF so the guardrail appendix, figures, and discussion pick up the new numbers:
+
+```bash
+latexmk -pdf -silent docs/whitepaper/STM_Structural_Manifold_Whitepaper.tex
+```
+
+The appendix now points to the `analysis/router_config_*_5pct*.json` artefacts, and the discussion section highlights the next steps (per-domain permutation automation, broader PlanBench/CodeTrace datasets, adapter expansion).
