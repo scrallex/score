@@ -93,6 +93,21 @@ per domain), converts traces into STM manifolds, calibrates the 5% guardrail for
 each domain, runs 20k-shuffle permutation tests, and writes guardrail sweep
 results to `docs/note/appendix_guardrail_sweep.csv`.
 
+To explore lower guardrails or tighten statistical reporting, run the sweep
+script directly. The example below scans 1–8% in 0.5% increments, emits per
+target router configs, writes permutation summaries, and stores a structured
+JSON artifact with coverage, lead, and p-value confidence intervals:
+
+```
+python scripts/guardrail_sweep.py \
+  analysis/blocksworld_invalid_state.json \
+  output/planbench_by_domain/blocksworld \
+  --grid 0.01 0.08 0.005 \
+  --prefix blocksworld_low_guardrail \
+  --summary-json analysis/blocksworld_guardrail_sweep.json \
+  --label Blocksworld
+```
+
 ### CodeTrace comparison suite
 
 ```
