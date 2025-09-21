@@ -122,7 +122,7 @@ python scripts/calibrate_router.py \
 python scripts/enrich_twin_corpus.py \
   output/planbench_by_domain/blocksworld/gold_state.json \
   --extra output/planbench_by_domain/logistics/gold_state.json \
-  --note "logistics twin enrichment"
+  --note "logistics-twin-enrichment"
 
 To add further corpora (for example bug-fix commits or scaled PlanBench
 exports) set `PLANBENCH_EXTRA_TWINS` when running the make target. Each
@@ -131,6 +131,10 @@ Blocksworld and Mystery foreground libraries:
 
 ```
 PLANBENCH_EXTRA_TWINS="data/twins/bugfix_state.json data/twins/robotics_state.json" \
+  make planbench-all
+
+# Example using built-in corpora:
+PLANBENCH_EXTRA_TWINS="output/planbench_public/gold_state.json analysis/mms_state.json" \
   make planbench-all
 ```
 ```

@@ -256,13 +256,15 @@ on the means stay above $0.61$. Alert precision is $1.0$ across all traces, so
 improving discriminative power will require richer structural signals rather
 than stricter timing alone. Table~\ref{tab:guardrail-dynamic} expands the
 analysis across 1--5\% guardrails; only Logistics crosses the $0.05$
-threshold when the guardrail drops to 2.5\%, while Blocksworld and Mystery
-remain statistically indistinguishable from random schedules despite severe
-coverage reductions.
+threshold when the guardrail drops to 2.5\%, while Blocksworld ($p_{\min}\approx
+0.60$) and Mystery ($p_{\min}\approx 0.08$) remain statistically
+indistinguishable from random schedules despite severe coverage reductions,
+longer 512-byte foreground windows, and the addition of Logistics,
+aggregate PlanBench, and robotics telemetry corpora into their twin libraries.
 The calibration tool now evaluates permutation statistics in-loop and
 automatically rewrites the Logistics router to the 2.5\% profile whenever the
 5\% configuration exhibits $p_{\min} > 0.05$, retaining the baseline artefacts
-for audit.
+for audit and reproducing the dynamic behaviour inside `make planbench-all`.
 
 \begin{table}[h]
   \centering
@@ -270,6 +272,11 @@ for audit.
   \label{tab:guardrail-dynamic}
   \input{guardrail_sensitivity_dynamic.tex}
 \end{table}
+
+Despite these attempts, Blocksworld and Mystery still report $p_{\min} > 0.05$.
+Additional data alone is insufficient, underscoring the need for richer
+foreground features and twin filtering to gain discriminative power before
+pursuing stricter guardrails on those domains.
 
 \begin{table}[h]
   \centering
@@ -373,12 +380,25 @@ curated from synthetic runs and a handful of maintenance tasks. Dataset scale
 confidence.
 
 \subsection{Future Work}
-To tighten significance and improve robustness we will: (i) expand PlanBench to
-hundreds of problems per domain and diversify CodeTrace scenarios across
-languages; (ii) ingest real-world plan traces, robotic telemetry, and bug-fix
-commits to broaden the twin library; (iii) explore dynamic guardrail calibration
-that targets $p \le 0.05$ on validation data; and (iv) integrate permutation-aware
-objectives directly into the calibration loop.
+To tighten significance and improve robustness we will:
+\begin{itemize}
+  \item scale PlanBench exports to 500--1000 instances per domain and continue
+        diversifying CodeTrace scenarios across languages so that lower
+        guardrails are exercised on longer, more varied traces;
+  \item ingest real-world plan traces, robotic telemetry, and bug-fix commits
+        via the new enrichment hooks (`PLANBENCH_EXTRA_TWINS`) to broaden the
+        twin corpus beyond synthetic data;
+  \item explore dynamic guardrail calibration that targets $p \le 0.05$ on
+        validation data, extending the in-loop permutation test now deployed for
+        Logistics to other domains;
+  \item prototype feature-level improvements (e.g., longer foreground windows,
+        signature-aware twin filtering, richer coherence metrics) and repeat the
+        permutation study to determine whether Blocksworld or Mystery can push
+        $p_{\min}$ below 0.05;
+  \item integrate permutation-aware objectives directly into the calibration
+        loop so that optimisation co-designs coverage and significance rather
+        than treating permutation analysis as a post-hoc audit.
+\end{itemize}
 
 \section{Conclusion}
 We provide a research-focused account of STM guardrails for symbolic planning
@@ -396,6 +416,8 @@ Key commands are listed below; outputs are referenced throughout the text and in
 
 \begin{lstlisting}[style=stm]
 make planbench-all    # regenerate dataset, manifolds, guardrail sweeps
+# PLANBENCH_EXTRA_TWINS="data/twins/bugfix_state.json" make planbench-all
+#   (optional) merge additional gold states into Blocksworld/Mystery twins
 make codetrace-report # rebuild CodeTrace comparison report
 .venv/bin/pytest      # regression suite (17 passed, 1 skipped)
 \end{lstlisting}

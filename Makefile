@@ -9,7 +9,11 @@ PLANBENCH_STRIDE ?= 128
 PERMUTATION_ITERS ?= 20000
 PLANBENCH_ENRICH_BASE ?= output/planbench_by_domain/logistics/gold_state.json
 PLANBENCH_EXTRA_TWINS ?=
-PLANBENCH_ENRICH_NOTE ?= logistics twin enrichment
+PLANBENCH_ENRICH_NOTE ?= logistics-twin-enrichment
+
+comma := ,
+empty :=
+space := $(empty) $(empty)
 
 scorecard:
 	python scripts/make_scorecard.py
@@ -52,7 +56,7 @@ planbench-all:
 	.venv/bin/python scripts/generate_planbench_dataset.py --count $(PLANBENCH_COUNT)
 	.venv/bin/python scripts/planbench_to_stm.py \
 	  --input-root data/planbench_public \
-	  --domains $(PLANBENCH_TARGETS) \
+	  --domains $(subst $(space),$(comma),$(PLANBENCH_TARGETS)) \
 	  --output output/planbench_public \
 	  --window-bytes $(PLANBENCH_WINDOW_BYTES) \
 	  --stride $(PLANBENCH_STRIDE) \
@@ -62,7 +66,7 @@ planbench-all:
 	  label=$$(echo $$dom | tr '[:lower:]' '[:upper:]'); \
 	  enrich_args=""; \
 	  if [ "$$dom" = "blocksworld" ] || [ "$$dom" = "mystery_bw" ]; then \
-	    enrich_args="--enrich-note '$(PLANBENCH_ENRICH_NOTE)'"; \
+	    enrich_args="--enrich-note \"$(PLANBENCH_ENRICH_NOTE)\""; \
 	    for extra in $(PLANBENCH_ENRICH_BASE) $(PLANBENCH_EXTRA_TWINS); do \
 	      if [ -n "$$extra" ]; then \
 	        enrich_args="$$enrich_args --enrich-from $$extra"; \
@@ -77,9 +81,11 @@ planbench-all:
 	    --stride $(PLANBENCH_STRIDE) \
 	    --path-threshold 0.10 --signal-threshold 0.10 \
 	    --twin-distance 0.40 --twin-top-k 3 --verbose $$enrich_args; \
-	  .venv/bin/python scripts/calibrate_router.py output/planbench_by_domain/$$dom/invalid_state.json \
-	    --target-low 0.05 --target-high 0.07 \
-	    --output analysis/router_config_$${dom}_invalid_5pct.json; \
+	  calibrate_args="--target-low 0.05 --target-high 0.07 --output analysis/router_config_$${dom}_invalid_5pct.json"; \
+	  if [ "$$dom" = "logistics" ]; then \
+	    calibrate_args="$$calibrate_args --domain-root output/planbench_by_domain/$$dom --dynamic-target 0.025 --dynamic-window 0.005 --pvalue-threshold 0.05 --pvalue-metric min"; \
+	  fi; \
+	  .venv/bin/python scripts/calibrate_router.py output/planbench_by_domain/$$dom/invalid_state.json $$calibrate_args; \
 	  .venv/bin/python scripts/run_permutation_guardrail.py \
 	    output/planbench_by_domain/$$dom \
 	    analysis/router_config_$${dom}_invalid_5pct.json \
