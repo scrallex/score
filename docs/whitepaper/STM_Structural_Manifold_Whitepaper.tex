@@ -43,6 +43,19 @@ This whitepaper introduces the Structural Manifold (STM) coprocessor and demonst
 \tableofcontents
 \newpage
 
+\section*{Executive Summary}
+\addcontentsline{toc}{section}{Executive Summary}
+\begin{itemize}
+  \item \textbf{What STM adds:} percentile-calibrated dilution metrics, guardrails that bound alert volume, and structural twin suggestions that act as repair snippets for planning and coding agents.
+  \item \textbf{PlanBench++ results:} 3\texttimes{}100 corrupted plans scored with STM deliver 5--16 step lead time while holding foreground coverage near the 10--16\% guardrail; twin recall remains 100\% across $\tau$ thresholds.
+  \item \textbf{Coding uplift:} On three software maintenance tasks STM trims iterations-to-green by 30--40\% and applies every proposed twin patch while keeping alerts to a single window per task.
+  \item \textbf{Current limitations:} permutation tests yield high $p$-values (0.85--0.99), signalling that alerts may still look random; adapters cover PDDL and Python traces only.
+  \item \textbf{Commercial path:} Dockerised coprocessor + Python client shipped as Pilot ($\$50$--$\$150$k), Enterprise ($\$100$--$\$300$k/yr), and OEM licensing for agent vendors.
+  \item \textbf{Roadmap:} tighten guardrails toward 5\%, expand the twin library with larger corpora, and add adapters for additional ecosystems (TypeScript, JVM, robotics telemetry).
+\end{itemize}
+
+\newpage
+
 \section{Introduction}
 Large language model (LLM) agents increasingly plan and execute multi-step programs, yet most verification tooling remains binary: a plan is either valid or not, a test either passes or fails. Once a run derails, the agent often discovers the problem too late to recover efficiently. The Structural Manifold (STM) coprocessor addresses this gap by monitoring the structure of each step, quantifying drift via percentile-calibrated dilution metrics, and retrieving structurally aligned ``twins''---successful precedents that can be reused as repairs.
 
@@ -128,7 +141,7 @@ Beyond the baseline plan-accuracy metric, we measured (i) \emph{lead time}: the 
 \end{figure}
 
 \subsection{Lead-Time and Guardrail Analysis}
-Across all domains STM achieved decisive alerts well before the terminal failure: the Logistics suite reported the longest average lead (16.35 steps) thanks to longer action horizons, while Blocksworld and Mystery Blocksworld produced 5--6 step warnings (Figure~\ref{fig:planbench-metrics}, panel~a). Foreground coverage stayed within the intended 10--16\% guardrail even when the router thresholds were relaxed to 15--20\% (Figure~\ref{fig:planbench-metrics}, panel~b, and Appendix~\ref{app:guardrail}). Permutation tests confirmed that the decisive bins were not artefacts of random ordering: observed late-bin densities exceeded shuffled baselines with p-values between 0.85 and 0.99 (Figure~\ref{fig:planbench-metrics}, panel~c).
+Across all domains STM achieved decisive alerts well before the terminal failure: the Logistics suite reported the longest average lead (16.35 steps) thanks to longer action horizons, while Blocksworld and Mystery Blocksworld produced 5--6 step warnings (Figure~\ref{fig:planbench-metrics}, panel~a). Foreground coverage stayed within the intended 10--16\% guardrail even when the router thresholds were relaxed to 15--20\% (Figure~\ref{fig:planbench-metrics}, panel~b, and Appendix~\ref{app:guardrail}). Permutation tests currently return high $p$-values (0.85--0.99; Figure~\ref{fig:planbench-metrics}, panel~c), signalling that the observed alerts may still be indistinguishable from random permutations. We treat this as a limitation and plan to tighten guardrails toward 5\%, increase trace counts, and refine seed filters so that decisive bins concentrate more strongly ahead of failure.
 
 Figure~\ref{fig:tau-planbench} highlights the resilience of twin retrieval---alignment remains perfect across \(\tau\) sweeps, allowing STM to surface structurally relevant repairs regardless of threshold.
 
@@ -211,7 +224,11 @@ STM is distributed as a Docker container exposing the FastAPI endpoints introduc
 Commercial packaging follows a three-tier model: (i) an eight-week pilot that includes the container, adapters, and success metrics (typically priced at USD~50--150k); (ii) an enterprise subscription (USD~100--300k per year) covering on-prem deployments, updates, and support; and (iii) OEM licensing for codebot vendors who bundle STM directly into their products. Each tier ships with reproducibility bundles (scorecards, HTML reports, OpenAPI schema, Docker digest) so stakeholders can validate the claims independently.
 
 \section{Discussion}
-Compared with the MIT verify-register baseline---a binary ``plan valid'' indicator---STM retains perfect plan accuracy while surfacing actionable foresight: alerts fire 5--16 steps ahead, guardrails keep coverage within the 10--16\% envelope, and twin suggestions arrive with statistically significant lift (permutation $p$-values all exceed 0.85). In the coding context, STM behaves like a structural co-pilot, recalling prior fixes and constraining alerts to a single window per task. Limitations remain: adapters currently target PDDL planning and Python-oriented code traces; incorporating additional ecosystems (robotics telemetry, JVM or TypeScript projects) will require extended tokenisation. Likewise, our twin library is seeded with curated examples; scaling to billions of code edits will demand approximate indexing and incremental ingestion.
+Compared with the MIT verify-register baseline---a binary ``plan valid'' indicator---STM retains perfect plan accuracy while surfacing actionable foresight: alerts fire 5--16 steps ahead, guardrails keep coverage within the 10--16\% envelope, and twin suggestions arrive as ready-to-apply repairs. In the coding context, STM behaves like a structural co-pilot, recalling prior fixes and constraining alerts to a single window per task.
+
+\paragraph{Limitations.} Permutation tests yield high $p$-values (0.85--0.99) across the current PlanBench runs, indicating that decisive bins may still resemble random permutations; additional evidence is required before claiming strong statistical lift. Adapter coverage is limited to PDDL traces and Python-focused code telemetry, and the twin library draws on curated sequences rather than web-scale corpora. Twin application thresholds are hand-tuned and may not generalise across languages or agent stacks.
+
+\paragraph{Next steps.} We will tighten guardrails toward 5\% coverage, increase trace counts, and explore seed filtering so decisive bins become statistically significant under permutation. Expanding the twin library with larger internal and open-source codebases (including TypeScript and JVM projects) is a priority alongside adding adapters for robotics and CI telemetry. We are also working on incremental twin indexing so enterprise deployments can contribute their own traces while preserving privacy.
 
 \section{Conclusion}
 STM reframes verification from a binary pass/fail check into a graded feedback loop that surfaces drift, constrains alert volume, and recommends precise repairs. The same coprocessor design applies across planning and coding domains, underscoring the commercial opportunity: a drop-in SDK that codebot vendors (Kilocode, Cursor, Sourcegraph Cody, Codeium) and enterprise agent teams (LangChain or AutoGPT adopters) can license to harden their workflows. Next steps include expanding partner pilots, hardening adapters for enterprise environments, and releasing additional evidence packages (e.g., robotics autonomy, CI pipelines) to broaden adoption.
