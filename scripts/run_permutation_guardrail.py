@@ -7,8 +7,21 @@ import argparse
 import json
 import random
 from pathlib import Path
-from statistics import mean
-from typing import Dict, List, Optional, Sequence
+from statistics import mean, pstdev
+from typing import Dict, List, Optional, Sequence, Tuple
+
+
+def mean_std_ci(values: Sequence[float]) -> Tuple[Optional[float], Optional[float], Optional[Tuple[float, float]]]:
+    if not values:
+        return None, None, None
+    mu = mean(values)
+    if len(values) == 1:
+        return mu, 0.0, (mu, mu)
+    var = sum((v - mu) ** 2 for v in values) / (len(values) - 1)
+    std = var ** 0.5
+    se = std / (len(values) ** 0.5)
+    ci = (mu - 1.96 * se, mu + 1.96 * se)
+    return mu, std, ci
 
 
 def load_json(path: Path) -> Dict[str, object]:
@@ -96,8 +109,10 @@ def summarise_domain(
             continue
         alerts = compute_alert_indices(state_path, thresholds, limit=window_count)
         coverage = len(alerts) / window_count if window_count else 0.0
-        leads = [failure_index - idx for idx in alerts if idx <= failure_index]
+        pre_failure_alerts = [idx for idx in alerts if idx <= failure_index]
+        leads = [failure_index - idx for idx in pre_failure_alerts]
         observed = min(leads) if leads else None
+        precision = (len(pre_failure_alerts) / len(alerts)) if alerts else None
         pval = permutation_p_value(
             window_count=window_count,
             alerts_count=len(alerts),
@@ -112,6 +127,8 @@ def summarise_domain(
                 "lead": observed,
                 "p_value": pval,
                 "alerts": len(alerts),
+                "alerts_pre_failure": len(pre_failure_alerts),
+                "precision": precision,
                 "window_count": window_count,
             }
         )
@@ -120,7 +137,12 @@ def summarise_domain(
     total_alerts = sum(r["alerts"] for r in records)
     coverage_values = [r["coverage"] for r in records]
     lead_values = [r["lead"] for r in records if isinstance(r["lead"], (int, float)) and r["lead"] is not None]
-    pval_values = [r["p_value"] for r in records]
+    pval_values = [r["p_value"] for r in records if isinstance(r["p_value"], (int, float))]
+    precision_values = [r["precision"] for r in records if isinstance(r.get("precision"), (int, float))]
+
+    lead_mean, lead_std, lead_ci = mean_std_ci(lead_values)
+    p_mean, p_std, p_ci = mean_std_ci(pval_values)
+    precision_mean, precision_std, precision_ci = mean_std_ci(precision_values)
 
     summary = {
         "trace_count": len(records),
@@ -130,16 +152,23 @@ def summarise_domain(
         "coverage_mean": (sum(coverage_values) / len(coverage_values)) if coverage_values else 0.0,
         "coverage_min": min(coverage_values) if coverage_values else 0.0,
         "coverage_max": max(coverage_values) if coverage_values else 0.0,
-        "lead_mean": mean(lead_values) if lead_values else None,
+        "lead_mean": lead_mean,
+        "lead_std": lead_std,
+        "lead_ci95": lead_ci,
         "lead_min": min(lead_values) if lead_values else None,
         "lead_max": max(lead_values) if lead_values else None,
         "lead_hits": len(lead_values),
-        "p_value_mean": mean(pval_values) if pval_values else None,
+        "p_value_mean": p_mean,
+        "p_value_std": p_std,
+        "p_value_ci95": p_ci,
         "p_value_median": (
             sorted(pval_values)[len(pval_values) // 2] if pval_values else None
         ),
         "p_value_min": min(pval_values) if pval_values else None,
         "p_value_max": max(pval_values) if pval_values else None,
+        "precision_mean": precision_mean,
+        "precision_std": precision_std,
+        "precision_ci95": precision_ci,
     }
 
     payload = {

@@ -80,12 +80,14 @@ done
 
 Highlights (weighting coverage by total windows):
 
+- 95% CI on permutation means: Blocksworld [0.836, 0.896], Mystery BW [0.822, 0.921], Logistics [0.614, 0.759]; aggregate PlanBench stays [0.865, 0.906].
+- Alert precision (share of alerts fired before the final failure) is **100%** across domains, so added sensitivity will require features beyond timing.
 - **Blocksworld invalid** (`docs/tests/permutation_blocksworld_5pct.json`) → coverage **6.9%**, mean lead **4.4** steps (alerts on 47/100 traces), mean permutation $p$ **0.87** (min 0.62).
 - **Mystery Blocksworld invalid** (`docs/tests/permutation_mystery_bw_5pct.json`) → coverage **8.5%**, mean lead **1.8** steps (25/100 traces), mean $p$ **0.87** (min 0.25).
 - **Logistics invalid** (`docs/tests/permutation_logistics_5pct.json`) → coverage **4.4%**, mean lead **2.9** steps (43/100 traces), mean $p$ **0.69** (min 0.070).
 - **Aggregate PlanBench invalid** (`docs/tests/permutation_planbench_invalid_5pct.json`) → coverage **5.5%**, mean lead **7.6** steps (alerts on 158/300 traces), mean $p$ **0.89** (min 0.10).
 
-Even with the calibrated 5% coverage, permutation significance remains weak (high $p$-values), reinforcing the roadmap item to expand corpora and harden the guardrail heuristics.
+Even with the calibrated 5% coverage, permutation significance remains weak—95% CIs on the permutation means stay above 0.61 and alert precision is 1.0 across domains—reinforcing the roadmap item to expand corpora and harden the guardrail heuristics.
 
 
 ## Whitepaper refresh

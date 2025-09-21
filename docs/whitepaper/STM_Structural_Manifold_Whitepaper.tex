@@ -30,7 +30,7 @@
 }
 
 \title{Structural Manifold Guardrails for Symbolic Planning Agents}
-\author{SepDynamics Research Group\\ \texttt{research@sepdynamics.com}}
+\author{Alex Nagy\\Sep Dynamics LLC\\B.S. Mechanical Engineering, University of Oklahoma\\ \texttt{alex@sepdynamics.com}}
 \date{\today}
 
 \begin{document}
@@ -196,6 +196,8 @@ $5\%$ foreground rate without modifying default ANN triggers.
     \bottomrule
   \end{tabular}
 \end{table}
+Alert precision (fraction of alerts that precede the terminal failure) equals $1.0$ for every domain, so the guardrail currently avoids false positives but lacks discriminative power against random baselines.
+
 
 \subsection{Lead-Time and Guardrail Behaviour}
 Lead-time behaviour remains consistent with earlier STM releases. Figure~\ref{fig:planbench-metrics}
@@ -207,15 +209,21 @@ coverage now aligns with the tighter $5\%$ target.
 
 \begin{figure}[h]
   \centering
-  \begin{subfigure}[t]{0.32\textwidth}
-    \includegraphics[width=\textwidth]{figures/planbench_lead.png}
+  \begin{subfigure}[t]{0.9\textwidth}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/planbench_lead.png}
     \caption{Average lead time.}
-  \end{subfigure}\hfill
-  \begin{subfigure}[t]{0.32\textwidth}
+  \end{subfigure}
+
+  \vspace{0.8em}
+
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
     \includegraphics[width=\textwidth]{figures/planbench_guardrail.png}
     \caption{Foreground coverage.}
   \end{subfigure}\hfill
-  \begin{subfigure}[t]{0.32\textwidth}
+  \begin{subfigure}[t]{0.45\textwidth}
+    \centering
     \includegraphics[width=\textwidth]{figures/planbench_permutation.png}
     \caption{Permutation trend.}
   \end{subfigure}
@@ -226,23 +234,25 @@ coverage now aligns with the tighter $5\%$ target.
 \subsection{Permutation Significance}
 Permutation outcomes appear in Table~\ref{tab:permutation}. Weighted coverage
 remains at $4$--$9\%$ across domains, yet permutation $p$-values cluster near
-unity, indicating that alert placement is still statistically similar to random
-schedules. The lowest observed $p$-value (Logistics, $0.070$) suggests slight
-sensitivity, but additional discriminative signals are required for stronger
-claims.
+unity even after $20{,}000$ shuffles, indicating that alert placement is still
+statistically similar to random schedules. The lowest observed $p$-value
+(Logistics, $0.070$) offers only marginal sensitivity, and the $95\%$
+confidence intervals on the means stay above $0.61$. Alert precision is $1.0$
+across all traces, so improving discriminative power will require richer
+structural signals rather than stricter timing alone.
 
 \begin{table}[h]
   \centering
-  \caption{Permutation statistics using $20{,}000$ iterations. Coverage-weighted is computed over all windows.}
+  \caption{Permutation statistics using $20{,}000$ shuffles. Coverage-weighted (Cov.) is computed over all windows; $CI_{95}$ denotes the $95\%$ confidence interval on the permutation mean.}
   \label{tab:permutation}
-  \begin{tabular}{lcccc}
+  \begin{tabular}{lccccc}
     \toprule
-    Dataset & Coverage-weighted (\%) & Mean lead (steps) & Mean $p$ & Min $p$ \\
+    Dataset & Cov. (\%) & Lead (steps) & Mean $p$ & $CI_{95}$ & Min $p$ \\
     \midrule
-    Blocksworld (invalid) & $6.89$ & $4.45$ & $0.87$ & $0.61$ \\
-    Mystery BW (invalid) & $8.53$ & $1.76$ & $0.87$ & $0.24$ \\
-    Logistics (invalid) & $4.41$ & $2.86$ & $0.69$ & $0.070$ \\
-    PlanBench (invalid aggregate) & $5.47$ & $7.59$ & $0.89$ & $0.10$ \\
+    Blocksworld (invalid) & $6.89$ & $4.45$ & $0.87$ & $[0.84, 0.90]$ & $0.62$ \\
+    Mystery BW (invalid) & $8.53$ & $1.76$ & $0.87$ & $[0.82, 0.92]$ & $0.25$ \\
+    Logistics (invalid) & $4.41$ & $2.86$ & $0.69$ & $[0.61, 0.76]$ & $0.070$ \\
+    PlanBench (invalid aggregate) & $5.47$ & $7.59$ & $0.89$ & $[0.86, 0.91]$ & $0.10$ \\
     \bottomrule
   \end{tabular}
 \end{table}

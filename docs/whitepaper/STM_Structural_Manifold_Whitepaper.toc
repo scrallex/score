@@ -12,10 +12,10 @@
 \contentsline {section}{\numberline {5}Results}{5}{section.5}%
 \contentsline {subsection}{\numberline {5.1}Guardrail Coverage}{5}{subsection.5.1}%
 \contentsline {subsection}{\numberline {5.2}Lead-Time and Guardrail Behaviour}{5}{subsection.5.2}%
-\contentsline {subsection}{\numberline {5.3}Permutation Significance}{6}{subsection.5.3}%
-\contentsline {subsection}{\numberline {5.4}Structural Twin Alignment}{6}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.3}Permutation Significance}{5}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Structural Twin Alignment}{5}{subsection.5.4}%
 \contentsline {subsection}{\numberline {5.5}CodeTrace Maintenance Tasks}{6}{subsection.5.5}%
-\contentsline {section}{\numberline {6}Discussion}{7}{section.6}%
-\contentsline {section}{\numberline {7}Limitations and Future Work}{7}{section.7}%
+\contentsline {section}{\numberline {6}Discussion}{6}{section.6}%
+\contentsline {section}{\numberline {7}Limitations and Future Work}{6}{section.7}%
 \contentsline {section}{\numberline {8}Conclusion}{7}{section.8}%
 \contentsline {section}{\numberline {A}Reproducibility Checklist}{7}{appendix.A}%
