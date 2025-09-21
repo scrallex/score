@@ -131,6 +131,10 @@ def merge_state(
     summary["token_count"] = sum(int(payload.get("occurrences", 0)) for payload in base_strings.values())
     base_state["token_count"] = summary["token_count"]
     base_state["corpus_size_bytes"] = base_state.get("corpus_size_bytes", 0) + extra_state.get("corpus_size_bytes", 0)
+    base_state["enriched_sources"] = sorted({
+        *base_state.get("enriched_sources", []),
+        str(source),
+    })
 
     enrichment_log = base_state.setdefault("enrichment_log", [])  # type: ignore[assignment]
     enrichment_entry = {

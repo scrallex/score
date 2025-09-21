@@ -18,6 +18,12 @@ from sep_text_manifold.pipeline import analyse_directory
 from sep_text_manifold.feedback import suggest_twin_action
 from stm_adapters.pddl_trace import PDDLTraceAdapter
 
+try:  # Optional twin enrichment utilities
+    from enrich_twin_corpus import load_state as load_twin_state, merge_state as merge_twin_state
+except ImportError:  # pragma: no cover - enrichment script not always available
+    load_twin_state = None
+    merge_twin_state = None
+
 ENABLE_PLOTS = False
 
 
@@ -300,6 +306,49 @@ def _aggregate_twin(records: Sequence[Dict[str, Any]]) -> Dict[str, Any]:
     }
 
 
+def _enrich_gold_state(
+    *,
+    gold_state_path: Path,
+    enrich_from: Sequence[Path],
+    note: Optional[str],
+    verbose: bool,
+) -> list[Dict[str, Any]]:
+    if not enrich_from:
+        return []
+    if merge_twin_state is None or load_twin_state is None:
+        raise RuntimeError("Twin enrichment requested but enrich_twin_corpus utilities are unavailable")
+
+    gold_state = load_twin_state(gold_state_path)
+    existing = set(str(src) for src in gold_state.get("enriched_sources", []))
+    summaries: list[Dict[str, Any]] = []
+
+    for extra in enrich_from:
+        extra_path = Path(extra)
+        extra_str = str(extra_path)
+        if extra_str in existing:
+            if verbose:
+                print(f"[stm] enrichment skipped: {extra_str} already merged")
+            continue
+        if not extra_path.exists():
+            raise FileNotFoundError(f"Enrichment state not found: {extra_path}")
+        extra_state = load_twin_state(extra_path)
+        summary = merge_twin_state(gold_state, extra_state, source=extra_path, note=note)
+        summaries.append(summary)
+        existing.add(extra_str)
+        if verbose:
+            print(
+                "[stm] enrichment merged {source} -> +{signals} windows, +{new} new strings".format(
+                    source=summary["source"],
+                    signals=summary["added_signals"],
+                    new=summary["new_strings"],
+                )
+            )
+
+    if summaries:
+        gold_state_path.write_text(json.dumps(gold_state, indent=2), encoding="utf-8")
+    return summaries
+
+
 def export_traces(
     label: str,
     trace_paths: Sequence[Path],
@@ -495,6 +544,19 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     parser.add_argument("--match-signature", action="store_true", help="Only consider twins that share the signature")
     parser.add_argument("--verbose", action="store_true", help="Print progress information")
     parser.add_argument("--plots", action="store_true", help="Generate dilution plots (requires matplotlib)")
+    parser.add_argument(
+        "--enrich-from",
+        action="append",
+        type=Path,
+        default=[],
+        help="Additional gold_state JSON files to merge into the twin corpus (can be repeated)",
+    )
+    parser.add_argument(
+        "--enrich-note",
+        type=str,
+        default=None,
+        help="Annotation stored alongside enrichment metadata",
+    )
     args = parser.parse_args(argv)
 
     global ENABLE_PLOTS
@@ -531,6 +593,15 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         stride=args.stride,
         verbose=args.verbose,
     )
+
+    enrich_summaries: List[Dict[str, Any]] = []
+    if args.enrich_from:
+        enrich_summaries = _enrich_gold_state(
+            gold_state_path=gold_state_path,
+            enrich_from=args.enrich_from,
+            note=args.enrich_note,
+            verbose=args.verbose,
+        )
 
     if invalid_paths:
         invalid_state_path, invalid_contexts = export_traces(
@@ -569,6 +640,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
             "twin_top_k": args.twin_top_k,
             "match_signature": args.match_signature,
         },
+        "enrichments": enrich_summaries,
     }
     (output_root / "run_summary.json").write_text(json.dumps(run_summary, indent=2), encoding="utf-8")
 

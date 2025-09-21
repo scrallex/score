@@ -55,6 +55,14 @@ with the Logistics gold state (`scripts/enrich_twin_corpus.py`), adding
   lead, and permutation statistics. These rows will be surfaced in the
   whitepaper’s sensitivity appendix to show why dynamic calibration is
   only activated for the Logistics domain.
+- `make planbench-all` now invokes `scripts/planbench_to_stm.py` with
+  `--enrich-from output/planbench_by_domain/logistics/gold_state.json` for
+  Blocksworld and Mystery, ensuring the merged twin corpus is reproduced
+  on rebuild.
+- Additional gold states can be merged by setting
+  `PLANBENCH_EXTRA_TWINS="/path/to/extra_state.json ..."` when invoking
+  the make target; each state is appended to the enrichment list so sweeps
+  can incorporate bug-fix corpora or larger synthetic expansions.
 - Recommended whitepaper call-out: “Only the logistics domain benefits
   from a dynamic 2.5% guardrail (p≈0.035, 10-step lead); blocksworld and
   mystery require corpus expansion before low-guardrail alerts become

@@ -3,10 +3,13 @@
 .PHONY: planbench-all codetrace-report
 
 PLANBENCH_COUNT ?= 300
-PLANBENCH_TARGETS ?= blocksworld mystery_bw logistics
+PLANBENCH_TARGETS ?= logistics blocksworld mystery_bw
 PLANBENCH_WINDOW_BYTES ?= 256
 PLANBENCH_STRIDE ?= 128
 PERMUTATION_ITERS ?= 20000
+PLANBENCH_ENRICH_BASE ?= output/planbench_by_domain/logistics/gold_state.json
+PLANBENCH_EXTRA_TWINS ?=
+PLANBENCH_ENRICH_NOTE ?= logistics twin enrichment
 
 scorecard:
 	python scripts/make_scorecard.py
@@ -57,6 +60,15 @@ planbench-all:
 	  --twin-distance 0.40 --twin-top-k 3 --verbose
 	for dom in $(PLANBENCH_TARGETS); do \
 	  label=$$(echo $$dom | tr '[:lower:]' '[:upper:]'); \
+	  enrich_args=""; \
+	  if [ "$$dom" = "blocksworld" ] || [ "$$dom" = "mystery_bw" ]; then \
+	    enrich_args="--enrich-note '$(PLANBENCH_ENRICH_NOTE)'"; \
+	    for extra in $(PLANBENCH_ENRICH_BASE) $(PLANBENCH_EXTRA_TWINS); do \
+	      if [ -n "$$extra" ]; then \
+	        enrich_args="$$enrich_args --enrich-from $$extra"; \
+	      fi; \
+	    done; \
+	  fi; \
 	  .venv/bin/python scripts/planbench_to_stm.py \
 	    --input-root data/planbench_public \
 	    --domains $$dom \
@@ -64,7 +76,7 @@ planbench-all:
 	    --window-bytes $(PLANBENCH_WINDOW_BYTES) \
 	    --stride $(PLANBENCH_STRIDE) \
 	    --path-threshold 0.10 --signal-threshold 0.10 \
-	    --twin-distance 0.40 --twin-top-k 3 --verbose; \
+	    --twin-distance 0.40 --twin-top-k 3 --verbose $$enrich_args; \
 	  .venv/bin/python scripts/calibrate_router.py output/planbench_by_domain/$$dom/invalid_state.json \
 	    --target-low 0.05 --target-high 0.07 \
 	    --output analysis/router_config_$${dom}_invalid_5pct.json; \
