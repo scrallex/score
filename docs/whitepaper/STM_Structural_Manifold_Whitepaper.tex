@@ -45,8 +45,8 @@ reasoning \cite{verma2025pddlinstruct}, we study how dense percentile grids and
 domain-specific calibration influence both alert coverage and statistical
 significance. Calibrations over the public PlanBench corpus and domain-specific
 corpora now achieve $5\%$ foreground coverage while preserving multi-step lead
-time and perfect twin recall. However, permutation tests with $5{,}000$
-iterations yield high $p$-values across domains (minimum $0.065$), highlighting
+time and perfect twin recall. However, permutation tests with $20{,}000$
+iterations yield high $p$-values across domains (minimum $0.070$), highlighting
 the need for stronger discriminative signals. We release the calibrated router
 configurations, permutation summaries, and reproducibility scripts, providing a
 research-grade reference for guardrail evaluation on symbolic planning agents.
@@ -160,7 +160,7 @@ done
 \label{subsec:permutation}
 To assess whether calibrated alerts produce statistically meaningful lead times,
 we run permutation tests using \
-\texttt{scripts/run\_permutation\_guardrail.py} with $5{,}000$ shuffled alert
+\texttt{scripts/run\_permutation\_guardrail.py} with $20{,}000$ shuffled alert
 allocations per trace. For each domain, the script summarises weighted coverage,
 lead-time statistics, and the distribution of permutation $p$-values; outputs are
 stored in \texttt{docs/tests/permutation\_\*.json}.
@@ -227,13 +227,13 @@ coverage now aligns with the tighter $5\%$ target.
 Permutation outcomes appear in Table~\ref{tab:permutation}. Weighted coverage
 remains at $4$--$9\%$ across domains, yet permutation $p$-values cluster near
 unity, indicating that alert placement is still statistically similar to random
-schedules. The lowest observed $p$-value (Logistics, $0.065$) suggests slight
+schedules. The lowest observed $p$-value (Logistics, $0.070$) suggests slight
 sensitivity, but additional discriminative signals are required for stronger
 claims.
 
 \begin{table}[h]
   \centering
-  \caption{Permutation statistics using $5{,}000$ iterations. Coverage-weighted is computed over all windows.}
+  \caption{Permutation statistics using $20{,}000$ iterations. Coverage-weighted is computed over all windows.}
   \label{tab:permutation}
   \begin{tabular}{lcccc}
     \toprule
@@ -241,7 +241,7 @@ claims.
     \midrule
     Blocksworld (invalid) & $6.89$ & $4.45$ & $0.87$ & $0.61$ \\
     Mystery BW (invalid) & $8.53$ & $1.76$ & $0.87$ & $0.24$ \\
-    Logistics (invalid) & $4.41$ & $2.86$ & $0.69$ & $0.065$ \\
+    Logistics (invalid) & $4.41$ & $2.86$ & $0.69$ & $0.070$ \\
     PlanBench (invalid aggregate) & $5.47$ & $7.59$ & $0.89$ & $0.10$ \\
     \bottomrule
   \end{tabular}

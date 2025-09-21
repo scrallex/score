@@ -67,22 +67,22 @@ for dom in blocksworld mystery_bw logistics; do
   .venv/bin/python scripts/run_permutation_guardrail.py \
     output/planbench_by_domain/$dom \
     analysis/router_config_${dom}_invalid_5pct.json \
-    --iterations 5000 \
+    --iterations 20000 \
     --output docs/tests/permutation_${dom}_5pct.json
 done
 
 .venv/bin/python scripts/run_permutation_guardrail.py \
   output/planbench_public \
   analysis/router_config_invalid_5pct.json \
-  --iterations 5000 \
+  --iterations 20000 \
   --output docs/tests/permutation_planbench_invalid_5pct.json
 ```
 
 Highlights (weighting coverage by total windows):
 
-- **Blocksworld invalid** (`docs/tests/permutation_blocksworld_5pct.json`) → coverage **6.9%**, mean lead **4.4** steps (alerts on 47/100 traces), mean permutation $p$ **0.87** (min 0.61).
-- **Mystery Blocksworld invalid** (`docs/tests/permutation_mystery_bw_5pct.json`) → coverage **8.5%**, mean lead **1.8** steps (25/100 traces), mean $p$ **0.87** (min 0.24).
-- **Logistics invalid** (`docs/tests/permutation_logistics_5pct.json`) → coverage **4.4%**, mean lead **2.9** steps (43/100 traces), mean $p$ **0.69** (min 0.065).
+- **Blocksworld invalid** (`docs/tests/permutation_blocksworld_5pct.json`) → coverage **6.9%**, mean lead **4.4** steps (alerts on 47/100 traces), mean permutation $p$ **0.87** (min 0.62).
+- **Mystery Blocksworld invalid** (`docs/tests/permutation_mystery_bw_5pct.json`) → coverage **8.5%**, mean lead **1.8** steps (25/100 traces), mean $p$ **0.87** (min 0.25).
+- **Logistics invalid** (`docs/tests/permutation_logistics_5pct.json`) → coverage **4.4%**, mean lead **2.9** steps (43/100 traces), mean $p$ **0.69** (min 0.070).
 - **Aggregate PlanBench invalid** (`docs/tests/permutation_planbench_invalid_5pct.json`) → coverage **5.5%**, mean lead **7.6** steps (alerts on 158/300 traces), mean $p$ **0.89** (min 0.10).
 
 Even with the calibrated 5% coverage, permutation significance remains weak (high $p$-values), reinforcing the roadmap item to expand corpora and harden the guardrail heuristics.
