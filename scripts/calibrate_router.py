@@ -5,14 +5,11 @@ from __future__ import annotations
 
 import json
 import sys
+import argparse
 from pathlib import Path
 from typing import Dict, Iterable, Tuple
 
 import numpy as np
-
-TARGET_LOW = 0.05
-TARGET_HIGH = 0.20
-
 
 def load_state(path: Path) -> dict:
     if not path.exists():
@@ -60,14 +57,18 @@ def coverage_for_thresholds(
     return float(mask.sum() / mask.size)
 
 
-def choose_thresholds(metrics: np.ndarray) -> Tuple[Dict[str, float], Dict[str, int | None], float]:
+def choose_thresholds(
+    metrics: np.ndarray,
+    target_low: float,
+    target_high: float,
+) -> Tuple[Dict[str, float], Dict[str, int | None], float]:
     coherence = metrics[:, 0]
     entropy = metrics[:, 1]
     stability = metrics[:, 2]
 
-    coh_qs = [0.75, 0.70, 0.65, 0.60, 0.55, 0.50]
-    ent_qs = [0.35, 0.40, 0.45, 0.50, 0.55]
-    stab_qs: list[float | None] = [0.60, None, 0.55, 0.50, 0.45]
+    coh_qs = list(np.arange(0.55, 0.99, 0.02)) + [0.99, 0.995]
+    ent_qs = list(np.arange(0.02, 0.60, 0.02)) + [0.60]
+    stab_qs: list[float | None] = [None] + list(np.arange(0.55, 0.90, 0.05)) + [0.90]
 
     in_range: list[Tuple[Dict[str, float], Dict[str, int | None], float]] = []
     candidates: list[Tuple[Dict[str, float], Dict[str, int | None], float]] = []
@@ -90,7 +91,7 @@ def choose_thresholds(metrics: np.ndarray) -> Tuple[Dict[str, float], Dict[str, 
                 percentiles = {"coh": coh_pct, "ent": ent_pct, "stab": stab_pct}
                 candidate = (thresholds, percentiles, coverage)
                 candidates.append(candidate)
-                if TARGET_LOW <= coverage <= TARGET_HIGH:
+                if target_low <= coverage <= target_high:
                     in_range.append(candidate)
 
     if in_range:
@@ -99,20 +100,24 @@ def choose_thresholds(metrics: np.ndarray) -> Tuple[Dict[str, float], Dict[str, 
         raise RuntimeError("Unable to derive router thresholds")
 
     def distance_to_range(value: float) -> float:
-        if value < TARGET_LOW:
-            return TARGET_LOW - value
-        if value > TARGET_HIGH:
-            return value - TARGET_HIGH
+        if value < target_low:
+            return target_low - value
+        if value > target_high:
+            return value - target_high
         return 0.0
 
     return min(candidates, key=lambda item: (distance_to_range(item[2]), item[2]))
 
 
-def compute_configuration(metrics: np.ndarray) -> Tuple[dict, dict, float]:
+def compute_configuration(
+    metrics: np.ndarray,
+    target_low: float,
+    target_high: float,
+) -> Tuple[dict, dict, float]:
     if metrics.size == 0:
         raise ValueError("No signal metrics available for calibration")
 
-    thresholds, percentiles, coverage = choose_thresholds(metrics)
+    thresholds, percentiles, coverage = choose_thresholds(metrics, target_low, target_high)
     coherence = metrics[:, 0]
     entropy = metrics[:, 1]
     stability = metrics[:, 2]
@@ -138,14 +143,25 @@ def compute_configuration(metrics: np.ndarray) -> Tuple[dict, dict, float]:
 
 
 def main() -> None:
-    if len(sys.argv) != 2:
-        raise SystemExit("Usage: python scripts/calibrate_router.py <state.json>")
-    state_path = Path(sys.argv[1])
+    parser = argparse.ArgumentParser(description="Calibrate STM router guardrails")
+    parser.add_argument("state", type=Path, help="Path to STM state JSON")
+    parser.add_argument("--target-low", type=float, default=0.05, help="Lower bound for desired coverage")
+    parser.add_argument("--target-high", type=float, default=0.20, help="Upper bound for desired coverage")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="Output router config path (defaults to <state>_router_config.json)",
+    )
+    args = parser.parse_args()
+
+    state_path = args.state
     state = load_state(state_path)
     metrics = extract_metrics(state)
-    cfg, percentiles, coverage = compute_configuration(metrics)
+    cfg, percentiles, coverage = compute_configuration(metrics, args.target_low, args.target_high)
 
-    out_path = Path("analysis/router_config.json")
+    out_path = args.output
+    if out_path is None:
+        out_path = state_path.with_name(f"{state_path.stem}_router_config.json")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
     print(json.dumps(cfg, indent=2))
@@ -153,6 +169,9 @@ def main() -> None:
     coverage_path = out_path.with_suffix(".coverage.json")
     coverage_payload = {"coverage": coverage, "percentiles": percentiles}
     coverage_path.write_text(json.dumps(coverage_payload, indent=2), encoding="utf-8")
+    sys.stderr.write(
+        f"Calibrated coverage {coverage:.4f} with targets [{args.target_low:.2f}, {args.target_high:.2f}] -> {out_path}\n"
+    )
 
 
 if __name__ == "__main__":
