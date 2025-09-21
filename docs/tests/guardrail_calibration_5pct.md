@@ -80,6 +80,7 @@ done
 
 Highlights (weighting coverage by total windows):
 
+- Guardrail sweep automation: `scripts/guardrail_sweep.py` records coverage vs $p$ across 2–8% (see `docs/note/appendix_guardrail_sweep.csv`).
 - 95% CI on permutation means: Blocksworld [0.836, 0.896], Mystery BW [0.822, 0.921], Logistics [0.614, 0.759]; aggregate PlanBench stays [0.865, 0.906].
 - Alert precision (share of alerts fired before the final failure) is **100%** across domains, so added sensitivity will require features beyond timing.
 - **Blocksworld invalid** (`docs/tests/permutation_blocksworld_5pct.json`) → coverage **6.9%**, mean lead **4.4** steps (alerts on 47/100 traces), mean permutation $p$ **0.87** (min 0.62).

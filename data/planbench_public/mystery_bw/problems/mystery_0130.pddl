@@ -1,0 +1,22 @@
+(define (problem mystery_0130)
+  (:domain mystery-bw)
+  (:objects t1 t2 t3 t4)
+  (:init
+    (idle)
+    (grounded t1)
+    (grounded t2)
+    (grounded t3)
+    (grounded t4)
+    (free t1)
+    (free t2)
+    (free t3)
+    (free t4)
+  )
+  (:goal
+    (and
+      (rel t1 t2)
+      (rel t2 t3)
+      (rel t3 t4)
+    )
+  )
+ )

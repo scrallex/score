@@ -77,6 +77,31 @@ PY
 
 For details on the commands and available options run `stm --help`.
 
+## Reproducing the PlanBench++ and CodeTrace experiments
+
+The repository now ships with end-to-end harnesses for the planning and coding
+benchmarks discussed in the STM whitepaper.
+
+### PlanBench++ guardrail pipeline
+
+```
+make planbench-all
+```
+
+This target regenerates the synthetic PlanBench dataset (default 300 instances
+per domain), converts traces into STM manifolds, calibrates the 5% guardrail for
+each domain, runs 20k-shuffle permutation tests, and writes guardrail sweep
+results to `docs/note/appendix_guardrail_sweep.csv`.
+
+### CodeTrace comparison suite
+
+```
+make codetrace-report
+```
+
+This command replays the CodeTrace maintenance tasks and emits the aggregated
+report used in the whitepaper.
+
 ## Repository structure
 
 - `src/sep_text_manifold/` – the Python package containing ingestion,

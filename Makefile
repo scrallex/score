@@ -1,5 +1,12 @@
 .PHONY: scorecard plots lead twins onset all
 .PHONY: demo-payload demo-up demo-down
+.PHONY: planbench-all codetrace-report
+
+PLANBENCH_COUNT ?= 300
+PLANBENCH_TARGETS ?= blocksworld mystery_bw logistics
+PLANBENCH_WINDOW_BYTES ?= 256
+PLANBENCH_STRIDE ?= 128
+PERMUTATION_ITERS ?= 20000
 
 scorecard:
 	python scripts/make_scorecard.py
@@ -37,3 +44,56 @@ demo-up:
 
 demo-down:
 	docker compose -f docker-compose.demo.yml down
+
+planbench-all:
+	.venv/bin/python scripts/generate_planbench_dataset.py --count $(PLANBENCH_COUNT)
+	.venv/bin/python scripts/planbench_to_stm.py \
+	  --input-root data/planbench_public \
+	  --domains $(PLANBENCH_TARGETS) \
+	  --output output/planbench_public \
+	  --window-bytes $(PLANBENCH_WINDOW_BYTES) \
+	  --stride $(PLANBENCH_STRIDE) \
+	  --path-threshold 0.10 --signal-threshold 0.10 \
+	  --twin-distance 0.40 --twin-top-k 3 --verbose
+	for dom in $(PLANBENCH_TARGETS); do \
+	  label=$$(echo $$dom | tr '[:lower:]' '[:upper:]'); \
+	  .venv/bin/python scripts/planbench_to_stm.py \
+	    --input-root data/planbench_public \
+	    --domains $$dom \
+	    --output output/planbench_by_domain/$$dom \
+	    --window-bytes $(PLANBENCH_WINDOW_BYTES) \
+	    --stride $(PLANBENCH_STRIDE) \
+	    --path-threshold 0.10 --signal-threshold 0.10 \
+	    --twin-distance 0.40 --twin-top-k 3 --verbose; \
+	  .venv/bin/python scripts/calibrate_router.py output/planbench_by_domain/$$dom/invalid_state.json \
+	    --target-low 0.05 --target-high 0.07 \
+	    --output analysis/router_config_$${dom}_invalid_5pct.json; \
+	  .venv/bin/python scripts/run_permutation_guardrail.py \
+	    output/planbench_by_domain/$$dom \
+	    analysis/router_config_$${dom}_invalid_5pct.json \
+	    --iterations $(PERMUTATION_ITERS) \
+	    --output docs/tests/permutation_$${dom}_5pct.json; \
+	  .venv/bin/python scripts/guardrail_sweep.py \
+	    output/planbench_by_domain/$$dom/invalid_state.json \
+	    output/planbench_by_domain/$$dom \
+	    --prefix $${dom}_invalid \
+	    --label PlanBench-$$label \
+	    --appendix docs/note/appendix_guardrail_sweep.csv; \
+	done
+	.venv/bin/python scripts/calibrate_router.py output/planbench_public/invalid_state.json \
+	  --target-low 0.05 --target-high 0.07 \
+	  --output analysis/router_config_invalid_5pct.json
+	.venv/bin/python scripts/run_permutation_guardrail.py \
+	  output/planbench_public \
+	  analysis/router_config_invalid_5pct.json \
+	  --iterations $(PERMUTATION_ITERS) \
+	  --output docs/tests/permutation_planbench_invalid_5pct.json
+	.venv/bin/python scripts/guardrail_sweep.py \
+	  output/planbench_public/invalid_state.json \
+	  output/planbench_public \
+	  --prefix planbench_invalid \
+	  --label PlanBench-Aggregate \
+	  --appendix docs/note/appendix_guardrail_sweep.csv
+
+codetrace-report:
+	PYTHONPATH=src .venv/bin/python demo/coding/run_comparison.py
