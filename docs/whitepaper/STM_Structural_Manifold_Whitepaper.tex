@@ -17,7 +17,7 @@
 \usepackage{listings}
 
 
-ewcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
 \usetikzlibrary{arrows.meta, positioning, shapes.geometric}
 \sisetup{round-mode=places, round-precision=2}
@@ -124,7 +124,7 @@ pipeline computes dilution as the fractional reduction in structural density
 relative to historical baselines, along with coherence/entropy/stability metrics
 used for guardrail calibration. Signals are stored in STM state artefacts used by
 both the router calibration (Section~\ref{subsec:calibration}) and permutation
-testing (Section~\ref{subsec:permutation}).
+testing (Section~\ref{subsec:permutation-testing}).
 
 
 oindent\textbf{Definition 3.1 (Structural Dilution).} Given a windowed state
@@ -205,7 +205,7 @@ python scripts/enrich_features.py \
 adds causal summaries to $22{,}052$ Logistics windows, exposing irreversible
 actions, resource commitments, and divergence rates for downstream calibration.
 These artefacts now seed partner pilots and act as reference inputs for the
-dashboard described in Section~\ref{subsec:demo-dashboard}.
+live evidence workflow in Section~\ref{subsec:live-evidence}.
 
 \section{Experimental Setup}
 \subsection{Datasets}
@@ -263,7 +263,7 @@ the lowest permutation score, recording all evaluated candidates in the
 generated coverage log.
 
 \subsection{Permutation Testing}
-\label{subsec:permutation}
+\label{subsec:permutation-testing}
 To assess whether calibrated alerts produce statistically meaningful lead times,
 we run permutation tests using \
 \texttt{scripts/run\_permutation\_guardrail.py} with $20{,}000$ shuffled alert
@@ -322,6 +322,20 @@ windows. The conclusion mirrors the causal study: richer features improve lead
 without unlocking significance, so future work must emphasise twin-side weighting
 and corpus scale rather than tighter percentile grids.
 
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.72\linewidth]{../figures/fig1_logistics_sweep.png}
+  \caption{Logistics sweep (1.6--2.2\% coverage): coverage target vs permutation $p_{min}$.}
+  \label{fig:logistics-sweep}
+\end{figure}
+
+\begin{table}[h]
+  \centering
+  \caption{Logistics guardrail configurations and permutation outcomes.}
+  \label{tab:stm-guardrail}
+  \input{table_stm_guardrail.tex}
+\end{table}
+
 \subsection{Live FX evidence}
 \label{subsec:live-evidence}
 The production stack now exposes equivalent artefacts. The websocket hydrator
@@ -345,6 +359,20 @@ produces the JSON needed to plot STM irreversibility against live rupture or to
 trace hazard $\lambda$ across admission events. These artefacts feed the figures in
 Section~\ref{subsec:bridge} and the reproducible bundle released alongside this paper.
 
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.72\linewidth]{../figures/fig2_spt_echo_vs_lambda.png}
+  \caption{EUR/USD manifolds sampled from warmup snapshots: echo count vs hazard $\lambda$.}
+  \label{fig:spt-echo-lambda}
+\end{figure}
+
+\begin{table}[h]
+  \centering
+  \caption{Live engine receipts referenced in Section~\ref{subsec:live-evidence}.}
+  \label{tab:spt-receipts}
+  \input{table_spt_receipts.tex}
+\end{table}
+
 \subsection{Bridge analysis}
 \label{subsec:bridge}
 Overlaying the enriched Logistics features with live manifolds shows that both
@@ -357,6 +385,13 @@ last 500 EUR/USD signals, only 1.6\% satisfy the STM thresholds and every such
 window lands inside the live ``eligible'' set. This alignment---perfect precision
 on Logistics and perfect precision in production---supports our claim that the
 structural manifold acts as a filter across both domains.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.72\linewidth]{../figures/fig3_logistics_irreversibility_vs_lambda.png}
+  \caption{Logistics windows (enriched domain): STM irreversibility vs estimated hazard $\lambda$.}
+  \label{fig:logistics-irrev-lambda}
+\end{figure}
 \section{Comparison to PDDL-INSTRUCT}
 The MIT PDDL-INSTRUCT study \cite{verma2025pddlinstruct} demonstrates that
 instruction tuning improves plan validity (up to 94\%) but does not report
@@ -421,12 +456,7 @@ Key commands are listed below; outputs are referenced throughout the text and in
 \texttt{docs/tests/}.
 
 \begin{lstlisting}[style=stm]
-make planbench-all    # regenerate dataset, manifolds, guardrail sweeps
-# PLANBENCH_EXTRA_TWINS="data/twins/bugfix_state.json" make planbench-all
-#   (optional) merge additional gold states into Blocksworld/Mystery twins
-make codetrace-report # rebuild CodeTrace comparison report
-.venv/bin/pytest      # regression suite (22 passed, 1 skipped)
-# Enrich guardrail states with causal features (Section~\ref{subsec:real-world-data-pipeline})
+# 1. Logistics enrichment & calibration (Section~\ref{subsec:permutation})
 python score/scripts/enrich_features.py \
   score/output/planbench_by_domain/logistics/invalid_state.json \
   --output score/output/planbench_by_domain/logistics/invalid_state_enriched.json \
@@ -456,9 +486,28 @@ python score/scripts/experiments/logistics_sweep.py \
   --results-dir score/results/logistics_enriched \
   --summary-output score/results/logistics_enriched_sweep_summary.json \
   --coverages 1.6 1.8 2.0 2.2 --entropy 99.985 99.99 --margin 0.0003 --iterations 20000
-python scripts/ops/export_manifold_snapshots.py --instrument EUR_USD --minutes 720
-curl http://localhost:5000/api/manifold/latest?instrument=EUR_USD
-curl "http://localhost:5000/api/opt/slice?instrument=EUR_USD&window_min=120"
+
+# 2. Live evidence export (Section~\ref{subsec:live-evidence})
+python scripts/ops/prime_qfh_history.py --instrument EUR_USD --days 10
+python scripts/rolling_backtest_evaluator.py --instrument EUR_USD --minutes 720
+python score/scripts/plot_whitepaper_figures.py \
+  --sweep score/results/logistics_enriched_sweep_summary.json \
+  --warmup-dir output/warmup/EUR_USD \
+  --logistics-state score/output/planbench_by_domain/logistics_enriched/invalid_state_enriched.json \
+  --outdir score/docs/figures --note-dir score/docs/note
+
+# 3. Tables & receipts
+python score/scripts/generate_receipt_tables.py \
+  --stm "Causal baseline=score/results/logistics_causal_perm_opt.json" \
+        "Enriched (predicate delta)=score/results/logistics_enriched_perm_opt.json" \
+  --spt "Latest manifold=output/manifolds/EUR_USD/2025-09-12.json" \
+        "Warmup signal dump=output/warmup/EUR_USD/2025-09-12.json" \
+        "Warmup snapshot CSV=score/docs/note/eurusd_warmup_snapshot.csv" \
+        "Echo scatter figure=score/docs/figures/fig2_spt_echo_vs_lambda.png"
+
+# 4. Paper build & tests
+latexmk -pdf STM_Structural_Manifold_Whitepaper.tex
+pytest -q score/tests/test_logistics_features.py
 \end{lstlisting}
 
 \begin{thebibliography}{9}
