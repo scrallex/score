@@ -50,6 +50,7 @@ src/stm_stream/core.py
 src/stm_stream/reader_kafka.py
 src/stm_stream/router.py
 src/stm_stream/runtime.py
+tests/test_adapters.py
 tests/test_comparison.py
 tests/test_dilution.py
 tests/test_feedback.py

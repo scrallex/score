@@ -38,7 +38,7 @@ def extract_metrics(state: dict) -> np.ndarray:
 
 
 def build_quantile_sets(sample_size: int) -> Tuple[List[float], List[float], List[float | None]]:
-    coherence = list(np.arange(0.55, 0.91, 0.02))
+    coherence = list(np.arange(0.45, 0.91, 0.02))
     if sample_size > 600:
         coherence.extend(np.arange(0.91, 0.99, 0.01))
     else:
@@ -56,7 +56,7 @@ def build_quantile_sets(sample_size: int) -> Tuple[List[float], List[float], Lis
     entropy = sorted({round(float(q), 4) for q in entropy})
 
     stability: List[float | None] = [None]
-    stability.extend(np.arange(0.55, 0.90, 0.05))
+    stability.extend(np.arange(0.45, 0.90, 0.05))
     if sample_size > 500:
         stability.extend([0.90, 0.92, 0.94])
     else:
@@ -317,7 +317,8 @@ def optimise_permutation_guardrail(
         candidates.append(spec)
 
     def ranking_key(spec: Dict[str, Any]) -> Tuple[int, float, float, float]:
-        metric_value = float(spec.get("p_metric", float("inf")))
+        metric_raw = spec.get("p_metric")
+        metric_value = float(metric_raw) if isinstance(metric_raw, (int, float)) else float("inf")
         fails = spec.get("fails_threshold", True)
         coverage_gap = float(spec.get("coverage_gap", float("inf")))
         lead_mean = spec.get("lead_mean")

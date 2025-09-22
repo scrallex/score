@@ -1,9 +1,9 @@
 {
   "config": "analysis/router_config_mystery_bw_invalid_5pct.json",
   "thresholds": {
-    "min_coh": 0.0006192261418636047,
-    "max_ent": 0.9994213730010078,
-    "min_stab": 0.4592085979482169
+    "min_coh": 0.0011009690561902818,
+    "max_ent": 0.9986677562183464,
+    "min_stab": 0.47116324535679377
   },
   "records": [
     {
@@ -14,7 +14,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 5
+      "window_count": 7
     },
     {
       "trace": "mystery_0002_corrupt.trace",
@@ -24,7 +24,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 11
+      "window_count": 8
     },
     {
       "trace": "mystery_0003_corrupt.trace",
@@ -34,17 +34,17 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 13
+      "window_count": 9
     },
     {
       "trace": "mystery_0004_corrupt.trace",
-      "coverage": 0.3,
-      "lead": 1,
-      "p_value": 0.5285,
-      "alerts": 3,
-      "alerts_pre_failure": 3,
+      "coverage": 0.08333333333333333,
+      "lead": 9,
+      "p_value": 0.8335,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 10
+      "window_count": 12
     },
     {
       "trace": "mystery_0005_corrupt.trace",
@@ -54,7 +54,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 3
+      "window_count": 5
     },
     {
       "trace": "mystery_0006_corrupt.trace",
@@ -64,7 +64,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 4
+      "window_count": 9
     },
     {
       "trace": "mystery_0007_corrupt.trace",
@@ -84,17 +84,17 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 9
+      "window_count": 6
     },
     {
       "trace": "mystery_0009_corrupt.trace",
-      "coverage": 0.36363636363636365,
-      "lead": 2,
-      "p_value": 0.78905,
-      "alerts": 4,
-      "alerts_pre_failure": 4,
+      "coverage": 0.1,
+      "lead": 7,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 11
+      "window_count": 10
     },
     {
       "trace": "mystery_0010_corrupt.trace",
@@ -104,7 +104,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 5
+      "window_count": 7
     },
     {
       "trace": "mystery_0011_corrupt.trace",
@@ -114,7 +114,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 4
+      "window_count": 9
     },
     {
       "trace": "mystery_0012_corrupt.trace",
@@ -124,7 +124,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 5
+      "window_count": 6
     },
     {
       "trace": "mystery_0013_corrupt.trace",
@@ -134,17 +134,17 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 9
+      "window_count": 8
     },
     {
       "trace": "mystery_0014_corrupt.trace",
-      "coverage": 0.25,
-      "lead": 0,
-      "p_value": 0.2503,
-      "alerts": 3,
-      "alerts_pre_failure": 3,
+      "coverage": 0.1111111111111111,
+      "lead": 6,
+      "p_value": 0.777,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 12
+      "window_count": 9
     },
     {
       "trace": "mystery_0015_corrupt.trace",
@@ -164,7 +164,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 7
+      "window_count": 6
     },
     {
       "trace": "mystery_0017_corrupt.trace",
@@ -174,27 +174,27 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 8
+      "window_count": 6
     },
     {
       "trace": "mystery_0018_corrupt.trace",
-      "coverage": 0.125,
-      "lead": 1,
-      "p_value": 0.251,
-      "alerts": 1,
-      "alerts_pre_failure": 1,
-      "precision": 1.0,
-      "window_count": 8
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 11
     },
     {
       "trace": "mystery_0019_corrupt.trace",
-      "coverage": 0.375,
-      "lead": 0,
-      "p_value": 0.37485,
-      "alerts": 3,
-      "alerts_pre_failure": 3,
+      "coverage": 0.08333333333333333,
+      "lead": 9,
+      "p_value": 0.8335,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 8
+      "window_count": 12
     },
     {
       "trace": "mystery_0020_corrupt.trace",
@@ -204,7 +204,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 3
+      "window_count": 7
     },
     {
       "trace": "mystery_0021_corrupt.trace",
@@ -214,7 +214,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 4
+      "window_count": 7
     },
     {
       "trace": "mystery_0022_corrupt.trace",
@@ -224,7 +224,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 8
+      "window_count": 11
     },
     {
       "trace": "mystery_0023_corrupt.trace",
@@ -234,17 +234,17 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 9
+      "window_count": 6
     },
     {
       "trace": "mystery_0024_corrupt.trace",
-      "coverage": 0.36363636363636365,
-      "lead": 2,
-      "p_value": 0.78905,
-      "alerts": 4,
-      "alerts_pre_failure": 4,
+      "coverage": 0.1111111111111111,
+      "lead": 6,
+      "p_value": 0.777,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 11
+      "window_count": 9
     },
     {
       "trace": "mystery_0025_corrupt.trace",
@@ -254,7 +254,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 3
+      "window_count": 4
     },
     {
       "trace": "mystery_0026_corrupt.trace",
@@ -274,27 +274,27 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 7
+      "window_count": 11
     },
     {
       "trace": "mystery_0028_corrupt.trace",
-      "coverage": 0.1,
-      "lead": 2,
-      "p_value": 0.29455,
-      "alerts": 1,
-      "alerts_pre_failure": 1,
-      "precision": 1.0,
-      "window_count": 10
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
     },
     {
       "trace": "mystery_0029_corrupt.trace",
-      "coverage": 0.2857142857142857,
-      "lead": 0,
-      "p_value": 0.284,
-      "alerts": 2,
-      "alerts_pre_failure": 2,
+      "coverage": 0.125,
+      "lead": 5,
+      "p_value": 0.74995,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 7
+      "window_count": 8
     },
     {
       "trace": "mystery_0030_corrupt.trace",
@@ -314,7 +314,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 7
+      "window_count": 4
     },
     {
       "trace": "mystery_0032_corrupt.trace",
@@ -324,7 +324,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 6
+      "window_count": 9
     },
     {
       "trace": "mystery_0033_corrupt.trace",
@@ -334,17 +334,17 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 7
+      "window_count": 13
     },
     {
       "trace": "mystery_0034_corrupt.trace",
-      "coverage": 0.2857142857142857,
-      "lead": 0,
-      "p_value": 0.284,
-      "alerts": 2,
-      "alerts_pre_failure": 2,
+      "coverage": 0.07692307692307693,
+      "lead": 10,
+      "p_value": 0.8462,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 7
+      "window_count": 13
     },
     {
       "trace": "mystery_0035_corrupt.trace",
@@ -354,7 +354,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 4
+      "window_count": 3
     },
     {
       "trace": "mystery_0036_corrupt.trace",
@@ -364,7 +364,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 5
+      "window_count": 4
     },
     {
       "trace": "mystery_0037_corrupt.trace",
@@ -374,27 +374,27 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 11
-    },
-    {
-      "trace": "mystery_0038_corrupt.trace",
-      "coverage": 0.125,
-      "lead": 1,
-      "p_value": 0.251,
-      "alerts": 1,
-      "alerts_pre_failure": 1,
-      "precision": 1.0,
       "window_count": 8
     },
     {
+      "trace": "mystery_0038_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 11
+    },
+    {
       "trace": "mystery_0039_corrupt.trace",
-      "coverage": 0.25,
-      "lead": 0,
-      "p_value": 0.2503,
-      "alerts": 3,
-      "alerts_pre_failure": 3,
+      "coverage": 0.1,
+      "lead": 7,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 12
+      "window_count": 10
     },
     {
       "trace": "mystery_0040_corrupt.trace",
@@ -404,7 +404,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 5
+      "window_count": 7
     },
     {
       "trace": "mystery_0041_corrupt.trace",
@@ -414,7 +414,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 7
+      "window_count": 5
     },
     {
       "trace": "mystery_0042_corrupt.trace",
@@ -424,7 +424,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 6
+      "window_count": 8
     },
     {
       "trace": "mystery_0043_corrupt.trace",
@@ -434,17 +434,17 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 11
+      "window_count": 9
     },
     {
       "trace": "mystery_0044_corrupt.trace",
-      "coverage": 0.3,
-      "lead": 1,
-      "p_value": 0.5285,
-      "alerts": 3,
-      "alerts_pre_failure": 3,
+      "coverage": 0.07692307692307693,
+      "lead": 10,
+      "p_value": 0.8462,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 10
+      "window_count": 13
     },
     {
       "trace": "mystery_0045_corrupt.trace",
@@ -454,7 +454,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 5
+      "window_count": 3
     },
     {
       "trace": "mystery_0046_corrupt.trace",
@@ -464,7 +464,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 7
+      "window_count": 5
     },
     {
       "trace": "mystery_0047_corrupt.trace",
@@ -474,7 +474,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 8
+      "window_count": 6
     },
     {
       "trace": "mystery_0048_corrupt.trace",
@@ -484,17 +484,17 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 7
+      "window_count": 13
     },
     {
       "trace": "mystery_0049_corrupt.trace",
-      "coverage": 0.36363636363636365,
-      "lead": 2,
-      "p_value": 0.78905,
-      "alerts": 4,
-      "alerts_pre_failure": 4,
+      "coverage": 0.1111111111111111,
+      "lead": 6,
+      "p_value": 0.777,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 11
+      "window_count": 9
     },
     {
       "trace": "mystery_0050_corrupt.trace",
@@ -514,7 +514,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 5
+      "window_count": 4
     },
     {
       "trace": "mystery_0052_corrupt.trace",
@@ -524,7 +524,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 8
+      "window_count": 6
     },
     {
       "trace": "mystery_0053_corrupt.trace",
@@ -534,17 +534,17 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 7
+      "window_count": 13
     },
     {
       "trace": "mystery_0054_corrupt.trace",
-      "coverage": 0.3333333333333333,
-      "lead": 1,
-      "p_value": 0.58525,
-      "alerts": 3,
-      "alerts_pre_failure": 3,
+      "coverage": 0.07692307692307693,
+      "lead": 10,
+      "p_value": 0.8462,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 9
+      "window_count": 13
     },
     {
       "trace": "mystery_0055_corrupt.trace",
@@ -564,7 +564,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 7
+      "window_count": 4
     },
     {
       "trace": "mystery_0057_corrupt.trace",
@@ -574,7 +574,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 5
+      "window_count": 9
     },
     {
       "trace": "mystery_0058_corrupt.trace",
@@ -584,17 +584,17 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 9
+      "window_count": 10
     },
     {
       "trace": "mystery_0059_corrupt.trace",
-      "coverage": 0.3,
-      "lead": 1,
-      "p_value": 0.5285,
-      "alerts": 3,
-      "alerts_pre_failure": 3,
+      "coverage": 0.1111111111111111,
+      "lead": 6,
+      "p_value": 0.777,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 10
+      "window_count": 9
     },
     {
       "trace": "mystery_0060_corrupt.trace",
@@ -604,7 +604,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 5
+      "window_count": 3
     },
     {
       "trace": "mystery_0061_corrupt.trace",
@@ -614,7 +614,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 4
+      "window_count": 7
     },
     {
       "trace": "mystery_0062_corrupt.trace",
@@ -624,7 +624,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 8
+      "window_count": 5
     },
     {
       "trace": "mystery_0063_corrupt.trace",
@@ -638,13 +638,13 @@
     },
     {
       "trace": "mystery_0064_corrupt.trace",
-      "coverage": 0.3,
-      "lead": 1,
-      "p_value": 0.5285,
-      "alerts": 3,
-      "alerts_pre_failure": 3,
+      "coverage": 0.1111111111111111,
+      "lead": 6,
+      "p_value": 0.777,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 10
+      "window_count": 9
     },
     {
       "trace": "mystery_0065_corrupt.trace",
@@ -654,7 +654,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 3
+      "window_count": 4
     },
     {
       "trace": "mystery_0066_corrupt.trace",
@@ -664,7 +664,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 6
+      "window_count": 9
     },
     {
       "trace": "mystery_0067_corrupt.trace",
@@ -674,27 +674,27 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 7
+      "window_count": 9
     },
     {
       "trace": "mystery_0068_corrupt.trace",
-      "coverage": 0.1,
-      "lead": 2,
-      "p_value": 0.29455,
-      "alerts": 1,
-      "alerts_pre_failure": 1,
-      "precision": 1.0,
-      "window_count": 10
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
     },
     {
       "trace": "mystery_0069_corrupt.trace",
-      "coverage": 0.2857142857142857,
-      "lead": 0,
-      "p_value": 0.284,
-      "alerts": 2,
-      "alerts_pre_failure": 2,
+      "coverage": 0.1111111111111111,
+      "lead": 6,
+      "p_value": 0.777,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 7
+      "window_count": 9
     },
     {
       "trace": "mystery_0070_corrupt.trace",
@@ -704,7 +704,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 3
+      "window_count": 7
     },
     {
       "trace": "mystery_0071_corrupt.trace",
@@ -714,7 +714,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 7
+      "window_count": 4
     },
     {
       "trace": "mystery_0072_corrupt.trace",
@@ -724,27 +724,27 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 8
+      "window_count": 9
     },
     {
       "trace": "mystery_0073_corrupt.trace",
-      "coverage": 0.1,
-      "lead": 2,
-      "p_value": 0.29455,
-      "alerts": 1,
-      "alerts_pre_failure": 1,
-      "precision": 1.0,
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
       "window_count": 10
     },
     {
       "trace": "mystery_0074_corrupt.trace",
-      "coverage": 0.36363636363636365,
-      "lead": 2,
-      "p_value": 0.78905,
-      "alerts": 4,
-      "alerts_pre_failure": 4,
+      "coverage": 0.14285714285714285,
+      "lead": 4,
+      "p_value": 0.7119,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 11
+      "window_count": 7
     },
     {
       "trace": "mystery_0075_corrupt.trace",
@@ -754,7 +754,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 5
+      "window_count": 4
     },
     {
       "trace": "mystery_0076_corrupt.trace",
@@ -764,7 +764,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 5
+      "window_count": 4
     },
     {
       "trace": "mystery_0077_corrupt.trace",
@@ -774,7 +774,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 8
+      "window_count": 6
     },
     {
       "trace": "mystery_0078_corrupt.trace",
@@ -784,17 +784,17 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 9
+      "window_count": 10
     },
     {
       "trace": "mystery_0079_corrupt.trace",
-      "coverage": 0.15384615384615385,
-      "lead": 11,
-      "p_value": 1.0,
-      "alerts": 2,
-      "alerts_pre_failure": 2,
+      "coverage": 0.08333333333333333,
+      "lead": 9,
+      "p_value": 0.8335,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 13
+      "window_count": 12
     },
     {
       "trace": "mystery_0080_corrupt.trace",
@@ -814,7 +814,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 6
+      "window_count": 9
     },
     {
       "trace": "mystery_0082_corrupt.trace",
@@ -824,7 +824,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 11
+      "window_count": 5
     },
     {
       "trace": "mystery_0083_corrupt.trace",
@@ -834,17 +834,17 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 11
+      "window_count": 9
     },
     {
       "trace": "mystery_0084_corrupt.trace",
-      "coverage": 0.15384615384615385,
-      "lead": 11,
-      "p_value": 1.0,
-      "alerts": 2,
-      "alerts_pre_failure": 2,
+      "coverage": 0.1111111111111111,
+      "lead": 6,
+      "p_value": 0.777,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 13
+      "window_count": 9
     },
     {
       "trace": "mystery_0085_corrupt.trace",
@@ -854,7 +854,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 5
+      "window_count": 3
     },
     {
       "trace": "mystery_0086_corrupt.trace",
@@ -864,7 +864,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 6
+      "window_count": 9
     },
     {
       "trace": "mystery_0087_corrupt.trace",
@@ -874,7 +874,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 8
+      "window_count": 6
     },
     {
       "trace": "mystery_0088_corrupt.trace",
@@ -884,17 +884,17 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 13
+      "window_count": 9
     },
     {
       "trace": "mystery_0089_corrupt.trace",
-      "coverage": 0.2857142857142857,
-      "lead": 0,
-      "p_value": 0.284,
-      "alerts": 2,
-      "alerts_pre_failure": 2,
+      "coverage": 0.08333333333333333,
+      "lead": 9,
+      "p_value": 0.8335,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 7
+      "window_count": 12
     },
     {
       "trace": "mystery_0090_corrupt.trace",
@@ -904,7 +904,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 4
+      "window_count": 7
     },
     {
       "trace": "mystery_0091_corrupt.trace",
@@ -914,7 +914,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 4
+      "window_count": 7
     },
     {
       "trace": "mystery_0092_corrupt.trace",
@@ -938,13 +938,13 @@
     },
     {
       "trace": "mystery_0094_corrupt.trace",
-      "coverage": 0.375,
-      "lead": 0,
-      "p_value": 0.37485,
-      "alerts": 3,
-      "alerts_pre_failure": 3,
+      "coverage": 0.07692307692307693,
+      "lead": 10,
+      "p_value": 0.8462,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 8
+      "window_count": 13
     },
     {
       "trace": "mystery_0095_corrupt.trace",
@@ -954,7 +954,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 4
+      "window_count": 5
     },
     {
       "trace": "mystery_0096_corrupt.trace",
@@ -974,7 +974,7 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 11
+      "window_count": 5
     },
     {
       "trace": "mystery_0098_corrupt.trace",
@@ -984,17 +984,17 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
-      "window_count": 7
+      "window_count": 9
     },
     {
       "trace": "mystery_0099_corrupt.trace",
-      "coverage": 0.3,
-      "lead": 1,
-      "p_value": 0.5285,
-      "alerts": 3,
-      "alerts_pre_failure": 3,
+      "coverage": 0.14285714285714285,
+      "lead": 4,
+      "p_value": 0.7119,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
       "precision": 1.0,
-      "window_count": 10
+      "window_count": 7
     },
     {
       "trace": "mystery_0100_corrupt.trace",
@@ -1004,34 +1004,2034 @@
       "alerts": 0,
       "alerts_pre_failure": 0,
       "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0101_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0102_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0103_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0104_corrupt.trace",
+      "coverage": 0.07692307692307693,
+      "lead": 10,
+      "p_value": 0.8462,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 13
+    },
+    {
+      "trace": "mystery_0105_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0106_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0107_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0108_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0109_corrupt.trace",
+      "coverage": 0.08333333333333333,
+      "lead": 9,
+      "p_value": 0.8335,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 12
+    },
+    {
+      "trace": "mystery_0110_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0111_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0112_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0113_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0114_corrupt.trace",
+      "coverage": 0.08333333333333333,
+      "lead": 9,
+      "p_value": 0.8335,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 12
+    },
+    {
+      "trace": "mystery_0115_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0116_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0117_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0118_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0119_corrupt.trace",
+      "coverage": 0.1,
+      "lead": 7,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0120_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0121_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0122_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0123_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0124_corrupt.trace",
+      "coverage": 0.09090909090909091,
+      "lead": 8,
+      "p_value": 0.81835,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0125_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
       "window_count": 3
+    },
+    {
+      "trace": "mystery_0126_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0127_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0128_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0129_corrupt.trace",
+      "coverage": 0.1,
+      "lead": 7,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0130_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0131_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0132_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0133_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 13
+    },
+    {
+      "trace": "mystery_0134_corrupt.trace",
+      "coverage": 0.14285714285714285,
+      "lead": 4,
+      "p_value": 0.7119,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0135_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0136_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0137_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0138_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 13
+    },
+    {
+      "trace": "mystery_0139_corrupt.trace",
+      "coverage": 0.08333333333333333,
+      "lead": 9,
+      "p_value": 0.8335,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 12
+    },
+    {
+      "trace": "mystery_0140_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0141_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0142_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0143_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0144_corrupt.trace",
+      "coverage": 0.14285714285714285,
+      "lead": 4,
+      "p_value": 0.7119,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0145_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0146_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0147_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0148_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0149_corrupt.trace",
+      "coverage": 0.1,
+      "lead": 7,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0150_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0151_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0152_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0153_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0154_corrupt.trace",
+      "coverage": 0.14285714285714285,
+      "lead": 4,
+      "p_value": 0.7119,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0155_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0156_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0157_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0158_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0159_corrupt.trace",
+      "coverage": 0.08333333333333333,
+      "lead": 9,
+      "p_value": 0.8335,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 12
+    },
+    {
+      "trace": "mystery_0160_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0161_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0162_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0163_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0164_corrupt.trace",
+      "coverage": 0.07692307692307693,
+      "lead": 10,
+      "p_value": 0.8462,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 13
+    },
+    {
+      "trace": "mystery_0165_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0166_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0167_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0168_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0169_corrupt.trace",
+      "coverage": 0.08333333333333333,
+      "lead": 9,
+      "p_value": 0.8335,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 12
+    },
+    {
+      "trace": "mystery_0170_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0171_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0172_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0173_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0174_corrupt.trace",
+      "coverage": 0.08333333333333333,
+      "lead": 9,
+      "p_value": 0.8335,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 12
+    },
+    {
+      "trace": "mystery_0175_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0176_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0177_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0178_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0179_corrupt.trace",
+      "coverage": 0.1,
+      "lead": 7,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0180_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0181_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0182_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0183_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0184_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 6,
+      "p_value": 0.777,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0185_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0186_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0187_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0188_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0189_corrupt.trace",
+      "coverage": 0.125,
+      "lead": 5,
+      "p_value": 0.74995,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0190_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0191_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0192_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0193_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0194_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 6,
+      "p_value": 0.777,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0195_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0196_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0197_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0198_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0199_corrupt.trace",
+      "coverage": 0.08333333333333333,
+      "lead": 9,
+      "p_value": 0.8335,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 12
+    },
+    {
+      "trace": "mystery_0200_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0201_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0202_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0203_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0204_corrupt.trace",
+      "coverage": 0.07692307692307693,
+      "lead": 10,
+      "p_value": 0.8462,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 13
+    },
+    {
+      "trace": "mystery_0205_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0206_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0207_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0208_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0209_corrupt.trace",
+      "coverage": 0.14285714285714285,
+      "lead": 4,
+      "p_value": 0.7119,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0210_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0211_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0212_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0213_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 13
+    },
+    {
+      "trace": "mystery_0214_corrupt.trace",
+      "coverage": 0.1,
+      "lead": 7,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0215_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0216_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0217_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0218_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 13
+    },
+    {
+      "trace": "mystery_0219_corrupt.trace",
+      "coverage": 0.1,
+      "lead": 7,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0220_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0221_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0222_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0223_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0224_corrupt.trace",
+      "coverage": 0.125,
+      "lead": 5,
+      "p_value": 0.74995,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0225_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0226_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0227_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0228_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0229_corrupt.trace",
+      "coverage": 0.07692307692307693,
+      "lead": 10,
+      "p_value": 0.8462,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 13
+    },
+    {
+      "trace": "mystery_0230_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0231_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0232_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0233_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0234_corrupt.trace",
+      "coverage": 0.08333333333333333,
+      "lead": 9,
+      "p_value": 0.8335,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 12
+    },
+    {
+      "trace": "mystery_0235_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0236_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0237_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0238_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0239_corrupt.trace",
+      "coverage": 0.1,
+      "lead": 7,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0240_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0241_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0242_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0243_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0244_corrupt.trace",
+      "coverage": 0.1111111111111111,
+      "lead": 6,
+      "p_value": 0.777,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0245_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0246_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0247_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0248_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0249_corrupt.trace",
+      "coverage": 0.07692307692307693,
+      "lead": 10,
+      "p_value": 0.8462,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 13
+    },
+    {
+      "trace": "mystery_0250_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0251_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0252_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0253_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 13
+    },
+    {
+      "trace": "mystery_0254_corrupt.trace",
+      "coverage": 0.14285714285714285,
+      "lead": 4,
+      "p_value": 0.7119,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0255_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0256_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0257_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0258_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0259_corrupt.trace",
+      "coverage": 0.09090909090909091,
+      "lead": 8,
+      "p_value": 0.81835,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0260_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0261_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0262_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0263_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0264_corrupt.trace",
+      "coverage": 0.08333333333333333,
+      "lead": 9,
+      "p_value": 0.8335,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 12
+    },
+    {
+      "trace": "mystery_0265_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0266_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0267_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0268_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0269_corrupt.trace",
+      "coverage": 0.125,
+      "lead": 5,
+      "p_value": 0.74995,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0270_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0271_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0272_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0273_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0274_corrupt.trace",
+      "coverage": 0.14285714285714285,
+      "lead": 4,
+      "p_value": 0.7119,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0275_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0276_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0277_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0278_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0279_corrupt.trace",
+      "coverage": 0.125,
+      "lead": 5,
+      "p_value": 0.74995,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0280_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0281_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0282_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0283_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 11
+    },
+    {
+      "trace": "mystery_0284_corrupt.trace",
+      "coverage": 0.08333333333333333,
+      "lead": 9,
+      "p_value": 0.8335,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 12
+    },
+    {
+      "trace": "mystery_0285_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0286_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 5
+    },
+    {
+      "trace": "mystery_0287_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0288_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 8
+    },
+    {
+      "trace": "mystery_0289_corrupt.trace",
+      "coverage": 0.1,
+      "lead": 7,
+      "p_value": 0.79795,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0290_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 3
+    },
+    {
+      "trace": "mystery_0291_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0292_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "mystery_0293_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0294_corrupt.trace",
+      "coverage": 0.14285714285714285,
+      "lead": 4,
+      "p_value": 0.7119,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0295_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 4
+    },
+    {
+      "trace": "mystery_0296_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
+    },
+    {
+      "trace": "mystery_0297_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 6
+    },
+    {
+      "trace": "mystery_0298_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "mystery_0299_corrupt.trace",
+      "coverage": 0.07692307692307693,
+      "lead": 10,
+      "p_value": 0.8462,
+      "alerts": 1,
+      "alerts_pre_failure": 1,
+      "precision": 1.0,
+      "window_count": 13
+    },
+    {
+      "trace": "mystery_0300_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 7
     }
   ],
   "summary": {
-    "trace_count": 100,
-    "total_windows": 739,
-    "total_alerts": 63,
-    "coverage_weighted": 0.08525033829499323,
-    "coverage_mean": 0.06538428238428239,
+    "trace_count": 300,
+    "total_windows": 2254,
+    "total_alerts": 60,
+    "coverage_weighted": 0.026619343389529725,
+    "coverage_mean": 0.020465136715136712,
     "coverage_min": 0.0,
-    "coverage_max": 0.375,
-    "lead_mean": 1.76,
-    "lead_std": 2.8907899727698427,
+    "coverage_max": 0.14285714285714285,
+    "lead_mean": 7.216666666666667,
+    "lead_std": 2.083768316171504,
     "lead_ci95": [
-      0.6268103306742216,
-      2.8931896693257784
+      6.689400534255389,
+      7.743932799077944
     ],
-    "lead_min": 0,
-    "lead_max": 11,
-    "lead_hits": 25,
-    "p_value_mean": 0.871559,
-    "p_value_std": 0.25392275344317145,
+    "lead_min": 4,
+    "lead_max": 10,
+    "lead_hits": 60,
+    "p_value_mean": 0.9589135,
+    "p_value_std": 0.08478559872951937,
     "p_value_ci95": [
-      0.8217901403251384,
-      0.9213278596748615
+      0.9493191063030212,
+      0.9685078936969788
     ],
     "p_value_median": 1.0,
-    "p_value_min": 0.2503,
+    "p_value_min": 0.7119,
     "p_value_max": 1.0,
     "precision_mean": 1.0,
     "precision_std": 0.0,

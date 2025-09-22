@@ -117,6 +117,13 @@ python scripts/calibrate_router.py \
   --pvalue-threshold 0.05 --pvalue-metric min \
   --output analysis/router_config_logistics_invalid_5pct.json
 
+If VAL traces are not available you can synthesise them directly from the
+generated plans:
+
+```
+.venv/bin/python scripts/generate_synthetic_traces.py --root data/planbench_public --overwrite
+```
+
 Use `--optimize-permutation` when you want calibration to search nearby
 coverage targets and retain the guardrail with the strongest permutation
 significance. The helper flags `--optimize-width`, `--optimize-span`,
