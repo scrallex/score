@@ -12,6 +12,7 @@ from typing import Any, Dict, List
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from scripts.features import CausalFeatureExtractor
+from scripts.experiments.build_causal_domain import blend_metrics  # type: ignore
 
 
 def load_state(path: Path) -> Dict[str, Any]:
@@ -59,12 +60,25 @@ def main() -> None:
         default="causal",
         help="Feature set to compute",
     )
+    parser.add_argument(
+        "--blend-metrics",
+        action="store_true",
+        help="Blend causal features into coherence/entropy/stability metrics",
+    )
     args = parser.parse_args()
 
     state = load_state(args.input)
     updated = 0
     if args.features == "causal":
         updated = enrich_with_causal_features(state)
+        if args.blend_metrics:
+            for window in state.get("signals", []):
+                if not isinstance(window, dict):
+                    continue
+                features = window.get("features", {}).get("causal")
+                metrics = window.get("metrics", {})
+                if isinstance(features, dict) and isinstance(metrics, dict):
+                    window["metrics"] = blend_metrics(metrics, features)
 
     output_path = args.output or default_output_path(args.input, args.features)
     write_state(output_path, state)

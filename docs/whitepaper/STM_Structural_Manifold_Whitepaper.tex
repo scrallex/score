@@ -349,6 +349,20 @@ mean lead.
   \label{fig:logistics-overlay}
 \end{figure}
 
+\paragraph{Causal feature trial.} To test whether the causal feature injector moves Logistics toward
+statistical significance we generated an enriched domain using
+\path{scripts/experiments/build\_causal\_domain.py}, blended the causal signals into
+each window's metrics, and recalibrated at the tighter 2--3\% target. The baseline
+guardrail (no features) achieved weighted coverage $0.20\%$ with a two-step mean lead and
+$p_{\min}=0.091$. After enrichment, the optimized guardrail covered $4.0\%$ of windows,
+extended mean lead to $5.29$ steps, and nudged the minimum permutation score to
+$p_{\min}=0.058$ (still above the $0.05$ significance bar). Configuration and
+permutation artefacts live under \path{results/} as
+\texttt{logistics\_baseline\_config.json} / \texttt{logistics\_baseline\_perm.json} and
+\texttt{logistics\_causal\_config\_opt.json} / \texttt{logistics\_causal\_perm\_opt.json}, with a
+diff-friendly summary in \path{results/experiment1\_summary.json}. The causal features therefore
+increase sensitivity and lead, but further tuning is required to push $p_{\min}$ below $0.05$.
+
 \paragraph{Null results for Blocksworld and Mystery.} Even the lowest guardrail
 settings leave Blocksworld at $p_{\min}=0.62$ and Mystery at
 $p_{\min}=0.14$ (Table~\ref{tab:guardrail-dynamic}). We repeated the sweep with
@@ -564,7 +578,25 @@ make codetrace-report # rebuild CodeTrace comparison report
 # Enrich guardrail states with causal features (Section~\ref{subsec:real-world-data-pipeline})
 python scripts/enrich_features.py \
   output/planbench_by_domain/logistics/invalid_state.json \
-  --output output/planbench_by_domain/logistics/invalid_state_causal.json
+  --output output/planbench_by_domain/logistics/invalid_state_causal.json \
+  --blend-metrics
+# Build causal domain for experiments (Section~\ref{subsec:real-world-data-pipeline})
+python scripts/experiments/build_causal_domain.py \
+  output/planbench_by_domain/logistics \
+  output/planbench_by_domain/logistics_causal \
+  --aggregated-state output/planbench_by_domain/logistics/invalid_state_causal.json
+# Run Experiment 1 calibration (Section~\ref{subsec:demo-dashboard})
+python scripts/calibrate_router.py \
+  output/planbench_by_domain/logistics_causal/invalid_state_causal.json \
+  --target-low 0.02 --target-high 0.03 \
+  --output results/logistics_causal_config_opt.json \
+  --domain-root output/planbench_by_domain/logistics_causal \
+  --permutation-iterations 20000 --optimize-permutation
+python scripts/run_permutation_guardrail.py \
+  output/planbench_by_domain/logistics_causal \
+  results/logistics_causal_config_opt.json \
+  --iterations 20000 \
+  --output results/logistics_causal_perm_opt.json
 # Launch demo dashboard (Section~\ref{subsec:demo-dashboard})
 streamlit run dashboard/stm_monitor.py
 # PlanBench scale probes (Section~\ref{subsec:permutation})

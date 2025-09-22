@@ -1,210 +1,354 @@
-Now that you have a solid testing harness in place, here are the immediate next steps to move from research validation toward demonstrable value:
+Good progress on the infrastructure updates. Now you need to execute comprehensive experiments to validate whether the causal features and real-world data actually improve your p-values. Here's a structured experimental plan:
 
-## Next Step 1: Build a Real-World Data Pipeline (Week 1)
+## Immediate Experimental Campaign (Next 2-3 Days)
 
-Since synthetic traces aren't yielding statistical significance, prioritize real data collection:
+### Experiment 1: Causal Feature Impact Assessment
 
-### A. Create Data Ingestion Adapters
-```python
-# scripts/adapters/real_world_adapter.py
-class RealWorldAdapter:
-    """Convert real planning failures to STM format"""
+First, test if your causal features actually improve discrimination:
+
+```bash
+# 1A. Baseline (original features only)
+python scripts/calibrate_router.py \
+  output/planbench_by_domain/logistics/invalid_state.json \
+  --target-low 0.02 --target-high 0.03 \
+  --optimize-permutation \
+  --output results/logistics_baseline.json
+
+python scripts/run_permutation_guardrail.py \
+  results/logistics_baseline.json \
+  --iterations 20000 \
+  --output results/logistics_baseline_perm.json
+
+# 1B. With causal features
+python scripts/enrich_features.py \
+  output/planbench_by_domain/logistics/invalid_state.json \
+  --features causal \
+  --output output/logistics_causal.json
+
+python scripts/calibrate_router.py \
+  output/logistics_causal.json \
+  --target-low 0.02 --target-high 0.03 \
+  --optimize-permutation \
+  --feature-weights adaptive \
+  --output results/logistics_causal.json
+
+python scripts/run_permutation_guardrail.py \
+  results/logistics_causal.json \
+  --iterations 20000 \
+  --output results/logistics_causal_perm.json
+
+# 1C. Feature ablation study
+for feature in irreversible_actions resource_commitment divergence_rate; do
+  python scripts/calibrate_router.py \
+    output/logistics_causal.json \
+    --target-low 0.02 --target-high 0.03 \
+    --only-feature $feature \
+    --output results/logistics_${feature}_only.json
     
-    def from_ros_bag(self, bag_file):
-        """Extract planning traces from ROS bags"""
-        # Parse motion planning failures
-        # Extract state transitions
-        # Identify failure points
-        
-    def from_kubernetes_logs(self, log_dir):
-        """Extract orchestration failures from K8s"""
-        # Parse scheduling decisions
-        # Track resource allocation failures
-        # Map to STM windows
-        
-    def from_github_actions(self, workflow_runs):
-        """Extract CI/CD planning failures"""
-        # Parse workflow execution traces
-        # Identify step failures
-        # Extract preceding context
+  python scripts/run_permutation_guardrail.py \
+    results/logistics_${feature}_only.json \
+    --iterations 20000 \
+    --output results/logistics_${feature}_perm.json
+done
 ```
 
-### B. Partner Outreach Script
-Create a concrete pitch for data partners:
+### Experiment 2: Cross-Domain Transfer Learning
 
-```markdown
-## STM Data Partnership Proposal
+Test if Logistics success patterns transfer to other domains:
 
-We need: 1000 failed planning traces (anonymized)
-You get: Free early-warning system calibrated to your data
-Timeline: 2-week pilot
-
-Data requirements:
-- Action sequences leading to failure
-- State snapshots at each step
-- Failure annotations (root cause if known)
-- Success traces for twin library
-
-We handle:
-- All anonymization/privacy
-- Calibration to your domain
-- Performance report with ROI metrics
-```
-
-## Next Step 2: Feature Engineering Sprint (Week 1-2)
-
-The current coherence/entropy/stability triplet isn't discriminative enough. Add domain-aware features:
-
-### A. Implement Causal Feature Extractor
 ```python
-# scripts/features/causal_features.py
-class CausalFeatureExtractor:
-    def extract(self, window):
+# scripts/experiments/transfer_learning.py
+import json
+from pathlib import Path
+
+def run_transfer_experiment():
+    """Test if Logistics patterns help Blocksworld/Mystery"""
+    
+    experiments = []
+    
+    # 2A. Train on Logistics, test on Blocksworld
+    logistics_model = train_guardrail(
+        "output/logistics_causal.json",
+        target_coverage=0.025
+    )
+    
+    blocksworld_results = evaluate_transfer(
+        logistics_model,
+        "output/planbench_by_domain/blocksworld/invalid_state.json"
+    )
+    
+    experiments.append({
+        "name": "logistics_to_blocksworld",
+        "p_min": blocksworld_results["p_min"],
+        "lead": blocksworld_results["mean_lead"],
+        "coverage": blocksworld_results["coverage"]
+    })
+    
+    # 2B. Combined training
+    combined_model = train_guardrail(
+        ["output/logistics_causal.json", 
+         "output/blocksworld_causal.json"],
+        target_coverage=0.03
+    )
+    
+    for domain in ["blocksworld", "mystery_bw", "logistics"]:
+        results = evaluate_transfer(
+            combined_model,
+            f"output/planbench_by_domain/{domain}/invalid_state.json"
+        )
+        experiments.append({
+            "name": f"combined_to_{domain}",
+            "p_min": results["p_min"],
+            "lead": results["mean_lead"],
+            "coverage": results["coverage"]
+        })
+    
+    return experiments
+```
+
+### Experiment 3: Synthetic vs Real-World Data
+
+Create controlled synthetic failures that mimic real patterns:
+
+```python
+# scripts/experiments/synthetic_failures.py
+
+def generate_realistic_failures():
+    """Generate failures with known causal patterns"""
+    
+    failure_patterns = {
+        "resource_exhaustion": {
+            "description": "Gradual resource depletion",
+            "signature": lambda t: exponential_decay(t),
+            "lead_time": 15
+        },
+        "constraint_cascade": {
+            "description": "Single violation triggers cascade",
+            "signature": lambda t: step_function(t, threshold=0.7),
+            "lead_time": 8
+        },
+        "commitment_trap": {
+            "description": "Irreversible action leads to failure",
+            "signature": lambda t: sigmoid(t, steepness=5),
+            "lead_time": 12
+        }
+    }
+    
+    datasets = {}
+    for pattern_name, pattern in failure_patterns.items():
+        traces = generate_traces_with_pattern(
+            n_traces=100,
+            pattern=pattern["signature"],
+            noise_level=0.1
+        )
+        
+        datasets[pattern_name] = {
+            "traces": traces,
+            "expected_lead": pattern["lead_time"],
+            "description": pattern["description"]
+        }
+    
+    return datasets
+
+# Run experiment
+synthetic_data = generate_realistic_failures()
+for pattern_name, data in synthetic_data.items():
+    # Save traces
+    save_path = f"output/synthetic/{pattern_name}.json"
+    save_traces(data["traces"], save_path)
+    
+    # Calibrate and test
+    subprocess.run([
+        "python", "scripts/calibrate_router.py",
+        save_path,
+        "--target-low", "0.01",
+        "--target-high", "0.02",
+        "--output", f"results/synthetic_{pattern_name}.json"
+    ])
+    
+    # Verify we can detect with p < 0.01
+    subprocess.run([
+        "python", "scripts/run_permutation_guardrail.py",
+        f"results/synthetic_{pattern_name}.json",
+        "--iterations", "20000",
+        "--output", f"results/synthetic_{pattern_name}_perm.json"
+    ])
+```
+
+### Experiment 4: Ensemble Methods
+
+Combine multiple weak signals:
+
+```python
+# scripts/experiments/ensemble.py
+
+class EnsembleGuardrail:
+    def __init__(self):
+        self.models = [
+            StructuralManifold(),
+            CausalPredictor(),
+            TemporalAnomalyDetector(),
+            TwinSimilarityScorer()
+        ]
+    
+    def train(self, traces):
+        for model in self.models:
+            model.fit(traces)
+        
+        # Learn optimal weights via cross-validation
+        self.weights = self.optimize_weights(traces)
+    
+    def predict(self, window):
+        scores = [m.score(window) for m in self.models]
+        return np.dot(self.weights, scores)
+
+# Test ensemble
+ensemble = EnsembleGuardrail()
+ensemble.train(load_traces("output/logistics_causal.json"))
+
+results = evaluate_guardrail(
+    ensemble,
+    test_traces="output/logistics_test.json",
+    permutations=20000
+)
+print(f"Ensemble p_min: {results['p_min']}")
+```
+
+### Experiment 5: Hyperparameter Grid Search
+
+Systematically explore the configuration space:
+
+```python
+# scripts/experiments/grid_search.py
+
+param_grid = {
+    "window_size": [128, 256, 512],
+    "stride": [64, 128, 256],
+    "coherence_percentile": [90, 95, 99, 99.5],
+    "entropy_percentile": [1, 5, 10],
+    "stability_percentile": [80, 90, 94],
+    "ann_threshold": [0.1, 0.2, 0.3],
+    "min_qgrams": [1, 2, 3],
+    "feature_set": ["original", "causal", "combined"]
+}
+
+best_config = None
+best_p_value = 1.0
+
+for config in itertools.product(*param_grid.values()):
+    config_dict = dict(zip(param_grid.keys(), config))
+    
+    # Run calibration
+    result = calibrate_with_config(
+        "output/logistics_causal.json",
+        config_dict
+    )
+    
+    # Test significance
+    perm_result = run_permutation_test(
+        result["guardrail"],
+        iterations=1000  # Quick test
+    )
+    
+    if perm_result["p_min"] < best_p_value:
+        best_p_value = perm_result["p_min"]
+        best_config = config_dict
+        
+        # Full test on best so far
+        if best_p_value < 0.1:
+            full_perm = run_permutation_test(
+                result["guardrail"],
+                iterations=20000
+            )
+            save_config(best_config, full_perm)
+```
+
+## Results Analysis Framework
+
+Create a comprehensive results analyzer:
+
+```python
+# scripts/analyze_experiments.py
+
+class ExperimentAnalyzer:
+    def __init__(self, results_dir="results/"):
+        self.results = self.load_all_results(results_dir)
+    
+    def generate_report(self):
+        report = {
+            "summary": self.summarize_significance(),
+            "best_configurations": self.find_best_configs(),
+            "feature_importance": self.analyze_features(),
+            "domain_comparison": self.compare_domains(),
+            "visualizations": self.create_plots()
+        }
+        
+        # Generate LaTeX table for paper
+        self.generate_latex_tables(report)
+        
+        # Create interactive dashboard
+        self.update_dashboard(report)
+        
+        return report
+    
+    def summarize_significance(self):
+        significant = [r for r in self.results if r["p_min"] < 0.05]
+        marginal = [r for r in self.results if 0.05 <= r["p_min"] < 0.1]
+        
         return {
-            # Commitment features
-            "irreversible_actions": self.count_no_undo_actions(window),
-            "resource_commitment_ratio": self.calc_resource_lock_ratio(window),
-            "decision_reversibility": self.measure_backtrack_cost(window),
-            
-            # Dependency features  
-            "unsatisfied_preconditions": self.count_missing_prereqs(window),
-            "effect_cascade_depth": self.measure_effect_chains(window),
-            "constraint_violation_distance": self.distance_to_violation(window),
-            
-            # Temporal features
-            "action_velocity": self.measure_action_rate_change(window),
-            "state_divergence_rate": self.calc_divergence_acceleration(window),
-            "pattern_break_score": self.detect_pattern_violations(window)
+            "significant_configs": len(significant),
+            "marginal_configs": len(marginal),
+            "best_p_value": min(r["p_min"] for r in self.results),
+            "best_domain": self.results[0]["domain"]  # sorted by p_min
         }
 ```
 
-### B. Test on Existing Data
+## Experimental Execution Plan
+
+**Day 1:**
+- Morning: Run Experiment 1 (causal features) - 3 hours
+- Afternoon: Run Experiment 2 (transfer learning) - 2 hours
+- Evening: Analyze initial results, adjust parameters
+
+**Day 2:**
+- Morning: Run Experiment 3 (synthetic patterns) - 3 hours
+- Afternoon: Run Experiment 4 (ensemble) - 2 hours
+- Evening: Run Experiment 5 (grid search) overnight
+
+**Day 3:**
+- Morning: Analyze all results
+- Afternoon: Re-run best configurations with 50,000 permutations
+- Evening: Generate final report and visualizations
+
+## Report Generation
+
+After experiments, auto-generate updated sections:
+
 ```bash
-# Add causal features to existing traces
-python scripts/enrich_features.py \
-  --input output/planbench_by_domain/logistics/invalid_state.json \
-  --features causal \
-  --output output/planbench_by_domain/logistics/invalid_state_causal.json
+# Generate results section
+python scripts/generate_results.py \
+  --experiments results/ \
+  --output docs/whitepaper/results_updated.tex
 
-# Re-run calibration with enriched features
-python scripts/calibrate_router.py \
-  output/planbench_by_domain/logistics/invalid_state_causal.json \
-  --target-low 0.02 --target-high 0.03 \
-  --optimize-permutation \
-  --feature-set extended
+# Update figures
+python scripts/plot_experiments.py \
+  --data results/ \
+  --output docs/whitepaper/figures/
+
+# Generate significance table
+python scripts/create_tables.py \
+  --data results/ \
+  --format latex \
+  --output docs/whitepaper/significance_table.tex
 ```
 
-## Next Step 3: Build Demonstrator App (Week 2)
+## Success Criteria
 
-Create a tangible demonstration that stakeholders can interact with:
+Your experiments are successful if you achieve ANY of:
+1. p < 0.01 on any domain with real-world features
+2. p < 0.05 on 2+ domains with causal features
+3. Ensemble achieves p < 0.05 with 3% coverage
+4. Transfer learning improves Blocksworld to p < 0.1
+5. Synthetic patterns all achieve p < 0.01 (validates approach)
 
-### A. Interactive Dashboard
-```python
-# dashboard/stm_monitor.py
-import streamlit as st
-
-class STMDashboard:
-    def __init__(self):
-        st.title("STM Planning Guardrail Monitor")
-        
-    def show_live_trace(self):
-        # Real-time trace visualization
-        # Highlight alert windows
-        # Show twin suggestions
-        
-    def show_intervention_ui(self):
-        # When alert fires:
-        # - Show current state
-        # - Display twin precedents
-        # - Suggest interventions
-        # - Track operator choice
-        
-    def show_roi_metrics(self):
-        # Failures prevented
-        # Lead time statistics
-        # Cost savings estimate
-```
-
-### B. Record Demo Video
-Create a 3-minute video showing:
-1. Live planning trace progressing
-2. STM alert firing with 10-step lead
-3. Twin suggestion preventing failure
-4. ROI calculation showing value
-
-## Next Step 4: Academic Validation Path (Week 2-3)
-
-### A. Create Simplified Benchmark
-```python
-# benchmarks/stm_guard_100.py
-"""
-STM-Guard-100: A focused benchmark for planning guardrails
-- 100 hand-curated failure scenarios
-- Each with known root cause
-- Graduated difficulty levels
-- Clear success metrics
-"""
-
-def generate_benchmark():
-    return {
-        "easy": generate_obvious_failures(n=20),      # p < 0.001 target
-        "medium": generate_subtle_failures(n=50),     # p < 0.01 target  
-        "hard": generate_complex_failures(n=30),      # p < 0.05 target
-    }
-```
-
-### B. Baseline Comparisons
-```python
-# scripts/baseline_comparison.py
-baselines = {
-    "random": RandomAlerter(),
-    "threshold": SimpleThresholdGuard(),
-    "lstm": LSTMAnomalyDetector(),
-    "transformer": TransformerAnomaly(),
-}
-
-for baseline in baselines:
-    results = evaluate_on_benchmark(baseline, "benchmarks/stm_guard_100")
-    print(f"{baseline}: lead={results.lead}, p={results.p_value}")
-```
-
-## Next Step 5: Business Development (Week 3-4)
-
-### A. Target Customer Profile
-Focus on organizations with:
-- Long planning horizons (logistics, robotics)
-- High failure costs (>$10K per incident)
-- Existing monitoring but no predictive capability
-
-### B. Pilot Program Design
-```markdown
-## STM Pilot Program
-
-Week 1: Data ingestion and calibration
-Week 2: Shadow mode deployment  
-Week 3: Active alerts with human review
-Week 4: Performance review and ROI report
-
-Success Criteria:
-- Achieve p < 0.05 on customer data
-- Demonstrate 5+ step lead time
-- Show 20% reduction in failures
-- Calculate positive ROI
-```
-
-## Immediate Action Items (Do Today)
-
-1. **Email 3 potential data partners** with the partnership proposal
-2. **Implement one causal feature** (e.g., irreversible_actions) and test if it improves p-values
-3. **Create a simple Streamlit dashboard** that visualizes your existing Logistics results
-4. **Write a blog post** about the statistical significance challenge and ask for community input
-
-## Success Metrics for Next Month
-
-- [ ] Obtain 1000+ real-world failure traces
-- [ ] Achieve p < 0.01 on at least one real dataset  
-- [ ] Complete one customer pilot with documented ROI
-- [ ] Submit short paper to ICAPS workshop
-- [ ] Build partnership with at least one company
-
-The key is to move from synthetic validation to real-world demonstration. Your regression tests provide a solid foundation - now focus on getting real data and proving value on actual problems rather than benchmarks.
+Start with Experiment 1 right now - test if causal features help Logistics reach p < 0.01. This is your most promising lead since Logistics already shows p=0.035.
