@@ -1,0 +1,42 @@
+[
+  {
+    "coverage_target_percent": 1.5,
+    "entropy_percentile": 99.985,
+    "coverage_weighted": 0.3248898678414097,
+    "lead_mean": 1.06,
+    "p_value_min": 0.29183333333333333,
+    "config_path": "/sep/score/results/logistics_enriched_sweep_native/logistics_cov1500_ent99985_config.json",
+    "permutation_path": "/sep/score/results/logistics_enriched_sweep_native/logistics_cov1500_ent99985_config.permutation.json",
+    "mode": "optimized"
+  },
+  {
+    "coverage_target_percent": 1.75,
+    "entropy_percentile": 99.985,
+    "coverage_weighted": 0.3248898678414097,
+    "lead_mean": 1.06,
+    "p_value_min": 0.29183333333333333,
+    "config_path": "/sep/score/results/logistics_enriched_sweep_native/logistics_cov1750_ent99985_config.json",
+    "permutation_path": "/sep/score/results/logistics_enriched_sweep_native/logistics_cov1750_ent99985_config.permutation.json",
+    "mode": "optimized"
+  },
+  {
+    "coverage_target_percent": 2.0,
+    "entropy_percentile": 99.985,
+    "coverage_weighted": 0.3248898678414097,
+    "lead_mean": 1.06,
+    "p_value_min": 0.29183333333333333,
+    "config_path": "/sep/score/results/logistics_enriched_sweep_native/logistics_cov2000_ent99985_config.json",
+    "permutation_path": "/sep/score/results/logistics_enriched_sweep_native/logistics_cov2000_ent99985_config.permutation.json",
+    "mode": "optimized"
+  },
+  {
+    "coverage_target_percent": 2.25,
+    "entropy_percentile": 99.985,
+    "coverage_weighted": 0.3248898678414097,
+    "lead_mean": 1.06,
+    "p_value_min": 0.29183333333333333,
+    "config_path": "/sep/score/results/logistics_enriched_sweep_native/logistics_cov2250_ent99985_config.json",
+    "permutation_path": "/sep/score/results/logistics_enriched_sweep_native/logistics_cov2250_ent99985_config.permutation.json",
+    "mode": "optimized"
+  }
+]

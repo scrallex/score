@@ -1,0 +1,1043 @@
+{
+  "config": "/sep/score/results/logistics_enriched_sweep_native/logistics_cov2000_ent99990_config.json",
+  "thresholds": {
+    "min_coh": 6.879415382299303e-05,
+    "max_ent": 0.9996360541057687,
+    "min_stab": 0.4767953102100635
+  },
+  "records": [
+    {
+      "trace": "logistics_0001_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0002_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0003_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 2,
+      "p_value": 0.7529333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0004_corrupt.trace",
+      "coverage": 0.16666666666666666,
+      "lead": 1,
+      "p_value": 0.3248,
+      "alerts": 2,
+      "alerts_pre_failure": 2,
+      "precision": 1.0,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0005_corrupt.trace",
+      "coverage": 0.32142857142857145,
+      "lead": 2,
+      "p_value": 0.7028666666666666,
+      "alerts": 9,
+      "alerts_pre_failure": 9,
+      "precision": 1.0,
+      "window_count": 28
+    },
+    {
+      "trace": "logistics_0006_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 2,
+      "p_value": 0.7529333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0007_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0008_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 1,
+      "p_value": 0.5640666666666667,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 18
+    },
+    {
+      "trace": "logistics_0009_corrupt.trace",
+      "coverage": 0.3,
+      "lead": 0,
+      "p_value": 0.2926666666666667,
+      "alerts": 3,
+      "alerts_pre_failure": 3,
+      "precision": 1.0,
+      "window_count": 10
+    },
+    {
+      "trace": "logistics_0010_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 1,
+      "p_value": 0.5515333333333333,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0011_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 0,
+      "p_value": 0.32606666666666667,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0012_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 2,
+      "p_value": 0.7529333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0013_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0014_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 0,
+      "p_value": 0.32606666666666667,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0015_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 2,
+      "p_value": 0.7529333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0016_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0017_corrupt.trace",
+      "coverage": 0.24242424242424243,
+      "lead": 5,
+      "p_value": 0.8397333333333333,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 33
+    },
+    {
+      "trace": "logistics_0018_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 2,
+      "p_value": 0.7529333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0019_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0020_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0021_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 2,
+      "p_value": 0.7529333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0022_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0023_corrupt.trace",
+      "coverage": 0.3076923076923077,
+      "lead": 1,
+      "p_value": 0.5280666666666667,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 26
+    },
+    {
+      "trace": "logistics_0024_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 0,
+      "p_value": 0.3366,
+      "alerts": 3,
+      "alerts_pre_failure": 3,
+      "precision": 1.0,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0025_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 1,
+      "p_value": 0.5515333333333333,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0026_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0027_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 2,
+      "p_value": 0.7529333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0028_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 1,
+      "p_value": 0.5515333333333333,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0029_corrupt.trace",
+      "coverage": 0.24242424242424243,
+      "lead": 5,
+      "p_value": 0.8397333333333333,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 33
+    },
+    {
+      "trace": "logistics_0030_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 0,
+      "p_value": 0.3366,
+      "alerts": 3,
+      "alerts_pre_failure": 3,
+      "precision": 1.0,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0031_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0032_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0033_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 2,
+      "p_value": 0.7529333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0034_corrupt.trace",
+      "coverage": 0.16666666666666666,
+      "lead": 1,
+      "p_value": 0.3248,
+      "alerts": 2,
+      "alerts_pre_failure": 2,
+      "precision": 1.0,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0035_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 0,
+      "p_value": 0.32606666666666667,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0036_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 0,
+      "p_value": 0.3366,
+      "alerts": 3,
+      "alerts_pre_failure": 3,
+      "precision": 1.0,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0037_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 1,
+      "p_value": 0.5515333333333333,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0038_corrupt.trace",
+      "coverage": 0.32142857142857145,
+      "lead": 2,
+      "p_value": 0.7028666666666666,
+      "alerts": 9,
+      "alerts_pre_failure": 9,
+      "precision": 1.0,
+      "window_count": 28
+    },
+    {
+      "trace": "logistics_0039_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 2,
+      "p_value": 0.7529333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0040_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 1,
+      "p_value": 0.5515333333333333,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0041_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 0,
+      "p_value": 0.32606666666666667,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0042_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 0,
+      "p_value": 0.3366,
+      "alerts": 3,
+      "alerts_pre_failure": 3,
+      "precision": 1.0,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0043_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0044_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0045_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 0,
+      "p_value": 0.3366,
+      "alerts": 3,
+      "alerts_pre_failure": 3,
+      "precision": 1.0,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0046_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 1,
+      "p_value": 0.5515333333333333,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0047_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 0,
+      "p_value": 0.32606666666666667,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0048_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 0,
+      "p_value": 0.3366,
+      "alerts": 3,
+      "alerts_pre_failure": 3,
+      "precision": 1.0,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0049_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 1,
+      "p_value": 0.5515333333333333,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0050_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0051_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 2,
+      "p_value": 0.7529333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0052_corrupt.trace",
+      "coverage": 0.2777777777777778,
+      "lead": 2,
+      "p_value": 0.6518,
+      "alerts": 5,
+      "alerts_pre_failure": 5,
+      "precision": 1.0,
+      "window_count": 18
+    },
+    {
+      "trace": "logistics_0053_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 0,
+      "p_value": 0.32606666666666667,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0054_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 0,
+      "p_value": 0.3366,
+      "alerts": 3,
+      "alerts_pre_failure": 3,
+      "precision": 1.0,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0055_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0056_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 1,
+      "p_value": 0.5640666666666667,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 18
+    },
+    {
+      "trace": "logistics_0057_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 0,
+      "p_value": 0.3322,
+      "alerts": 4,
+      "alerts_pre_failure": 4,
+      "precision": 1.0,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0058_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0059_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 0,
+      "p_value": 0.32606666666666667,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0060_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 0,
+      "p_value": 0.3322,
+      "alerts": 4,
+      "alerts_pre_failure": 4,
+      "precision": 1.0,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0061_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 1,
+      "p_value": 0.5515333333333333,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0062_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0063_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 0,
+      "p_value": 0.3366,
+      "alerts": 3,
+      "alerts_pre_failure": 3,
+      "precision": 1.0,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0064_corrupt.trace",
+      "coverage": 0.2777777777777778,
+      "lead": 2,
+      "p_value": 0.6518,
+      "alerts": 5,
+      "alerts_pre_failure": 5,
+      "precision": 1.0,
+      "window_count": 18
+    },
+    {
+      "trace": "logistics_0065_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0066_corrupt.trace",
+      "coverage": 0.3,
+      "lead": 0,
+      "p_value": 0.2926666666666667,
+      "alerts": 3,
+      "alerts_pre_failure": 3,
+      "precision": 1.0,
+      "window_count": 10
+    },
+    {
+      "trace": "logistics_0067_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 1,
+      "p_value": 0.5515333333333333,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0068_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0069_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 0,
+      "p_value": 0.3366,
+      "alerts": 3,
+      "alerts_pre_failure": 3,
+      "precision": 1.0,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0070_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0071_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 0,
+      "p_value": 0.32606666666666667,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0072_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 2,
+      "p_value": 0.7529333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0073_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 1,
+      "p_value": 0.5515333333333333,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0074_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0075_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 0,
+      "p_value": 0.3366,
+      "alerts": 3,
+      "alerts_pre_failure": 3,
+      "precision": 1.0,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0076_corrupt.trace",
+      "coverage": 0.16666666666666666,
+      "lead": 1,
+      "p_value": 0.3248,
+      "alerts": 2,
+      "alerts_pre_failure": 2,
+      "precision": 1.0,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0077_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0078_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 2,
+      "p_value": 0.7529333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0079_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 1,
+      "p_value": 0.5515333333333333,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0080_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0081_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 0,
+      "p_value": 0.3322,
+      "alerts": 4,
+      "alerts_pre_failure": 4,
+      "precision": 1.0,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0082_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 1,
+      "p_value": 0.5515333333333333,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0083_corrupt.trace",
+      "coverage": 0.3076923076923077,
+      "lead": 1,
+      "p_value": 0.5280666666666667,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 26
+    },
+    {
+      "trace": "logistics_0084_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 2,
+      "p_value": 0.7529333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0085_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 1,
+      "p_value": 0.5515333333333333,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0086_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0087_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 0,
+      "p_value": 0.3366,
+      "alerts": 3,
+      "alerts_pre_failure": 3,
+      "precision": 1.0,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0088_corrupt.trace",
+      "coverage": 0.2777777777777778,
+      "lead": 2,
+      "p_value": 0.6518,
+      "alerts": 5,
+      "alerts_pre_failure": 5,
+      "precision": 1.0,
+      "window_count": 18
+    },
+    {
+      "trace": "logistics_0089_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0090_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 2,
+      "p_value": 0.7529333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0091_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0092_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0093_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 0,
+      "p_value": 0.3366,
+      "alerts": 3,
+      "alerts_pre_failure": 3,
+      "precision": 1.0,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0094_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0095_corrupt.trace",
+      "coverage": 0.24242424242424243,
+      "lead": 5,
+      "p_value": 0.8397333333333333,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 33
+    },
+    {
+      "trace": "logistics_0096_corrupt.trace",
+      "coverage": 0.3333333333333333,
+      "lead": 0,
+      "p_value": 0.3366,
+      "alerts": 3,
+      "alerts_pre_failure": 3,
+      "precision": 1.0,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0097_corrupt.trace",
+      "coverage": 0.32,
+      "lead": 1,
+      "p_value": 0.5515333333333333,
+      "alerts": 8,
+      "alerts_pre_failure": 8,
+      "precision": 1.0,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0098_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 1,
+      "p_value": 0.5879333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0099_corrupt.trace",
+      "coverage": 0.35294117647058826,
+      "lead": 2,
+      "p_value": 0.7529333333333333,
+      "alerts": 6,
+      "alerts_pre_failure": 6,
+      "precision": 1.0,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0100_corrupt.trace",
+      "coverage": 0.16666666666666666,
+      "lead": 1,
+      "p_value": 0.3248,
+      "alerts": 2,
+      "alerts_pre_failure": 2,
+      "precision": 1.0,
+      "window_count": 12
+    }
+  ],
+  "summary": {
+    "trace_count": 100,
+    "total_windows": 1816,
+    "total_alerts": 590,
+    "coverage_weighted": 0.3248898678414097,
+    "coverage_mean": 0.32654926250220373,
+    "coverage_min": 0.16666666666666666,
+    "coverage_max": 0.35294117647058826,
+    "lead_mean": 1.06,
+    "lead_std": 0.9725526134140948,
+    "lead_ci95": [
+      0.8693796877708375,
+      1.2506203122291626
+    ],
+    "lead_min": 0,
+    "lead_max": 5,
+    "lead_hits": 100,
+    "p_value_mean": 0.539956,
+    "p_value_std": 0.15735240602880132,
+    "p_value_ci95": [
+      0.5091149284183549,
+      0.570797071581645
+    ],
+    "p_value_median": 0.5879333333333333,
+    "p_value_min": 0.2926666666666667,
+    "p_value_max": 0.8397333333333333,
+    "precision_mean": 1.0,
+    "precision_std": 0.0,
+    "precision_ci95": [
+      1.0,
+      1.0
+    ]
+  }
+}
