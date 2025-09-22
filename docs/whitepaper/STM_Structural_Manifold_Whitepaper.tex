@@ -442,16 +442,17 @@ intermediate guardrail metrics. STM builds on that baseline by providing:
 STM guardrails complement instruction-tuned planners by offering calibrated
 coverage, actionable lead-time, and structural repair suggestions. The refreshed
 feature set---effect-alignment cues in the PDDL adapter and AST-aware edit
-profiles for CodeTrace---raises the signal-to-noise ratio of alerting windows,
-while the permutation-aware calibration layer keeps foreground coverage anchored
-near the requested 5\% budget. On the synthetic logistics traces this produces
-0.051 weighted coverage with a three-step lead and perfect precision, but the
-permutation minimum stalls at $p_{\min}=0.23$. Blocksworld and Mystery
-corpora remain null, never triggering alerts under the calibrated thresholds.
-These results mirror the discussion in Section~\ref{subsec:permutation}: richer
-foreground features alone are not sufficient—the twin corpora must be scaled and
-the calibration loop must optimise directly for permutation significance to
-escape the synthetic plateau.
+profiles for CodeTrace---raises the signal-to-noise ratio of alerting windows.
+With VAL-generated traces the logistics guardrail now fires on roughly
+1.8\% of windows (weighted) while preserving five to six step leads and perfect
+precision, yet permutation tails remain high ($p_{\min}\approx 0.09$). The
+Blocksworld configuration does fire at the 5\% budget but does so almost exactly
+at the failure boundary (mean lead $=0$) leaving $p_{\min}\approx 0.14$, while
+Mystery continues to alert at 2--3\% coverage with seven-step leads but null
+permutation scores. These results mirror the discussion in
+Section~\ref{subsec:permutation}: richer foreground features alone are not
+sufficient—the twin corpora must be scaled and the calibration loop must
+optimise directly for permutation significance to escape the synthetic plateau.
 
 These improvements matter in real deployments: Logistics-style predicates mirror
 the resource and fleet constraints surfaced by critical infrastructure partners,
@@ -461,15 +462,17 @@ low enough for human-in-the-loop review while remaining sensitive to the semanti
 structure of the underlying domains.
 
 \subsection{Limitations}
-Permutation $p$-values stay high at 5\% coverage. On the synthetic traces used in
-this regeneration, Logistic guardrails land at 0.051 weighted coverage with
-$p_{\min}=0.23$, while Blocksworld and Mystery raise no alerts at all under the
-calibrated thresholds. The domain-specific features improve alignment signals
-but cannot compensate for the limited twin corpora generated without VAL. Adapters
-still focus on PDDL traces and Python-heavy CodeTrace telemetry; twin corpora are
-curated from synthetic runs and a handful of maintenance tasks. Dataset scale
-(300 problems per PlanBench domain, 500 for the Logistics probe, three CodeTrace
-tasks) limits statistical confidence.
+Permutation $p$-values stay high at nominal coverage. With VAL traces the
+logistics guardrail attains $0.018$ weighted coverage and a five-step mean lead
+yet only reaches $p_{\min}=0.09$; Blocksworld delivers more alerts but with
+zero-step leads and $p_{\min}=0.14$; Mystery produces seven-step leads at
+${\sim}2.7\%$ coverage but $p_{\min}=0.71$. The domain-specific features improve
+alignment signals but cannot compensate for the limited foreground corpora or
+the deterministic corruption patterns in PlanBench. Adapters still focus on PDDL
+traces and Python-heavy CodeTrace telemetry; twin corpora are curated from the
+same VAL runs and a handful of maintenance tasks. Dataset scale (300 problems per
+PlanBench domain, 500 for the Logistics probe, three CodeTrace tasks) limits
+statistical confidence.
 
 \subsection{Future Work}
 To tighten significance and improve robustness we will:

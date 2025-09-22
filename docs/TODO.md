@@ -6,10 +6,10 @@
 - [x] Added permutation-aware calibration (`--optimize-permutation`) and
   dynamic fallback logic so guardrails prefer statistically significant
   coverage before dropping to secondary targets.
-- [x] Regenerated PlanBench/CodeTrace artefacts with synthetic traces; logistic
-  guardrail now hits ~5% coverage with 3-step lead but p-values remain high
-  (p_min≈0.23) while block/mystery stay null, underscoring the need for richer
-  corpora.
+- [x] Regenerated PlanBench/CodeTrace artefacts with VAL traces; logistics now
+  fires on ~1.8% of windows with ~5.5 step leads (p_min≈0.09) while
+  blocksworld/mystery still yield weak significance and near-zero guardrail
+  margin, underscoring the need for richer corpora and calibrated thresholds.
 
 ### Ways to Improve the STM Whitepaper and Technology
 
