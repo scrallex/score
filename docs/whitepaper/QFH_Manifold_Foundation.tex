@@ -22,6 +22,15 @@ The Sep Engine's Quantum Field Harmonics (QFH) algorithm analyses discrete trans
 
 Integrating the manifold into live markets surfaced practical issues: candle feeds present numeric strings, nested mid/bid/ask payloads, and ISO-8601 timestamps; historical allocators relied on helper functions that vanished during the rolling evaluator rewrite; and the whitepaper pipeline lacked reproducible figure generation. The current release closes those gaps by hardening the serializer to coerce mixed-type OHLCV data, restoring the legacy cooldown/hysteresis API for CI, and wiring Valkey exports directly into the documentation workflow. The following sections revisit the metric intuition, describe the native implementation, and present evidence across synthetic corpora, PlanBench logistics traces, live FX data, and a planner–market bridge.
 
+This paper is therefore a methods and instrumentation report. It does not claim trading profitability or statistically significant improvements yet; instead it documents (i) how to compute the structural manifold on both text and price data, (ii) how the native metrics and hazard $\lambda$ propagate end-to-end through the Sep stack, and (iii) how STM irreversibility aligns quantitatively with market rupture. Subsequent papers will focus on significance tests and performance benchmarks.
+
+\subsection*{Contributions}
+\begin{itemize}
+  \item A production-grade native pipeline (parser, Valkey integration, CI wrappers) that exposes QFH metrics and hazard $\lambda$ to both STM planners and the live trading stack.
+  \item An empirical evaluation across synthetic corpora, PlanBench logistics traces, and eight live FX pairs showing that the manifold behaves consistently and produces monotonic admission curves.
+  \item A quantitative bridge between STM irreversibility and live rupture (Pearson \(-0.23\), Spearman \(-0.28\)), demonstrating shared structure between planning anomalies and market regimes.
+\end{itemize}
+
 \section{Algorithm}
 We formalise the transformation from bytes to QFH events, define the state machine (NULL, FLIP, RUPTURE, stabilising phases), and derive the per-window metrics:
 \begin{itemize}
@@ -123,7 +132,17 @@ The \texttt{native\_metrics\_provider} injects the QFH metrics directly into STM
 \end{figure}
 
 \section{Discussion}
-Parameter sensitivity remains an open lever: shrinking the signature precision below two decimals or widening the repetition look-back quickly raises false positives; conversely, overly aggressive hazard caps throttle genuine echoes. Data dependencies are still real---Valkey availability and OANDA fallbacks must remain healthy to avoid gaps in the warmup corpus. The evaluation also highlights limitations: the synthetic catalogue is intentionally tiny, PlanBench permutation $p$-values plateau around 0.24 despite better lead times, and only eight FX pairs have been primed so far. The manifold should therefore be viewed as a conservative filter that elevates structural recurrence, not a crystal ball that guarantees alpha. Expanding the synthetic library, adding futures/equity assets, and running longer FX windows are immediate next steps.
+Parameter sensitivity remains an open lever: shrinking the signature precision below two decimals or widening the repetition look-back quickly raises false positives; conversely, overly aggressive hazard caps throttle genuine echoes. Data dependencies are still real---Valkey availability and OANDA fallbacks must remain healthy to avoid gaps in the warmup corpus. The manifold should therefore be viewed as a conservative filter that elevates structural recurrence, not a crystal ball that guarantees alpha.
+
+Key quantitative findings to keep in mind:
+\begin{itemize}
+  \item \textbf{Synthetic} streams produce the expected event mix: constant sequences deliver coherence $\approx0.67$ with near-zero rupture, alternating streams reach coherence $\approx0.91$, and uniform noise drops coherence below 0.5 while entropy approaches one.
+  \item \textbf{PlanBench logistics} guardrails at 1.6--2.2\% coverage achieve weighted coverage $0.010$--$0.026$, mean lead times of 5.3--7.0 steps, and conservative permutation $p_{\min}\approx0.24$.
+  \item \textbf{Live FX} (eight pairs, 30-day window) cluster around hazard $\lambda=0.12$--$0.18$ with echo counts $>1$, producing a steep admission curve that validates the hazard gate.
+  \item \textbf{Bridge} analyses yield Pearson \(-0.23\) and Spearman \(-0.28\) correlations between STM irreversibility and live rupture, with a 0.25 hazard threshold agreeing on 62\% of windows.
+\end{itemize}
+
+\textbf{Limitations:} PlanBench corpora remain small and biased toward logistics traces, the best permutation $p$-values are still \(\approx0.24\), hazard thresholds (e.g., $\lambda \leq 0.18$ for FX gating) require empirical tuning per asset, and the synthetic catalogue is intentionally minimal. Future work will expand the dataset (more FX pairs, other asset classes, larger PlanBench collections), explore ablations that vary the $\lambda$ weighting and twin filters, and benchmark manifold gating against classical technical indicators to quantify any performance edge.
 
 \section{Conclusion}
 The native QFH/QBSA manifold now runs end-to-end across STM planning and spt trading, delivering a single structural vocabulary for echo detection. Synthetic corpora, PlanBench logistics traces, and live FX snapshots all exhibit coherent hazard behaviour, and the STM\,$\leftrightarrow$\,market bridge quantifies how planner irreversibility mirrors live rupture. Future work will deepen the bridge with richer contingency tables, expand the FX universe beyond the current eight pairs, and harden allocator policies that consume the gates.
@@ -134,8 +153,10 @@ All commands are executed from the project root (\texttt{/sep/score}) with the v
 The following script regenerates the native artefacts end-to-end:
 \begin{itemize}
   \item Set \texttt{ECHO\_SIGNATURE\_PRECISION=2} and \texttt{ECHO\_LOOKBACK\_MINUTES=60} (defaults in production) before priming.
-  \item The PlanBench sweep uses coverage targets 1.5--2.2\% and entropy percentiles 99.985--99.99 as recorded in \texttt{results/logistics\_sweep\_summary\_native.json}.
-  \item OANDA keys are optional because Valkey backfill is preferred; if unavailable, set \texttt{OANDA\_API\_KEY} and \texttt{OANDA\_ACCOUNT\_ID} before running the prime script.
+  \item Ensure \texttt{VALKEY\_URL} points at the hotband Valkey instance and \texttt{HOTBAND\_PAIRS} lists the instruments you wish to prime (defaults cover the eight FX pairs used here).
+  \item Set \texttt{ECHO\_MIN\_REPETITIONS} (or \texttt{REPETITION\_MIN\_COUNT}) to 3 and \texttt{ECHO\_HAZARD\_MAX} to 0.7 for the rolling evaluator to reproduce admission curves.
+  \item The PlanBench sweep uses coverage targets 1.5--2.2\% and entropy percentiles 99.985--99.99 as recorded in \texttt{results/logistics\_sweep\_summary\_native.json}; pass those values through \texttt{logistics\_sweep.py} if you change them.
+  \item OANDA keys are optional because Valkey backfill is preferred; if unavailable, set \texttt{OANDA\_API\_KEY}, \texttt{OANDA\_ACCOUNT\_ID}, and \texttt{OANDA\_ENVIRONMENT} before running the prime script so the HTTP fallback succeeds.
 \end{itemize}
 \begin{verbatim}
 # Build native bindings

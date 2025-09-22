@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1758566342.84498 "QFH_Manifold_Foundation.tex" "QFH_Manifold_Foundation.pdf" "QFH_Manifold_Foundation" 1758566344.8232 0
+["pdflatex"] 1758567106.5752 "QFH_Manifold_Foundation.tex" "QFH_Manifold_Foundation.pdf" "QFH_Manifold_Foundation" 1758567108.12313 0
   "../figures/fig0_synthetic_event_hist.png" 1758564182.93922 36011 7186f17fc19c3c7b383d2d641b140fde ""
   "../figures/fig1_logistics_sweep.png" 1758564181.02817 44215 601d85638eb66fce1f851cb9f492e8ae ""
   "../figures/fig2_spt_echo_vs_lambda.png" 1758564181.69819 43814 f05442066748d07dcdc000511d2f89b2 ""
@@ -105,9 +105,9 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1707919699 40399 f2c302f7d2af602abb742093540a5834 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1758413751.13215 165012 f177baa1c39a3ebd62c3096a43521a0d ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1758413823 6831130 3e11db87c1927b5463e7e43e2978a80a ""
-  "QFH_Manifold_Foundation.aux" 1758566344.66174 4017 dcdccc710022a1b59cfc1a0e8f86981d "pdflatex"
-  "QFH_Manifold_Foundation.out" 1758566344.66274 1565 8c340229303f97f988f69171d35adf8d "pdflatex"
-  "QFH_Manifold_Foundation.tex" 1758566334.78445 17201 7f4a61293636da990cba40db235929bf ""
+  "QFH_Manifold_Foundation.aux" 1758567108.00438 4017 977e288c5a1d9e4f8f95a7ba765ee30c "pdflatex"
+  "QFH_Manifold_Foundation.out" 1758567108.00538 1565 8c340229303f97f988f69171d35adf8d "pdflatex"
+  "QFH_Manifold_Foundation.tex" 1758567100.81617 19994 3b4e55ad6703cc73ff0fdf917ddbf518 ""
   (generated)
   "QFH_Manifold_Foundation.aux"
   "QFH_Manifold_Foundation.log"
