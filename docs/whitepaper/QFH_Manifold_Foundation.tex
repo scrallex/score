@@ -30,21 +30,21 @@ We formalise the transformation from bytes to QFH events, define the state machi
 We also document the repetition signature used to bucket windows (\texttt{sig	extunderscore c}, \texttt{sig	extunderscore s}, \texttt{sig	extunderscore e}).
 
 \section{Implementation}
-The production implementation comprises (i) a C++ kernel linked through a pybind11 module (`sep\_quantum`), (ii) Python helpers that expose native results (`sep\_text\_manifold.native`), and (iii) CLI tooling that toggles the native engine via `--use-native-quantum`. Figure~\ref{fig:synthetic-events} confirms the event distribution emitted by the kernel on canonical synthetic patterns.
+The production implementation comprises (i) a C++ kernel linked through a pybind11 module (\texttt{sep\_quantum}), (ii) Python helpers that expose native results (\texttt{sep\_text\_manifold.native}), and (iii) CLI tooling that toggles the native engine via \texttt{--use-native-quantum}. Figure~\ref{fig:synthetic-events} confirms the event distribution emitted by the kernel on canonical synthetic patterns.
 
 \subsection{Native Metric Flow Across Services}
 Native metrics now propagate along a single path shared by trading and planning:
 \begin{enumerate}
-  \item \textbf{Candle ingestion}: `scripts/ops/prime\_qfh\_history.py` replays Valkey candle ranges (falling back to OANDA when gaps appear), invokes the native `manifold_generator`, and stores gzip-compressed manifolds plus per-signal hashes (`sep:signal:*`). Recent changes attach both nanosecond and millisecond timestamps so downstream exports remain numeric.
-  \item \textbf{Snapshot export}: `scripts/ops/export\_manifold\_snapshots.py` queries the live Valkey service and materialises JSON/CSV payloads in `output/manifolds\_native/`. These snapshots feed the whitepaper figures and provide a consistent interface for analytics beyond the cluster network.
-  \item \textbf{Planner integration}: the `native_metrics_provider` wires the same kernel into PlanBench ingestion (`--use-native-quantum`), ensuring every logistics window carries QFH metrics, hazard weights, and STM feature enrichments before guardrail calibration.
-  \item \textbf{Bridge analytics}: the enriched state (`invalid\_state\_logistics\_native.json`) coupled with live FX measurements allows `compute_bridge_metrics.py` to correlate STM irreversibility against QBSA hazard without bespoke adapters.
+  \item \textbf{Candle ingestion}: \texttt{scripts/ops/prime\_qfh\_history.py} replays Valkey candle ranges (falling back to OANDA when gaps appear), invokes the native \texttt{manifold\_generator}, and stores gzip-compressed manifolds plus per-signal hashes (\texttt{sep:signal:*}). Recent changes attach both nanosecond and millisecond timestamps so downstream exports remain numeric.
+  \item \textbf{Snapshot export}: \texttt{scripts/ops/export\_manifold\_snapshots.py} queries the live Valkey service and materialises JSON/CSV payloads in \texttt{output/manifolds\_native/}. These snapshots feed the whitepaper figures and provide a consistent interface for analytics beyond the cluster network.
+  \item \textbf{Planner integration}: the \texttt{native\_metrics\_provider} wires the same kernel into PlanBench ingestion (\texttt{--use-native-quantum}), ensuring every logistics window carries QFH metrics, hazard weights, and STM feature enrichments before guardrail calibration.
+  \item \textbf{Bridge analytics}: the enriched state (\texttt{invalid\_state\_logistics\_native.json}) coupled with live FX measurements allows \texttt{compute\_bridge\_metrics.py} to correlate STM irreversibility against QBSA hazard without bespoke adapters.
 \end{enumerate}
 
 This flow unifies the instrumentation for both the spt trading stack and the STM planning harness, eliminating historic divergences between Python and native code paths.
 
 \section{Synthetic Validation}
-We generate representative bitstreams (constant, alternating, biased random walks, bursty noise, and uniform noise) using `scripts/experiments/qfh\_synthetic.py`. Each sample is analysed with the native kernel and summarised in Figure~\ref{fig:synthetic-events}. Expected behaviours include low entropy/high coherence for constant streams and high entropy/low coherence for uniform noise.
+We generate representative bitstreams (constant, alternating, biased random walks, bursty noise, and uniform noise) using \texttt{scripts/experiments/qfh\_synthetic.py}. Each sample is analysed with the native kernel and summarised in Figure~\ref{fig:synthetic-events}. Expected behaviours include low entropy/high coherence for constant streams and high entropy/low coherence for uniform noise.
 
 \begin{figure}[t]
   \centering
@@ -54,7 +54,7 @@ We generate representative bitstreams (constant, alternating, biased random walk
 \end{figure}
 
 \section{PlanBench Logistics Experiments}
-Running the PlanBench ingestion pipeline with `--use-native-quantum` regenerates the logistics manifolds and guardrail sweeps. Figure~\ref{fig:logistics-sweep} shows the updated coverage vs permutation $p$ curve. Figure~\ref{fig:planbench-metrics} plots native metric distributions across all logistics windows, and Table~\ref{tab:planbench-stats} summarises the means and standard deviations.
+Running the PlanBench ingestion pipeline with \texttt{--use-native-quantum} regenerates the logistics manifolds and guardrail sweeps. Figure~\ref{fig:logistics-sweep} shows the updated coverage vs permutation $p$ curve. Figure~\ref{fig:planbench-metrics} plots native metric distributions across all logistics windows.
 
 \begin{figure}[t]
   \centering
@@ -73,7 +73,7 @@ Running the PlanBench ingestion pipeline with `--use-native-quantum` regenerates
 \end{figure}
 
 \section{Live FX Manifolds}
-We prime 30 days of EUR/USD, GBP/USD, and USD/JPY data with the native kernel (via the Valkey-backed `prime\_qfh\_history.py` workflow) and export manifolds for distribution analysis. Figure~\ref{fig:fx-metrics} illustrates the spread of coherence, entropy, and hazard values. Figure~\ref{fig:echo-vs-lambda} reproduces the echo-count vs hazard relationship across warmup snapshots, while Figure~\ref{fig:lambda-admission} shows that the live gate retains monotonic calibration when binned by the native hazard estimate.
+We prime 30 days of EUR/USD, GBP/USD, and USD/JPY data with the native kernel (via the Valkey-backed \texttt{prime\_qfh\_history.py} workflow) and export manifolds for distribution analysis. Figure~\ref{fig:fx-metrics} illustrates the spread of coherence, entropy, and hazard values. Figure~\ref{fig:echo-vs-lambda} reproduces the echo-count vs hazard relationship across warmup snapshots, while Figure~\ref{fig:lambda-admission} shows that the live gate retains monotonic calibration when binned by the native hazard estimate.
 
 \begin{figure}[t]
   \centering
@@ -99,9 +99,9 @@ We prime 30 days of EUR/USD, GBP/USD, and USD/JPY data with the native kernel (v
 \end{figure}
 
 \section{Bridge Analysis}
-Using the enriched logistics state (`invalid\_state\_logistics\_native.json`) and the native guardrail config, we recompute STM irreversibility vs QBSA hazard. Figure~\ref{fig:logistics-irr-lambda} visualises the scatter while Figure~\ref{fig:bridge-summary} summarises Pearson and Spearman correlations against the spt rupture proxy.
+Using the enriched logistics state (\texttt{invalid\_state\_logistics\_native.json}) and the native guardrail config, we recompute STM irreversibility vs QBSA hazard. Figure~\ref{fig:logistics-irr-lambda} visualises the scatter while Figure~\ref{fig:bridge-summary} summarises Pearson and Spearman correlations against the spt rupture proxy.
 
-The `native_metrics_provider` injects the QFH metrics directly into STM feature derivation, so bridge comparisons now operate on identical coherence, stability, entropy, rupture, and $\lambda$ definitions across markets and planners.
+The \texttt{native\_metrics\_provider} injects the QFH metrics directly into STM feature derivation, so bridge comparisons now operate on identical coherence, stability, entropy, rupture, and $\lambda$ definitions across markets and planners.
 
 \begin{figure}[t]
   \centering
@@ -113,7 +113,7 @@ The `native_metrics_provider` injects the QFH metrics directly into STM feature 
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.5\linewidth]{../figures/fig4_bridge_correlation_summary.png}
-  \caption{Correlation summary from `compute_bridge_metrics.py`.}
+  \caption{Correlation summary from \texttt{compute\_bridge\_metrics.py}.}
   \label{fig:bridge-summary}
 \end{figure}
 
@@ -125,7 +125,7 @@ The native QFH/QBSA manifold is now integrated into the STM pipelines and makes 
 
 \appendix
 \section{Reproducibility}
-All commands are executed from the project root (`/sep/score`) with the virtual environment at `score/.venv` activated.
+All commands are executed from the project root (\texttt{/sep/score}) with the virtual environment at \texttt{score/.venv} activated.
 The following script regenerates the native artefacts end-to-end:
 \begin{verbatim}
 # Build native bindings
