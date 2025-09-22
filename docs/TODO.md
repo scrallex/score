@@ -1,196 +1,47 @@
-Below is a detailed, step‑by‑step plan that your Codex bot can follow on the droplet under `/sep` to use real data, refresh all artifacts, and continue assembling the QFH foundation paper.  These instructions assume that the new JSON parsing code has been compiled (as you noted with `cmake --build build --target manifold_generator`) and that the `.env` file in `/sep` contains valid OANDA and Valkey credentials.
+Here’s a structured roadmap to build on your foundation paper and to set up your next round of research.  The aim is to turn the current methods paper into a springboard for deeper empirical results and stronger STM↔spt integration.
 
----
+## 1. Consolidate and check the existing pipeline
 
-### 1. Prepare the environment
+* **Verify the end-to-end workflow**. Now that the native metrics flow is stable, run through the reproducibility commands in the appendix from start to finish (PlanBench ingestion, feature enrichment, guardrail calibration, synthetic generation, Valkey priming, snapshot export, figure generation) to ensure there are no hidden gaps. This will also confirm that the restored cooldown/hysteresis helpers don’t interfere with the live loop.
 
-1. **Move to the SPT workspace**
+* **Document environment assumptions**. Make sure colleagues know to set `VALKEY_URL`, `HOTBAND_PAIRS`, `ECHO_*` parameters, and (optionally) OANDA keys when priming live data. Clear environment defaults reduce friction when others reproduce your work.
 
-   ```bash
-   cd /sep
-   ```
+## 2. Expand the datasets
 
-   The `spt` repository is the root here; the `score` repo is a subdirectory.
+* **Broaden PlanBench coverage**. Logistics is only one domain; regenerate Blocksworld, CodeTrace and Mystery traces with `--use-native-quantum`. Calibrate guardrails and compute coverage/lead/p‑values for each domain. This will test whether the native QFH metrics generalise across textual environments.
 
-2. **Load environment variables**
-   Source the `.env` file so the Python scripts can access your OANDA API key and Valkey URL:
+* **Add more FX instruments and asset classes**. Thirty‑day snapshots for eight majors gave you hazard clusters around 0.12–0.18. Extend to crosses (EUR/GBP, JPY/CHF), metals (XAU/USD), and possibly crypto if feeds are available. Also lengthen the sample (90 or 180 days) to see if hazard regimes persist. Use the same prime/export scripts to collect snapshots and update the λ‑calibration curves.
 
-   ```bash
-   set -a
-   source .env
-   set +a
-   ```
+* **Gather higher‑frequency synthetic corpora**. The current synthetic benchmark uses only a few canonical patterns. Generate larger synthetic bitstreams with variable burst lengths, multi‑level alternations and regime shifts to stress the event model and refine your intuition about when coherence/entropy and λ diverge.
 
-3. **Rebuild the native tools** (if you haven’t already)
+## 3. Improve statistical power
 
-   ```bash
-   cmake --build build --target manifold_generator
-   ```
+* **Twin‑filtering experiments**. On PlanBench traces, bucket windows by action distribution (e.g. predicate classes) or trace length, then rerun permutation tests within each bucket. The idea is to reduce heterogeneity and see whether p‑values drop when the manifold is evaluated on more homogeneous slices.
 
-4. **Ensure the services are up**
-   You already ran `deploy.sh`, but it’s good to verify:
+* **Lambda weighting and thresholds**. The hazard λ is currently a blend of entropy and coherence; experiment with alternative weightings (entropy‑only, coherence‑only, or dynamic weights that adapt with volatility) to see how admission curves change. Similarly, test different λ thresholds (0.10, 0.15, 0.20) on live FX data to quantify trade‑off between coverage and noise.
 
-   ```bash
-   docker compose -f docker-compose.hotband.yml ps
-   ```
+* **Correlate with classical indicators**. Compute standard technical indicators (ATR, RSI, MACD) over the same FX snapshots and compare them to λ and repetition counts. See whether high echo/low hazard windows correspond to particular indicator regimes, and whether the manifold offers orthogonal information.
 
-   You should see `sep-backend`, `sep-valkey`, `sep-candle-fetcher`, and related services all “Up” and healthy.  The trading backend uses the improved parsing helpers to deserialize candles so numeric strings will no longer cause a `nlohmann::json` type error.
+## 4. Deepen the STM↔spt bridge
 
----
+* **Richer contingency tables**. In the bridge analysis you used a single hazard threshold (0.25) and found 62 % agreement between STM irreversibility and market rupture. Produce a full sensitivity analysis: vary the hazard threshold and STM irreversibility cutoff and record agreement/disagreement rates. This will help you tune thresholds for real‑time use.
 
-### 2. Prime Valkey with real market data
+* **Temporal alignment**. Align PlanBench windows and FX snapshots by calendar date and time of day. Investigate whether certain time‑of‑day patterns show stronger irreversibility–rupture correlation (e.g. during London/New York overlap).
 
-The prime script reads historical candles via your OANDA credentials, creates manifolds, stores them to Valkey, and writes JSON snapshots in `output/warmup/<PAIR>/<DATE>.json`.  Run it for each instrument over a sufficient window (e.g., 30 days).
+* **Feature translation**. Use the native kernel to generate QFH metrics directly from PlanBench bitstreams (beyond logistic features) and compare them to spt metrics. This may reduce the need for STM proxies and reveal deeper structural similarities.
 
-Here is an example loop for eight FX pairs (EUR/USD, USD/JPY, GBP/USD, EUR/JPY, USD/CAD, NZD/USD, AUD/USD, USD/CHF):
+## 5. Start planning the next paper(s)
 
-```bash
-cd /sep
-for pair in EUR_USD USD_JPY GBP_USD EUR_JPY USD_CAD NZD_USD AUD_USD USD_CHF
-do
-    python scripts/ops/prime_qfh_history.py \
-      --instrument $pair \
-      --days 30 \
-      --store-manifold-to-valkey \
-      --output-dir output/warmup  # optional: explicit output location
-done
-```
+* **PlanBench/STP performance paper**. Use the expanded datasets and twin‑filtering results to write a second paper focused on significance. Aim to show whether native metrics plus filtering strategies reduce p‑values below 0.05 or improve lead times relative to baselines.
 
-* This command fetches 30 days of 1‑minute candles per pair, converts them to bitstreams, computes the QFH metrics via the native engine (using the robust numeric parsing functions), builds signatures and repetition counts, and writes JSON files.
-* Watch for log messages; if you see `terminate called after throwing…`, revisit your `.env` credentials and ensure the new parsing code has been picked up (the fix should prevent those errors).
+* **Combined STM↔spt paper**. Once you have more FX pairs and a richer bridge analysis, draft a third paper that evaluates the manifold as a trading filter. Compare gated vs. ungated strategies on historical data; include profit/risk metrics and benchmark against classical indicators. Make sure to emphasise that the goal is stability and regime detection rather than pure alpha.
 
----
+* **Methodological spin‑offs**. Consider papers on hazard calibration methods, the mathematical properties of the QFH event process, or an application to other domains (e.g. sensor data, social streams) to broaden the technology’s appeal.
 
-### 3. Export snapshot CSVs for the figures
+## 6. Continue improving the infrastructure
 
-After the prime job completes successfully for a pair, export a 30‑day snapshot from Valkey for plotting:
+* **Automate CI and data regeneration**. Integrate the `--use-native-quantum` paths and the figure generation scripts into a nightly job that refreshes synthetic, PlanBench and FX datasets. This ensures your experiments always run on up‑to‑date data and helps catch regressions early.
 
-```bash
-for pair in EUR_USD USD_JPY GBP_USD EUR_JPY USD_CAD NZD_USD AUD_USD USD_CHF
-do
-    python scripts/ops/export_manifold_snapshots.py \
-      --instrument $pair \
-      --minutes $((30*24*60)) \
-      --out output/manifolds_native/${pair}_snapshots.csv
-done
-```
+* **Refine the Python/C++ interface**. If you plan to release the package publicly, consider adding type hints, docstrings and examples for the native APIs, and align the naming conventions between STM and spt code paths to reduce friction for external contributors.
 
-Each CSV will contain timestamped rows with `coherence`, `entropy`, `stability`, `rupture`, `lambda_hazard`, and `repetition.count_1h`.  These will be used for the FX plots.
-
----
-
-### 4. Regenerate PlanBench/Logistics artifacts (done, but repeat if necessary)
-
-You already reran all PlanBench exports and calibration scripts with `--use-native-quantum` enabled.  If you need to refresh them after the parsing fix:
-
-```bash
-# Example for logistics domain
-python scripts/planbench_to_stm.py \
-    --domain logistics \
-    --use-native-quantum \
-    --output output/planbench_by_domain/logistics
-
-python scripts/enrich_features.py \
-    output/planbench_by_domain/logistics/gold_state.json \
-    --output output/planbench_by_domain/logistics/gold_state_logistics_native.json \
-    --features causal logistics --blend-metrics --use-native-quantum
-
-python scripts/experiments/build_causal_domain.py \
-    --domain logistics \
-    --include-logistics \
-    --use-native-quantum \
-    --output output/planbench_by_domain/logistics_enriched_native
-
-python scripts/calibrate_router.py \
-    --domain logistics \
-    --input output/planbench_by_domain/logistics_enriched_native \
-    --use-native-quantum \
-    --output analysis/router_config_logistics_enriched_native.json
-```
-
-This pipeline ensures that logistics states contain the native metrics and that guardrails are calibrated on those metrics.
-
----
-
-### 5. Refresh synthetic and bridge datasets
-
-* Run the synthetic generator to produce canonical event histograms:
-
-  ```bash
-  python scripts/experiments/qfh_synthetic.py \
-    --output results/qfh_synthetic_native.json
-  ```
-
-* Recompute bridge statistics with the new PlanBench and FX data:
-
-  ```bash
-  python score/scripts/compute_bridge_metrics.py \
-    --planbench output/planbench_by_domain/logistics/gold_state_logistics_native.json \
-    --fx output/manifolds_native/EUR_USD_snapshots.csv \
-    --output-metrics docs/note/bridge_metrics.json \
-    --output-contingency docs/note/bridge_contingency.json
-  ```
-
-Replace `compute_bridge_metrics.py` with the actual script name used to recompute bridge metrics.
-
----
-
-### 6. Generate updated figures and tables
-
-Once all datasets (synthetic, PlanBench native, FX CSVs, bridge metrics) exist, regenerate the figures for your foundation paper:
-
-```bash
-python score/scripts/plot_whitepaper_figures.py \
-  --synthetic results/qfh_synthetic_native.json \
-  --planbench output/planbench_by_domain/logistics/gold_state_logistics_native.json \
-  --fx output/manifolds_native/EUR_USD_snapshots.csv \
-  --bridge docs/note/bridge_metrics.json
-```
-
-* If the script expects a warmup directory, ensure it points at `output/warmup` (where the JSONs from step 2 live).
-* This will produce new histograms of QFH events, metric distributions and the updated bridge scatter/correlation.
-
-Regenerate LaTeX tables (if applicable) using any table-generation scripts you have (e.g. `generate_receipt_tables.py` or equivalents).
-
----
-
-### 7. Compile the foundation paper
-
-1. Edit `docs/whitepaper/QFH_Manifold_Foundation.tex` to insert the newly generated figures (`fig1_*`, `fig2_*`, etc.) and update sections on experiments and results.
-2. Include narrative explaining the robust JSON parsing fix: the new helper functions accept numeric strings, ISO‑8601 timestamps and nested mid/bid/ask payloads and avoid the previous type errors.
-3. Run LaTeX to produce the PDF:
-
-   ```bash
-   cd docs/whitepaper
-   latexmk -pdf QFH_Manifold_Foundation.tex
-   ```
-4. Review the PDF, adjust figure sizes if necessary, then commit the updated `.tex` and `pdf`.
-
----
-
-### 8. CI and testing
-
-1. Modify your CI configuration (e.g. GitHub Actions or your `Makefile`) to run:
-
-   ```bash
-   pip install -e ./score[native]
-   ```
-
-   before executing tests.  This builds the `sep_quantum` extension automatically.
-
-2. Add or update tests to cover:
-
-   * `Candle::fromJson` parsing numeric strings, mid/bid/ask payloads and ISO‑8601 timestamps.
-   * Calibration and sweep scripts when `--use-native-quantum` is enabled.
-   * End‑to‑end prime/ export scripts using a small mock dataset.
-
-3. Run the test suite:
-
-   ```bash
-   pytest -q score/tests/test_logistics_features.py \
-                score/tests/test_qfh_native.py
-   ```
-
----
-
-Following these steps will ensure you’re using real OANDA data end‑to‑end, that the Candle parsing fix is exercised, and that all plots and bridge metrics reflect the native QFH metrics.  Once the foundation paper is complete, you can use it as the baseline for your follow‑on papers.
+By following this roadmap you’ll systematically deepen the statistical validity of your findings, broaden the data base, and prepare compelling follow‑up papers.  The current foundation paper gives you a solid platform; the next phase should focus on data diversity, rigorous significance tests, and comparative performance against standard baselines.
