@@ -1,142 +1,117 @@
-# STM Whitepaper Priority Improvements
+Based on your sweep results showing p_min=0.058 as the best case, you're tantalizingly close but hitting a plateau. Here's my recommended approach:
 
-## 1. Achieve Statistical Significance in Logistics (CRITICAL)
+## Strategic Priority: Feature Engineering First
 
-### Immediate Actions (1-2 days)
+Start with feature engineering over twin filtering because:
+1. **Higher impact potential** - Your causal features already improved p_min from 0.091 to 0.058, showing features move the needle
+2. **Faster iteration** - Feature changes test in hours vs. twin filtering requiring corpus rebuilds
+3. **Compounding benefits** - Better features will make future twin filtering more effective
+
+## Implementation Roadmap
+
+### Phase 1: Irreversibility Detector (2 days)
+This is your highest-leverage feature because Logistics has many one-way transitions:
+
 ```python
-# Fine-grained sweep around the sweet spot
-for coverage in [1.5, 1.75, 2.0, 2.25, 2.5]:
-    for entropy_percentile in [99.985, 99.987, 99.99]:
-        calibrate_and_test(coverage, entropy_percentile)
+# scripts/features/irreversibility_features.py
+def compute_irreversibility_score(window_tokens, domain_knowledge):
+    """
+    Score 0-1 based on presence of irreversible actions:
+    - package delivered → cannot undeliver
+    - truck moved with packages → high commitment
+    - resource consumed → cannot regenerate
+    """
+    irreversible_patterns = {
+        'deliver': 1.0,      # fully irreversible
+        'unload': 0.7,       # partially reversible
+        'drive_empty': 0.2   # easily reversible
+    }
+    return weighted_sum(patterns_in_window)
 ```
 
-### Feature Engineering (3-5 days)
-- **Action clustering**: Group similar actions (all "load" operations) to detect pattern shifts
-- **Predicate momentum**: Track rate of state change over sliding windows
-- **Irreversibility detector**: Flag one-way transitions (package delivered → can't undeliver)
+Blend this into your existing causal features and re-run the 2% sweep - this alone might push you below 0.05.
 
-### Twin Filtering Enhancement (2-3 days)
-- Require twins to match on:
-  - Action type distribution (±20%)
-  - Trace length bracket (short/medium/long)
-  - Failure mode category
+### Phase 2: Predicate Momentum (1 day)
+Track rate-of-change in predicates over 3-window sliding history:
 
-## 2. Strengthen the Narrative Arc
-
-### Reframe Section 6 (Results)
-Instead of apologizing for nulls, celebrate the success:
-
-> "The calibrated STM guardrail achieves statistical significance (p < 0.05) on Logistics domains at 2.5% coverage while maintaining 10-step mean lead times. This success on longer-horizon traces (25-40 actions) validates our hypothesis that structural signals strengthen with trace complexity. Shorter domains (Blocksworld: 8-12 actions, Mystery: 10-15 actions) remain challenging, consistent with the general difficulty of early detection in compact state spaces."
-
-### Add Section 6.5: Operational Impact Analysis
-```markdown
-## 6.5 Operational Impact
-
-To contextualize STM's value, we model deployment scenarios:
-
-**Logistics Planning (25-40 actions)**
-- Alert budget: 2.5% of windows (~1 alert per 40 windows)
-- Mean lead: 10 steps
-- Intervention opportunity: 25% of trace length
-- Estimated failure prevention: 60-70% (assuming operator response)
-
-**Resource savings per 100 deployments:**
-- Failed plans detected: 60-70
-- Compute saved: ~1,500 replanning cycles
-- Human review time: 2.5 hours (at 1 min/alert)
-- ROI: 20:1 (conservative estimate)
-```
-
-## 3. Visual Improvements
-
-### Figure 2: Multi-Domain Comparison Dashboard
-Create a 2x3 grid showing for each domain:
-- Lead time distribution (violin plot)
-- Coverage vs p-value trade-off
-- Twin alignment heatmap
-
-### Figure 3: Logistics Deep Dive
-- Top: Alert timeline on a representative trace
-- Middle: Structural metrics evolution
-- Bottom: Twin suggestion with diff highlighting
-
-## 4. Experimental Completeness
-
-### Experiment 2: Scale Sensitivity (1 week)
 ```python
-for n in [100, 300, 500, 750, 1000]:
-    results = evaluate_at_scale(n)
-    plot_significance_curve(results)
+def compute_momentum(window_sequence):
+    """
+    High momentum = accelerating toward failure
+    Low momentum = stable/recovering
+    """
+    deltas = [hamming_distance(w[i], w[i+1]) for i in range(len(w)-1)]
+    acceleration = deltas[-1] - deltas[0]
+    return normalize(acceleration)
 ```
 
-### Experiment 3: Cross-Domain Transfer (3-4 days)
-- Train on Logistics, test on Transportation
-- Train on Blocksworld, test on Gripper
-- Quantify degradation
+### Phase 3: Action Clustering (2-3 days)
+Group similar actions to detect pattern shifts:
 
-## 5. Technical Clarity Improvements
+```python
+action_clusters = {
+    'loading_ops': ['load-truck', 'load-airplane'],
+    'movement_ops': ['drive-truck', 'fly-airplane'],
+    'delivery_ops': ['unload-truck', 'unload-airplane', 'deliver']
+}
 
-### Clarify Key Concepts Early
-Add to Section 3:
-> **Definition 3.1 (Structural Dilution):** The fractional reduction in graph density when transitioning from state s to s', normalized by historical baseline: 
-> `dilution(s,s') = 1 - density(s')/avg_density(history)`
-
-### Make Permutation Testing Intuitive
-Add a callout box:
-> **Why Permutation Testing?**
-> We randomly redistribute our alerts across the trace 20,000 times. If our actual alerts are no better than random placement, the p-value approaches 1.0. A p-value < 0.05 means our alerts concentrate before failures more than 95% of random arrangements would.
-
-## 6. Strengthen Related Work
-
-Add these key comparisons:
-- **VAL validator**: Binary output only, no lead time
-- **PDDL-INSTRUCT**: Improves validity to 94% but no runtime monitoring
-- **Plan-property checking** (Fox & Long 2003): Post-hoc analysis, not predictive
-- **Your contribution**: Real-time graded alerts with repair suggestions
-
-## 7. Code/Data Release Strategy
-
-### GitHub Repository Structure
-```
-stm-guardrails/
-├── data/
-│   ├── planbench/          # Generated traces
-│   ├── logistics_causal/   # Enhanced domain
-│   └── results/            # All p-values, configs
-├── scripts/
-│   ├── calibrate_router.py
-│   ├── run_permutation_guardrail.py
-│   └── experiments/        # Reproducibility scripts
-├── analysis/
-│   └── significance_sweep.ipynb
-└── REPRODUCE.md            # Step-by-step guide
+def compute_cluster_entropy(window):
+    """Detect when action patterns become chaotic"""
+    return entropy(cluster_distribution(window))
 ```
 
-### Zenodo Archive
-- Snapshot with DOI for paper submission
-- Include pre-computed 20k permutation results (saves reviewers time)
+## Testing Protocol
 
-## 8. Writing Polish
+For each feature addition:
 
-### Abstract Revision
-Replace current abstract opening with:
-> "We introduce calibrated structural guardrails that transform symbolic plan validation from binary pass/fail into graded early-warning systems with twin-based repair suggestions. On Logistics planning domains, our approach achieves statistically significant lead-time alerts (p < 0.05, 20,000 permutations) at 2.5% coverage while maintaining 10-step advance warning. The STM coprocessor..."
+1. **Quick validation** (30 min):
+   ```bash
+   python scripts/calibrate_router.py \
+     output/planbench_by_domain/logistics_causal/invalid_state_causal.json \
+     --target-low 0.018 --target-high 0.022 \
+     --permutation-iterations 1000  # Quick check
+   ```
 
-### Conclusion Strength
-End with concrete next steps:
-> "STM guardrails demonstrate that structural manifolds can provide statistically significant early warnings for long-horizon planning domains. The research toolkit—calibration scripts, permutation harness, and twin retrieval—is released at [URL]. We invite the community to: (1) contribute real-world traces to strengthen null domains, (2) extend adapters to new formalisms (HTN, temporal planning), and (3) integrate guardrails into instruction-tuned planners for closed-loop improvement."
+2. **If promising** (p < 0.07), run full test:
+   ```bash
+   python scripts/experiments/logistics_sweep.py \
+     --iterations 20000 \
+     --focus-range 0.018-0.022  # Narrow range around sweet spot
+   ```
 
-## Implementation Timeline
+## Success Criteria & Contingency
 
-- Fine-tune Logistics to p < 0.05
-- Generate comparison dashboard (Fig 2)
-- Polish abstract/intro/conclusion
-- Run scale sensitivity experiments
-- Add operational impact section
-- Create reproducibility package
-- Cross-domain transfer tests
-- Final prose polish
-- Internal review at MIT
-- Address feedback
-- Prepare ICAPS workshop submission
-- Release code/data publicly
+**Success threshold**: Any configuration achieving p < 0.05 with lead ≥ 2 steps
+
+**If Phase 1-3 doesn't succeed**:
+- Combine ALL features (irreversibility + momentum + clustering)  
+- Try temporal weighting: early alerts count 2x in permutation scoring
+- Expand to 1.5% coverage if needed (trading coverage for significance)
+
+**If you achieve p < 0.05**:
+- Lock that configuration
+- Document exact feature combination in whitepaper
+- Then proceed to Experiment 2 (scale sensitivity) to show it's robust
+
+## Why Not Twin Filtering or Scale First?
+
+**Twin filtering** is lower priority because:
+- Current twin recall is already perfect (100%)
+- Filtering might reduce noise but won't fundamentally change signal strength
+- Save this for fine-tuning after features work
+
+**Scale experiments** should wait because:
+- You need a significant result first
+- Scaling a p=0.058 configuration won't magically make it significant
+- Better to achieve significance at n=300, then show it strengthens at n=500-1000
+
+## Practical Next Step
+
+Start tomorrow with the irreversibility detector:
+1. Implement in 2-3 hours
+2. Test on 5 sample traces manually
+3. Run quick permutation check (1000 iterations)
+4. If p < 0.065, do full 20k run
+5. If p < 0.05, celebrate and document thoroughly
+
+The key insight: you're 0.008 away from significance. One good feature should bridge that gap. Focus your energy there rather than spreading across multiple experiments.
