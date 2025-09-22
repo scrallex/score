@@ -108,6 +108,97 @@ PY
 
 For details on the commands and available options run `stm --help`.
 
+## Reproducing the PlanBench++ and CodeTrace experiments
+
+The repository now ships with end-to-end harnesses for the planning and coding
+benchmarks discussed in the STM whitepaper.
+
+### PlanBench++ guardrail pipeline
+
+```
+make planbench-all
+```
+
+This target regenerates the synthetic PlanBench dataset (default 300 instances
+per domain), converts traces into STM manifolds, calibrates the 5% guardrail for
+each domain, runs 20k-shuffle permutation tests, and writes guardrail sweep
+results to `docs/note/appendix_guardrail_sweep.csv`.
+
+To explore lower guardrails or tighten statistical reporting, run the sweep
+script directly. The example below scans 1–8% in 0.5% increments, emits per
+target router configs, writes permutation summaries, and stores a structured
+JSON artifact with coverage, lead, and p-value confidence intervals:
+
+```
+python scripts/guardrail_sweep.py \
+  analysis/blocksworld_invalid_state.json \
+  output/planbench_by_domain/blocksworld \
+  --grid 0.01 0.08 0.005 \
+  --prefix blocksworld_low_guardrail \
+  --summary-json analysis/blocksworld_guardrail_sweep.json \
+  --label Blocksworld
+
+# Drop the Logistics guardrail to 2.5% automatically when the 5% config
+# fails permutation significance (writes both base and dynamic artefacts).
+python scripts/calibrate_router.py \
+  output/planbench_by_domain/logistics/invalid_state.json \
+  --target-low 0.05 --target-high 0.07 \
+  --domain-root output/planbench_by_domain/logistics \
+  --dynamic-target 0.025 --dynamic-window 0.005 \
+  --pvalue-threshold 0.05 --pvalue-metric min \
+  --output analysis/router_config_logistics_invalid_5pct.json
+
+If VAL traces are not available you can synthesise them directly from the
+generated plans:
+
+```
+.venv/bin/python scripts/generate_synthetic_traces.py --root data/planbench_public --overwrite
+```
+
+Use `--optimize-permutation` when you want calibration to search nearby
+coverage targets and retain the guardrail with the strongest permutation
+significance. The helper flags `--optimize-width`, `--optimize-span`,
+`--optimize-samples`, and `--optimize-centers` control the search window, letting
+you bias the scan toward bespoke coverage budgets or previously audited
+thresholds without writing additional scripts.
+
+# Enrich Blocksworld or Mystery twins with the Logistics corpus and rerun sweeps.
+# (The make target does this automatically via --enrich-from when rebuilding domains.)
+python scripts/enrich_twin_corpus.py \
+  output/planbench_by_domain/blocksworld/gold_state.json \
+  --extra output/planbench_by_domain/logistics/gold_state.json \
+  --note "logistics-twin-enrichment"
+
+To add further corpora (for example bug-fix commits or scaled PlanBench
+exports) set `PLANBENCH_EXTRA_TWINS` when running the make target. Each
+entry should point to a `gold_state.json` that you want merged into the
+Blocksworld and Mystery foreground libraries:
+
+```
+PLANBENCH_EXTRA_TWINS="data/twins/bugfix_state.json data/twins/robotics_state.json" \
+  make planbench-all
+
+# Example using built-in corpora:
+PLANBENCH_EXTRA_TWINS="output/planbench_public/gold_state.json analysis/mms_state.json" \
+  make planbench-all
+```
+```
+
+### CodeTrace comparison suite
+
+```
+make codetrace-report
+```
+
+This command replays the CodeTrace maintenance tasks and emits the aggregated
+report used in the whitepaper.
+
+The `CodeTraceAdapter` now inspects Python edits for structural cues, parsing
+added snippets into AST categories (functions, branches, context managers,
+etc.) and recording change magnitudes. These features feed directly into the
+manifold, giving the guardrail additional leverage in discriminating noisy
+maintenance edits from meaningful repairs.
+
 ## Repository structure
 
 - `src/sep_text_manifold/` – the Python package containing ingestion,

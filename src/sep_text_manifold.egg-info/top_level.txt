@@ -1,3 +1,4 @@
+sep_quantum
 sep_text_manifold
 stm_adapters
 stm_cli

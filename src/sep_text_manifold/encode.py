@@ -15,11 +15,7 @@ from __future__ import annotations
 import math
 from typing import Dict, Iterable, List
 
-try:  # pragma: no cover - optional native backend
-    from .native import analyze_bits as native_analyze_bits, HAVE_NATIVE
-except ImportError:  # pragma: no cover - optional native backend
-    native_analyze_bits = None  # type: ignore
-    HAVE_NATIVE = False
+from . import native
 
 
 def bytes_to_bits(data: bytes) -> List[int]:
@@ -106,18 +102,32 @@ def encode_window(window: bytes) -> Dict[str, float]:
     produce a single metrics dictionary for a window of data.
     """
     bits = bytes_to_bits(window)
-    if HAVE_NATIVE and native_analyze_bits is not None:
+    if native.HAVE_NATIVE:
         try:
-            native = native_analyze_bits(bits)
+            result = native.analyze_window(bits)
+            rupture_ratio = float(result.rupture_ratio)
             return {
-                "coherence": native.get("coherence", 0.0),
-                "stability": native.get("stability", 0.0),
-                "entropy": native.get("entropy", 0.0),
-                "rupture": native.get("rupture", 0.0),
-                "lambda_hazard": native.get("lambda_hazard", native.get("rupture", 0.0)),
+                "coherence": float(result.coherence),
+                "stability": 1.0 - rupture_ratio,
+                "entropy": float(result.entropy),
+                "rupture": rupture_ratio,
+                "lambda_hazard": rupture_ratio,
             }
-        except Exception:  # pragma: no cover - safety fallback
-            pass
+        except Exception:  # pragma: no cover - fall back to simplified metrics
+            # Older native builds expose only analyze_bits; reuse the compatibility
+            # wrapper before reverting to the pure-Python implementation.
+            try:
+                metrics = native.analyze_bits(bits)
+            except Exception:
+                pass
+            else:
+                return {
+                    "coherence": metrics.get("coherence", 0.0),
+                    "stability": metrics.get("stability", 0.0),
+                    "entropy": metrics.get("entropy", 0.0),
+                    "rupture": metrics.get("rupture", 0.0),
+                    "lambda_hazard": metrics.get("lambda_hazard", metrics.get("rupture", 0.0)),
+                }
     return compute_metrics(bits)
 
 

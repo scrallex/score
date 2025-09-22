@@ -49,16 +49,18 @@ wrap:
 2. **Create a thin Python wrapper.**  Use a tool such as
    [pybind11](https://pybind11.readthedocs.io/) or
    [ctypes/cffi](https://docs.python.org/3/library/ctypes.html) to
-   expose the C++ functions to Python.  The wrapper should accept a
-   `bytes` object and return a Python dict or a simple object with
-   `coherence`, `stability`, `entropy`, `rupture` and `lambda_hazard`
-   fields.
+   expose the C++ functions to Python.  The repository now ships with
+   a pybind11 extension (`sep_quantum`) that is built automatically by
+   running `pip install .[native]` – it exports `analyze_window`,
+   `transform_rich` and `aggregate_events` along with the
+   `QFHResult`/`QFHEvent` types.
 
 3. **Plug the wrapper into `encode.py`.**  The STM `encode.py` module
    defines the `encode_window` function which converts a window of
-   bytes into a bitstream and then calls the quantum engine.  Modify
-   this module to call into your C++ wrapper instead of the
-   placeholder implementation.
+   bytes into a bitstream and then calls the quantum engine.  The
+   repository now attempts to call `sep_text_manifold.native.analyze_window`
+   first and falls back to the simplified metrics when the native
+   kernel is unavailable.
 
 4. **Validate with unit tests.**  Write tests in `tests/` that feed
    known input sequences into your wrapper and check that the

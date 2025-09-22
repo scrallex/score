@@ -1,5 +1,8 @@
 README.md
 pyproject.toml
+setup.py
+cpp/sep_quantum.cpp
+cpp/sep_core/core/qfh.cpp
 src/sep_text_manifold/__init__.py
 src/sep_text_manifold/api.py
 src/sep_text_manifold/binary_log.py
@@ -54,7 +57,11 @@ tests/test_adapters.py
 tests/test_comparison.py
 tests/test_dilution.py
 tests/test_feedback.py
+tests/test_guardrail_scripts.py
 tests/test_kernel_litmus.py
+tests/test_logistics_features.py
 tests/test_pipeline.py
 tests/test_propose.py
+tests/test_qfh_native.py
+tests/test_real_world_adapter.py
 tests/test_similar.py
