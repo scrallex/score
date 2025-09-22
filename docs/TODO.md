@@ -1,47 +1,33 @@
-Here’s a structured roadmap to build on your foundation paper and to set up your next round of research.  The aim is to turn the current methods paper into a springboard for deeper empirical results and stronger STM↔spt integration.
+Paper Scope & Structure
 
-## 1. Consolidate and check the existing pipeline
+Purpose: Position Paper 2 as an empirical study linking QFH structural signals (coherence, entropy, λ hazard) to symbolic plan quality across PlanBench domains. Clarify that Paper 1 covered instrumentation and MIT PDDL-INSTRUCT targeted LLM accuracy; this work probes whether low-hazard echoes predict plan validity/difficulty.
+Background bullets: briefly recap QFH manifold (refer to Paper 1), PDDL-INSTRUCT headline accuracies (BW 94 %, Logistics 79 %, Mystery 64 %), and why PlanBench + CodeTrace form a common evaluation bed.
+Contributions list: unified native-metric PlanBench corpus with validity labels; correlation analyses against human/LLM success; twin-filter/λ sweeps; discussion on structural recurrence as a hardness signal.
+Data Expansion Tasks
 
-* **Verify the end-to-end workflow**. Now that the native metrics flow is stable, run through the reproducibility commands in the appendix from start to finish (PlanBench ingestion, feature enrichment, guardrail calibration, synthetic generation, Valkey priming, snapshot export, figure generation) to ensure there are no hidden gaps. This will also confirm that the restored cooldown/hysteresis helpers don’t interfere with the live loop.
+PlanBench (native build ✅):
+output/planbench_by_domain/blocksworld_native, .../mystery_bw_native already regenerated. Extract per-window QFH features + guardrail stats (coverage 0.065 @ lead 2.8, mystery coverage 0.058 @ lead 2.25, min p≈0.33/0.115).
+Stash aggregated states (blocksworld_state_native.json, mystery_bw_state_native.json) and produce CSVs with success labels if available.
+CodeTrace corpus: replayed 3 demo tasks (fix_flaky_test, rename_service_endpoint, resolve_missing_import) → native dataset at output/codetrace_native/. Need to enlarge corpus (more tasks/runs) because current state has 1 window ⇒ guardrail calibration saturates. Plan: gather additional CodeTrace traces (from repo or MIT release) using demo/coding/run_replay.py --variant stm --persist, rerun ingestion script.
+Plan validity labels: align each trace/window with success/failure (use MIT reported rates or dataset metadata). If only plan-level labels exist, propagate that label to all windows in the trace.
+LLM outputs: locate or request PDDL-INSTRUCT run logs; if accessible, sync them under data/pddl_instruct/ and record reasoning chain lengths, VAL results, etc., for correlation.
+Experimental Design Roadmap
 
-* **Document environment assumptions**. Make sure colleagues know to set `VALKEY_URL`, `HOTBAND_PAIRS`, `ECHO_*` parameters, and (optionally) OANDA keys when priming live data. Clear environment defaults reduce friction when others reproduce your work.
+Correlations: per domain compute Pearson/Spearman between STM irreversibility (or λ) and plan validity (0/1), plus between QFH metrics and MIT accuracy stats. Produce scatter plots akin to Paper 1’s bridge figure.
+Twin-filter sweeps: bucket by predicate/action type or trace length, rerun permutation tests; log buckets where p < 0.05.
+λ sweeps: vary hazard weightings (entropy-only, coherence-only, 50/50) and thresholds (0.10–0.20). Plot coverage vs plan success for each blend.
+Indicator comparisons: compute traditional difficulty proxies (plan length, branching factor, heuristic cost) and compare with λ/echo metrics to check complementarity.
+Ablations: drop coherence/entropy/λ in turn; observe impact on correlations for at least one domain.
+Writing & Presentation
 
-## 2. Expand the datasets
+Results section template: per domain table (coverage, lead, p-value, mean λ); correlation matrices; histograms of metrics; λ vs success scatter; twin-filter heatmaps.
+Discussion focus: highlight patterns (e.g. high λ ↔ failures, domains sensitive to thresholds). Stress limitations (dataset size, p-values still high, λ tuning). Note interactions with PDDL-INSTRUCT (e.g. structural hazard can flag “hard” instances even when LLM succeeds).
+Conclusion: emphasise structural manifold as hardness indicator, not predictive alpha; propose feeding λ into LLM feedback, expanding to other symbolic tasks.
+Repro Appendix: add script block describing CodeTrace ingestion (run_replay.py --persist, native ingestion script), correlation/twin-filter commands, env vars (VALKEY_URL, HOTBAND_PAIRS, ECHO_*, PDDL_INSTRUCT paths).
+Project Management
 
-* **Broaden PlanBench coverage**. Logistics is only one domain; regenerate Blocksworld, CodeTrace and Mystery traces with `--use-native-quantum`. Calibrate guardrails and compute coverage/lead/p‑values for each domain. This will test whether the native QFH metrics generalise across textual environments.
-
-* **Add more FX instruments and asset classes**. Thirty‑day snapshots for eight majors gave you hazard clusters around 0.12–0.18. Extend to crosses (EUR/GBP, JPY/CHF), metals (XAU/USD), and possibly crypto if feeds are available. Also lengthen the sample (90 or 180 days) to see if hazard regimes persist. Use the same prime/export scripts to collect snapshots and update the λ‑calibration curves.
-
-* **Gather higher‑frequency synthetic corpora**. The current synthetic benchmark uses only a few canonical patterns. Generate larger synthetic bitstreams with variable burst lengths, multi‑level alternations and regime shifts to stress the event model and refine your intuition about when coherence/entropy and λ diverge.
-
-## 3. Improve statistical power
-
-* **Twin‑filtering experiments**. On PlanBench traces, bucket windows by action distribution (e.g. predicate classes) or trace length, then rerun permutation tests within each bucket. The idea is to reduce heterogeneity and see whether p‑values drop when the manifold is evaluated on more homogeneous slices.
-
-* **Lambda weighting and thresholds**. The hazard λ is currently a blend of entropy and coherence; experiment with alternative weightings (entropy‑only, coherence‑only, or dynamic weights that adapt with volatility) to see how admission curves change. Similarly, test different λ thresholds (0.10, 0.15, 0.20) on live FX data to quantify trade‑off between coverage and noise.
-
-* **Correlate with classical indicators**. Compute standard technical indicators (ATR, RSI, MACD) over the same FX snapshots and compare them to λ and repetition counts. See whether high echo/low hazard windows correspond to particular indicator regimes, and whether the manifold offers orthogonal information.
-
-## 4. Deepen the STM↔spt bridge
-
-* **Richer contingency tables**. In the bridge analysis you used a single hazard threshold (0.25) and found 62 % agreement between STM irreversibility and market rupture. Produce a full sensitivity analysis: vary the hazard threshold and STM irreversibility cutoff and record agreement/disagreement rates. This will help you tune thresholds for real‑time use.
-
-* **Temporal alignment**. Align PlanBench windows and FX snapshots by calendar date and time of day. Investigate whether certain time‑of‑day patterns show stronger irreversibility–rupture correlation (e.g. during London/New York overlap).
-
-* **Feature translation**. Use the native kernel to generate QFH metrics directly from PlanBench bitstreams (beyond logistic features) and compare them to spt metrics. This may reduce the need for STM proxies and reveal deeper structural similarities.
-
-## 5. Start planning the next paper(s)
-
-* **PlanBench/STP performance paper**. Use the expanded datasets and twin‑filtering results to write a second paper focused on significance. Aim to show whether native metrics plus filtering strategies reduce p‑values below 0.05 or improve lead times relative to baselines.
-
-* **Combined STM↔spt paper**. Once you have more FX pairs and a richer bridge analysis, draft a third paper that evaluates the manifold as a trading filter. Compare gated vs. ungated strategies on historical data; include profit/risk metrics and benchmark against classical indicators. Make sure to emphasise that the goal is stability and regime detection rather than pure alpha.
-
-* **Methodological spin‑offs**. Consider papers on hazard calibration methods, the mathematical properties of the QFH event process, or an application to other domains (e.g. sensor data, social streams) to broaden the technology’s appeal.
-
-## 6. Continue improving the infrastructure
-
-* **Automate CI and data regeneration**. Integrate the `--use-native-quantum` paths and the figure generation scripts into a nightly job that refreshes synthetic, PlanBench and FX datasets. This ensures your experiments always run on up‑to‑date data and helps catch regressions early.
-
-* **Refine the Python/C++ interface**. If you plan to release the package publicly, consider adding type hints, docstrings and examples for the native APIs, and align the naming conventions between STM and spt code paths to reduce friction for external contributors.
-
-By following this roadmap you’ll systematically deepen the statistical validity of your findings, broaden the data base, and prepare compelling follow‑up papers.  The current foundation paper gives you a solid platform; the next phase should focus on data diversity, rigorous significance tests, and comparative performance against standard baselines.
+Create Makefile/CLI target (e.g. make planbench-native-suite) chaining: PlanBench regenerate → CodeTrace ingest → correlations → λ sweeps → figure generation.
+Track subtasks (dataset expansion, correlations, sweeps, writing) in issue tracker/Linear.
+Document new env requirements in README (paths for CodeTrace/LLM data, hazard sweep parameters).
+Plan follow-up: once CodeTrace corpus expanded, re-run guardrail calibration to obtain meaningful coverage/p-values; prepare baseline comparisons against LLM outputs.
+Next actionable steps: 1) source additional CodeTrace traces (from MIT dataset or internal runs), rerun the native ingestion script; 2) gather PlanBench plan-validity labels (success/failure) and integrate into aggregated states to enable correlations.
