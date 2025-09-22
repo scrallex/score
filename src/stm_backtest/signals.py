@@ -69,8 +69,6 @@ class STMManifoldBuilder:
         window = self._select_window(len(bits))
         start, step = self._iteration_params(len(bits), window)
         indices = list(range(start, len(bits) + 1, step))
-        if not indices or indices[-1] != len(bits):
-            indices.append(len(bits))
 
         records: List[Dict[str, object]] = []
         repetition_history: Dict[str, Deque[int]] = {}
