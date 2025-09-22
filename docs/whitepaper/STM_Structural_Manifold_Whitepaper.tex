@@ -216,6 +216,18 @@ allocations per trace. For each domain, the script summarises weighted coverage,
 lead-time statistics, and the distribution of permutation $p$-values; outputs are
 stored in \texttt{docs/tests/permutation\_\*.json}.
 
+\subsection{Guardrail Regression Tests}
+Targeted regression tests now exercise the calibration and permutation tooling
+directly. \texttt{tests/test\_guardrail\_scripts.py} fabricates synthetic signal
+manifolds to confirm that \texttt{compute\_configuration()} selects thresholds in
+the requested coverage band, validates that
+\texttt{run\_permutation\_guardrail.py} reproduces observed coverage, lead, and
+permutation scores, and simulates a calibration run where failing
+permutation $p$-values trigger the dynamic $2.5\%$ Logistics fallback. These
+checks keep the optimisation loop aligned with the roadmap captured in
+\texttt{docs/TODO.md}, ensuring that statistical audits fail fast when coverage
+tuning regresses.
+
 \subsection{CodeTrace Evaluation}
 For completeness we reproduce the CodeTrace maintenance tasks introduced in
 prior STM summaries. The same guardrail configuration (ANN distance $0.2$,
@@ -514,7 +526,7 @@ make planbench-all    # regenerate dataset, manifolds, guardrail sweeps
 # PLANBENCH_EXTRA_TWINS="data/twins/bugfix_state.json" make planbench-all
 #   (optional) merge additional gold states into Blocksworld/Mystery twins
 make codetrace-report # rebuild CodeTrace comparison report
-.venv/bin/pytest      # regression suite (17 passed, 1 skipped)
+.venv/bin/pytest      # regression suite (22 passed, 1 skipped)
 # PlanBench scale probes (Section~\ref{subsec:permutation})
 PLANBENCH_SCALE_TARGETS="logistics blocksworld mystery_bw" make planbench-scale
 # To regenerate a single domain, override PLANBENCH_SCALE_TARGETS (e.g. "logistics")
