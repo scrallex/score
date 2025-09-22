@@ -98,6 +98,15 @@ def test_backtester_produces_trades(sample_candles: pd.DataFrame) -> None:
     assert summary["trade_count"] == len(result.trades)
     assert isinstance(summary["avg_return_bps"], float)
     assert summary["bootstrap_p_value"] is None or 0.0 <= summary["bootstrap_p_value"] <= 1.0
+    assert "profit_factor" in summary
+    assert isinstance(summary["profit_factor"], float)
+    assert "sortino" in summary
+    assert isinstance(summary["sortino"], float)
+
+    trades_df = result.trade_frame()
+    assert not trades_df.empty
+    equity_df = result.equity_curve()
+    assert not equity_df.empty
 
 
 def test_session_filter_blocks_entries_outside_window() -> None:
