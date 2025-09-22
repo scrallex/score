@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1758565582.932 "QFH_Manifold_Foundation.tex" "QFH_Manifold_Foundation.pdf" "QFH_Manifold_Foundation" 1758565584.7405 0
+["pdflatex"] 1758566342.84498 "QFH_Manifold_Foundation.tex" "QFH_Manifold_Foundation.pdf" "QFH_Manifold_Foundation" 1758566344.8232 0
   "../figures/fig0_synthetic_event_hist.png" 1758564182.93922 36011 7186f17fc19c3c7b383d2d641b140fde ""
   "../figures/fig1_logistics_sweep.png" 1758564181.02817 44215 601d85638eb66fce1f851cb9f492e8ae ""
   "../figures/fig2_spt_echo_vs_lambda.png" 1758564181.69819 43814 f05442066748d07dcdc000511d2f89b2 ""
@@ -41,6 +41,10 @@
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb" 1248133631 35752 024fb6c41858982481f6968b5fc26508 ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb" 1248133631 32722 d7379af29a190c3f453aba36302ff5a9 ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb" 1248133631 32362 179c33bbf43f19adbb3825bb4e36e57a ""
+  "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb" 1248133631 32762 224316ccc9ad3ca0423a14971cfa7fc1 ""
+  "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb" 1248133631 32726 0a1aea6fcd6468ee2cf64d891f5c43c8 ""
+  "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb" 1248133631 32569 5e5ddc8df908dea60932f3c484a54c0d ""
+  "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb" 1248133631 32626 4f5c1b83753b1dd3a97d1b399a005b4b ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb" 1248133631 31099 c85edf1dd5b9e826d67c9c7293b6786c ""
   "/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii" 1461363279 71627 94eb9990bed73c364d7f53f960cc8c5b ""
   "/usr/share/texlive/texmf-dist/tex/generic/atbegshi/atbegshi.sty" 1575674566 24708 5584a51a7101caf7e6bbf1fc27d8f7b1 ""
@@ -101,9 +105,9 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1707919699 40399 f2c302f7d2af602abb742093540a5834 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1758413751.13215 165012 f177baa1c39a3ebd62c3096a43521a0d ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1758413823 6831130 3e11db87c1927b5463e7e43e2978a80a ""
-  "QFH_Manifold_Foundation.aux" 1758565584.62206 3876 f15d9f19e4bc9a913aa7d3239be956fd "pdflatex"
-  "QFH_Manifold_Foundation.out" 1758565584.62306 1445 9dd6a4986ef5123a47fb4f274bdb8e95 "pdflatex"
-  "QFH_Manifold_Foundation.tex" 1758565577.00384 11840 ddb63bff3907724f4d89b697fd5f258f ""
+  "QFH_Manifold_Foundation.aux" 1758566344.66174 4017 dcdccc710022a1b59cfc1a0e8f86981d "pdflatex"
+  "QFH_Manifold_Foundation.out" 1758566344.66274 1565 8c340229303f97f988f69171d35adf8d "pdflatex"
+  "QFH_Manifold_Foundation.tex" 1758566334.78445 17201 7f4a61293636da990cba40db235929bf ""
   (generated)
   "QFH_Manifold_Foundation.aux"
   "QFH_Manifold_Foundation.log"
