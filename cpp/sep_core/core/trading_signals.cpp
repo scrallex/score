@@ -1,6 +1,159 @@
 #include "trading_signals.h"
 #include "qfh.h"
 #include "manifold_builder.h"
+#include "io_utils.h"
+
+#include <algorithm>
+#include <array>
+#include <cctype>
+#include <cmath>
+#include <optional>
+#include <stdexcept>
+#include <string>
+
+namespace {
+
+std::optional<double> parseNumericField(const nlohmann::json& value) {
+    try {
+        if (value.is_number_float() || value.is_number_integer() || value.is_number_unsigned()) {
+            return value.get<double>();
+        }
+        if (value.is_string()) {
+            const auto& s = value.get_ref<const std::string&>();
+            if (s.empty()) {
+                return std::nullopt;
+            }
+            size_t idx = 0;
+            double parsed = std::stod(s, &idx);
+            if (idx == s.size()) {
+                return parsed;
+            }
+        }
+    } catch (...) {
+        return std::nullopt;
+    }
+    return std::nullopt;
+}
+
+std::optional<uint64_t> parseTimestampField(const nlohmann::json& value) {
+    try {
+        if (value.is_number_unsigned()) {
+            return value.get<uint64_t>();
+        }
+        if (value.is_number_integer()) {
+            auto v = value.get<int64_t>();
+            if (v >= 0) {
+                return static_cast<uint64_t>(v);
+            }
+            return std::nullopt;
+        }
+        if (value.is_string()) {
+            const auto& s = value.get_ref<const std::string&>();
+            if (s.empty()) {
+                return std::nullopt;
+            }
+            const bool digits_only = std::all_of(s.begin(), s.end(), [](unsigned char ch) { return std::isdigit(ch); });
+            if (digits_only) {
+                try {
+                    return static_cast<uint64_t>(std::stoull(s));
+                } catch (...) {
+                    // fall through to ISO8601 parsing
+                }
+            }
+            if (auto iso = sep::io::parse_iso8601_ms(s); iso) {
+                return *iso;
+            }
+        }
+    } catch (...) {
+        return std::nullopt;
+    }
+    return std::nullopt;
+}
+
+}  // namespace
+
+nlohmann::json sep::Candle::toJson() const {
+    return {
+        {"t", timestamp},
+        {"o", open},
+        {"h", high},
+        {"l", low},
+        {"c", close},
+        {"v", volume}
+    };
+}
+
+sep::Candle sep::Candle::fromJson(const nlohmann::json& j) {
+    Candle c{};
+
+    auto timestamp = [&]() -> std::optional<uint64_t> {
+        if (auto it = j.find("t"); it != j.end()) {
+            if (auto ts = parseTimestampField(*it)) {
+                return ts;
+            }
+        }
+        if (auto it = j.find("timestamp"); it != j.end()) {
+            if (auto ts = parseTimestampField(*it)) {
+                return ts;
+            }
+        }
+        if (auto it = j.find("time"); it != j.end()) {
+            if (auto ts = parseTimestampField(*it)) {
+                return ts;
+            }
+        }
+        return std::nullopt;
+    }();
+
+    if (!timestamp) {
+        throw std::runtime_error("candle JSON missing timestamp");
+    }
+    c.timestamp = *timestamp;
+
+    auto mid_it = j.find("mid");
+    const nlohmann::json* mid = (mid_it != j.end() && mid_it->is_object()) ? &(*mid_it) : nullptr;
+    auto bid_it = j.find("bid");
+    const nlohmann::json* bid = (bid_it != j.end() && bid_it->is_object()) ? &(*bid_it) : nullptr;
+    auto ask_it = j.find("ask");
+    const nlohmann::json* ask = (ask_it != j.end() && ask_it->is_object()) ? &(*ask_it) : nullptr;
+
+    const std::array<const nlohmann::json*, 4> sources{&j, mid, bid, ask};
+
+    auto pickPrice = [&](std::initializer_list<const char*> keys) -> std::optional<double> {
+        for (const auto* src : sources) {
+            if (!src) {
+                continue;
+            }
+            for (const char* key : keys) {
+                auto it = src->find(key);
+                if (it == src->end()) {
+                    continue;
+                }
+                if (auto v = parseNumericField(*it); v && std::isfinite(*v)) {
+                    return *v;
+                }
+            }
+        }
+        return std::nullopt;
+    };
+
+    auto requirePrice = [&](std::initializer_list<const char*> keys, const char* label) -> double {
+        if (auto v = pickPrice(keys)) {
+            return *v;
+        }
+        throw std::runtime_error(std::string("candle JSON missing numeric field: ") + label);
+    };
+
+    c.open = requirePrice({"o", "open"}, "open");
+    c.high = requirePrice({"h", "high"}, "high");
+    c.low = requirePrice({"l", "low"}, "low");
+    c.close = requirePrice({"c", "close"}, "close");
+
+    auto volume = pickPrice({"v", "volume"});
+    c.volume = (volume && std::isfinite(*volume)) ? *volume : 0.0;
+
+    return c;
+}
 
 namespace sep {
 

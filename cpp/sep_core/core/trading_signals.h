@@ -13,14 +13,8 @@ namespace sep {
 struct Candle {
     uint64_t timestamp;
     double open, high, low, close, volume;
-    nlohmann::json toJson() const {
-        return {{"t", timestamp}, {"o", open}, {"h", high}, {"l", low}, {"c", close}, {"v", volume}};
-    }
-    static Candle fromJson(const nlohmann::json& j) {
-        Candle c;
-        c.timestamp = j["t"]; c.open = j["o"]; c.high = j["h"]; c.low = j["l"]; c.close = j["c"]; c.volume = j["v"];
-        return c;
-    }
+    nlohmann::json toJson() const;
+    static Candle fromJson(const nlohmann::json& j);
 };
 
 // Valkey connection (technical: hiredis redisConnectWithTimeout, auth with redisCommand("AUTH pw"))
