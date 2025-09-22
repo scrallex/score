@@ -65,6 +65,7 @@ research-grade reference for guardrail evaluation on symbolic planning agents.
   \item \textbf{PlanBench++ guardrails:} Dense percentile calibration reaches 5\% coverage per domain while preserving multi-step lead time and twin recall. New sweeps map coverage against permutation significance.
   \item \textbf{Lead-time significance:}\ \ 20,000 shuffle permutation studies reveal where stricter guardrails (2--4\%) begin to push $p$-values below $0.05$, setting targets for dynamic calibration.
   \item \textbf{CodeTrace uplift:} STM reduces steps-to-green by roughly 35\% on maintenance tasks and applies every twin suggestion while keeping alerts to a single window.
+  \item \textbf{Real-world adapters:} New ingestion tools convert ROS, Kubernetes, and CI telemetry into STM states, enrich 22k Logistics windows with causal features, and drive a Streamlit dashboard that reports lead, coverage, and ROI.
   \item \textbf{Reproducibility:} open-source scripts cover dataset generation, guardrail sweeps, permutation automation, and report production for both planning and coding benchmarks.
 \end{itemize}
 \end{sloppypar}
@@ -151,6 +152,28 @@ successful windows that align with alerting windows. We retain default triggers
 requiring at least two shared $q$-grams and an ANN distance below $0.2$, which
 preserved perfect twin recall on PlanBench domains throughout the calibration
 experiments.
+
+\subsection{Real-World Data Pipeline}
+\label{subsec:real-world-data-pipeline}
+Synthetic traces limited the statistical confidence of earlier releases, so we
+implemented adapters that map operational telemetry into STM artefacts. The
+module \texttt{scripts/adapters/real\_world\_adapter.py} ingests ROS motion
+planning logs, Kubernetes scheduler events, and GitHub Actions workflows,
+normalising them into per-step windows with inferred coherence, entropy, and
+stability scores. Each window is immediately enriched with causal signals via
+\texttt{scripts/features/causal\_features.py}, and the enrichment utility
+\texttt{scripts/enrich\_features.py} retrofits existing PlanBench states. Running
+
+\begin{lstlisting}[style=stm]
+python scripts/enrich_features.py \
+  output/planbench_by_domain/logistics/invalid_state.json \
+  --output output/planbench_by_domain/logistics/invalid_state_causal.json
+\end{lstlisting}
+
+adds causal summaries to $22{,}052$ Logistics windows, exposing irreversible
+actions, resource commitments, and divergence rates for downstream calibration.
+These artefacts now seed partner pilots and act as reference inputs for the
+dashboard described in Section~\ref{subsec:demo-dashboard}.
 
 \section{Experimental Setup}
 \subsection{Datasets}
@@ -353,6 +376,17 @@ at the $5\%$ target ($p_{\min}=0.035$) albeit over just $2.9\%$ of windows.
   \input{guardrail_sensitivity_dynamic.tex}
 \end{table}
 
+\subsection{Demo Dashboard}
+\label{subsec:demo-dashboard}
+To make these artefacts tangible we publish a Streamlit dashboard in
+\path{dashboard/stm\_monitor.py}. The application ingests permutation summaries,
+plots per-trace lead and coverage, and surfaces alerts alongside twin
+recommendations. Operators can step through traces, annotate interventions, and
+inspect estimated ROI using alert counts and lead-time savings. The default view
+uses the Logistics guardrail enriched with causal features, but any permutation
+report can be passed when launching
+\mbox{\texttt{streamlit run dashboard/stm\_monitor.py -- <summary.json>}}.
+
 Despite these attempts and the $n=500$ expansions, Blocksworld and Mystery still report $p_{\min} > 0.05$.
 Additional data alone is insufficient, underscoring the need for richer
 foreground features and twin filtering to gain discriminative power before
@@ -527,6 +561,12 @@ make planbench-all    # regenerate dataset, manifolds, guardrail sweeps
 #   (optional) merge additional gold states into Blocksworld/Mystery twins
 make codetrace-report # rebuild CodeTrace comparison report
 .venv/bin/pytest      # regression suite (22 passed, 1 skipped)
+# Enrich guardrail states with causal features (Section~\ref{subsec:real-world-data-pipeline})
+python scripts/enrich_features.py \
+  output/planbench_by_domain/logistics/invalid_state.json \
+  --output output/planbench_by_domain/logistics/invalid_state_causal.json
+# Launch demo dashboard (Section~\ref{subsec:demo-dashboard})
+streamlit run dashboard/stm_monitor.py
 # PlanBench scale probes (Section~\ref{subsec:permutation})
 PLANBENCH_SCALE_TARGETS="logistics blocksworld mystery_bw" make planbench-scale
 # To regenerate a single domain, override PLANBENCH_SCALE_TARGETS (e.g. "logistics")

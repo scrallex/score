@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1758503351.27669 "STM_Structural_Manifold_Whitepaper.tex" "STM_Structural_Manifold_Whitepaper.pdf" "STM_Structural_Manifold_Whitepaper" 1758503352.35795 0
+["pdflatex"] 1758504434.45529 "STM_Structural_Manifold_Whitepaper.tex" "STM_Structural_Manifold_Whitepaper.pdf" "STM_Structural_Manifold_Whitepaper" 1758504435.52557 0
   "../note/fig_tau_sweep_planbench.png" 1758412417.84652 61694 1aaff706fcbc12cd877a664b82f21214 ""
   "/usr/share/texlive/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1136849721 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/tcrm1095.tfm" 1136768653 1536 02c06700a42be0f5a28664c7273f82e7 ""
@@ -173,10 +173,10 @@
   "/usr/share/texlive/texmf-dist/web2c/texmf.cnf" 1737590400 40900 887e0dc8cac988a9e9c574af364cf837 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1758501715.09474 283208 30dc06413e1936e6b57d4a0f3c94eaa7 ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1758501804 6444210 f5024191ddcff65e20bd656bd20e72f8 ""
-  "STM_Structural_Manifold_Whitepaper.aux" 1758503352.26337 8772 f08709c5cad5f9037053dd74fa8c7f78 "pdflatex"
-  "STM_Structural_Manifold_Whitepaper.out" 1758503352.2635 3905 c1890a39a313f523e7215e408a6e8ad3 "pdflatex"
-  "STM_Structural_Manifold_Whitepaper.tex" 1758503342.85884 28521 832134b9de536fb95bb674dcd53798c9 ""
-  "STM_Structural_Manifold_Whitepaper.toc" 1758503352.2635 2343 0a419f974e7185b8390179554b8ce9f8 "pdflatex"
+  "STM_Structural_Manifold_Whitepaper.aux" 1758504435.40839 9200 3a7a4222127813226eb81d75f891243b "pdflatex"
+  "STM_Structural_Manifold_Whitepaper.out" 1758504435.40939 4220 72d989593cc79495a4f4e694f33f7641 "pdflatex"
+  "STM_Structural_Manifold_Whitepaper.tex" 1758504367.03105 30963 8dde4da094b9b17cd3e67aec7bbab644 ""
+  "STM_Structural_Manifold_Whitepaper.toc" 1758504435.40939 2513 561645f16dc4e0075a393dd1e2d78d37 "pdflatex"
   "feature_ablation.tex" 1758480556.62437 1202 c98eddbd3b1b681d0fe6cd07fc3b40cd ""
   "figures/logistics_guardrail_overlay.png" 1758480556.62537 165495 141d8c3417eb74423693e71a8ee01f07 ""
   "figures/planbench_guardrail.png" 1758422972.8161 71698 e359a6abbe11ebb78ea78dd739242396 ""
