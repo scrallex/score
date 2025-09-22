@@ -110,6 +110,7 @@ def main() -> None:
     instruments_cfg = data_cfg.get("instruments", [])
     if not instruments_cfg:
         raise ValueError("Config must provide data.instruments")
+    enforce_m1 = bool(data_cfg.get("enforce_m1", True))
 
     signal_cfg = cfg.get("signals", {})
     cache_root = Path(signal_cfg.get("cache_dir", outputs["signals_dir"]))
@@ -131,7 +132,7 @@ def main() -> None:
         timestamp_col = inst_cfg.get("timestamp_col")
         tz = inst_cfg.get("tz", "UTC")
         raw = load_candles_csv(csv_path, timestamp_col=timestamp_col, tz=tz)
-        candles = preprocess_candles(raw)
+        candles = preprocess_candles(raw, enforce_m1=enforce_m1)
         candles_by_inst[symbol] = candles
         signals = build_or_load_signals(
             candles=candles,
