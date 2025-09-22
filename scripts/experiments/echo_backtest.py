@@ -13,6 +13,7 @@ import yaml
 
 from stm_backtest import build_signals, load_candles_csv, preprocess_candles
 from stm_backtest.backtester import StrategyConfig, dump_results, run_sweep
+from stm_backtest.reporting import export_run_report, render_param_key
 
 
 KEY_MAP = {
@@ -44,6 +45,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--config", required=True, help="YAML configuration for the sweep")
     parser.add_argument("--output", help="Optional override for summary JSON output")
     parser.add_argument("--verbose", action="store_true", help="Print intermediate progress")
+    parser.add_argument("--report", help="Optional directory to write per-run artifacts")
     return parser.parse_args()
 
 
@@ -153,9 +155,14 @@ def main() -> None:
     iterations = int(bootstrap_cfg.get("iterations", 500))
     seed = bootstrap_cfg.get("seed")
 
+    report_cfg = cfg.get("report", {})
+    report_dir = args.report or report_cfg.get("outdir")
+    report_path: Path | None = Path(report_dir) if report_dir else None
+    make_plots = bool(report_cfg.get("make_plots", True)) if report_cfg else True
+
     if args.verbose:
         print("[sweep] running parameter grid")
-    results = run_sweep(
+    results, run_details = run_sweep(
         candles_by_instrument=candles_by_inst,
         signals_by_instrument=signals_by_inst,
         base_config=base_config,
@@ -163,6 +170,7 @@ def main() -> None:
         bootstrap_iterations=iterations,
         seed=seed,
         instrument_overrides=overrides_by_inst,
+        capture_details=bool(report_path),
     )
 
     payload = {
@@ -179,6 +187,19 @@ def main() -> None:
     dump_results(payload, outputs["summary_json"])
     df = pd.DataFrame(results)
     df.to_csv(outputs["summary_csv"], index=False)
+
+    if report_path:
+        if args.verbose:
+            print(f"[report] writing artifacts to {report_path}")
+        for summary, detail in zip(results, run_details, strict=False):
+            run_dir = report_path / render_param_key(summary.get("params", {}))
+            export_run_report(
+                run_dir,
+                summary,
+                detail["portfolio_result"],
+                detail["instrument_results"],
+                make_plots=make_plots,
+            )
 
     if args.verbose:
         print(f"[done] wrote {outputs['summary_json']} and {outputs['summary_csv']}")

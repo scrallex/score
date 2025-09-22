@@ -236,17 +236,33 @@ class BacktestResult:
         bootstrap_p = self._bootstrap_p_value(returns)
         avg_minutes = float(np.mean([t.bars_held for t in self.trades]) * 1.0)
         payoff = (wins.mean() / abs(losses.mean())) if len(wins) and len(losses) else 0.0
+        total_gain = float(wins.sum())
+        total_loss = float(-losses.sum())
+        if total_loss > 1e-9:
+            profit_factor = total_gain / total_loss
+        elif total_gain > 1e-9:
+            profit_factor = float("inf")
+        else:
+            profit_factor = 0.0
+        downside = losses
+        if downside.size > 0:
+            downside_std = float(np.sqrt(np.mean(np.square(downside))))
+            sortino = (avg_return / downside_std) * math.sqrt(len(returns)) if downside_std > 1e-9 else 0.0
+        else:
+            sortino = 0.0
         return {
-            "trade_count": len(self.trades),
-            "avg_return_bps": avg_return * 10_000.0,
+            "trade_count": int(len(self.trades)),
+            "avg_return_bps": float(avg_return * 10_000.0),
             "win_rate": float((returns > 0).mean()),
             "payoff": float(payoff),
-            "sharpe": sharpe,
-            "calmar": calmar,
-            "max_drawdown_pct": max_dd * 100.0,
-            "avg_time_in_trade_min": avg_minutes,
-            "alpha_vs_baseline_bps": (avg_return - baseline_mean) * 10_000.0,
-            "bootstrap_p_value": bootstrap_p,
+            "sharpe": float(sharpe),
+            "calmar": float(calmar),
+            "sortino": float(sortino),
+            "profit_factor": float(profit_factor),
+            "max_drawdown_pct": float(max_dd * 100.0),
+            "avg_time_in_trade_min": float(avg_minutes),
+            "alpha_vs_baseline_bps": float((avg_return - baseline_mean) * 10_000.0),
+            "bootstrap_p_value": float(bootstrap_p) if bootstrap_p is not None else None,
         }
 
     @staticmethod
@@ -287,6 +303,103 @@ class BacktestResult:
             boot.append(sample.mean())
         boot = np.array(boot)
         return float(np.mean(boot <= 0.0))
+
+    # ------------------------------------------------------------------
+    # Export helpers
+
+    def trade_frame(self) -> pd.DataFrame:
+        if not self.trades:
+            return pd.DataFrame(
+                columns=[
+                    "instrument",
+                    "entry_ts",
+                    "exit_ts",
+                    "direction",
+                    "size",
+                    "entry_price",
+                    "exit_price",
+                    "pnl_pct",
+                    "pnl_bps",
+                    "bars_held",
+                    "hazard_on_exit",
+                    "reason",
+                    "entry_signal_index",
+                    "exit_signal_index",
+                ]
+            )
+        records = []
+        for trade in self.trades:
+            records.append(
+                {
+                    "instrument": trade.instrument,
+                    "entry_ts": trade.entry_ts,
+                    "exit_ts": trade.exit_ts,
+                    "direction": "long" if trade.direction > 0 else "short",
+                    "size": float(trade.size),
+                    "entry_price": float(trade.entry_price),
+                    "exit_price": float(trade.exit_price),
+                    "pnl_pct": float(trade.pnl_pct),
+                    "pnl_bps": float(trade.pnl_bps),
+                    "bars_held": int(trade.bars_held),
+                    "hazard_on_exit": float(trade.hazard_on_exit),
+                    "reason": trade.reason,
+                    "entry_signal_index": int(trade.entry_signal_index),
+                    "exit_signal_index": int(trade.exit_signal_index),
+                }
+            )
+        df = pd.DataFrame.from_records(records)
+        df.sort_values("entry_ts", inplace=True)
+        df.reset_index(drop=True, inplace=True)
+        return df
+
+    def equity_curve(self) -> pd.DataFrame:
+        trades_df = self.trade_frame()
+        if trades_df.empty:
+            return pd.DataFrame(columns=["timestamp", "equity_pct", "equity_bps", "trade_index"])
+        equity_pct = trades_df["pnl_pct"].cumsum()
+        curve = pd.DataFrame(
+            {
+                "timestamp": trades_df["exit_ts"],
+                "equity_pct": equity_pct,
+                "equity_bps": equity_pct * 10_000.0,
+                "trade_index": np.arange(1, len(trades_df) + 1),
+            }
+        )
+        return curve
+
+    def hazard_calibration(self, bins: int = 20) -> pd.DataFrame:
+        if self.signals.empty:
+            return pd.DataFrame(columns=["hazard_bin", "signal_count", "entry_count", "admission_rate"])
+        signals = self.signals.reset_index(drop=True).copy()
+        entry_indices = {trade.entry_signal_index for trade in self.trades}
+        signals["is_entry"] = signals.index.isin(entry_indices)
+        bins = max(1, bins)
+        hazard_bins = np.linspace(0.0, 1.0, bins + 1)
+        signals["hazard_bin"] = pd.cut(
+            signals["lambda_hazard"], bins=hazard_bins, include_lowest=True, right=True
+        )
+        grouped = signals.groupby("hazard_bin", observed=False)
+        stats = grouped.agg(
+            signal_count=("lambda_hazard", "size"),
+            entry_count=("is_entry", "sum"),
+            hazard_mean=("lambda_hazard", "mean"),
+        ).reset_index()
+        stats["admission_rate"] = stats.apply(
+            lambda row: float(row["entry_count"]) / row["signal_count"] if row["signal_count"] else np.nan,
+            axis=1,
+        )
+        return stats
+
+    def lead_time_minutes(self) -> pd.Series:
+        if not self.trades:
+            return pd.Series(dtype=float)
+        minutes = pd.Series([trade.bars_held for trade in self.trades], name="bars_held", dtype=float)
+        return minutes
+
+    def hazard_scatter_frame(self) -> pd.DataFrame:
+        if self.signals.empty:
+            return pd.DataFrame(columns=["lambda_hazard", "repetition_count"])
+        return self.signals[["lambda_hazard", "repetition_count"]].copy()
 
 
 class EchoBacktester:
@@ -541,14 +654,17 @@ def run_sweep(
     bootstrap_iterations: int = 500,
     seed: Optional[int] = None,
     instrument_overrides: Optional[Dict[str, Dict[str, object]]] = None,
-) -> List[Dict[str, object]]:
+    capture_details: bool = False,
+) -> Tuple[List[Dict[str, object]], List[Dict[str, object]]]:
     """Run a grid sweep of strategy parameters across instruments."""
     results: List[Dict[str, object]] = []
+    details: List[Dict[str, object]] = []
     overrides = instrument_overrides or {}
     for params in parameter_grid(grid):
         all_trades: List[Trade] = []
         baseline_returns = []
         per_instrument: Dict[str, Dict[str, object]] = {}
+        instrument_results: Dict[str, BacktestResult] = {}
         for inst, candles in candles_by_instrument.items():
             signals = signals_by_instrument[inst]
             cfg_dict = {**base_config.as_dict(), **params, **overrides.get(inst, {})}
@@ -558,6 +674,8 @@ def run_sweep(
             all_trades.extend(res.trades)
             baseline_returns.append(res.baseline)
             per_instrument[inst] = res.summary()
+            if capture_details:
+                instrument_results[inst] = res
 
         merged_signals = pd.concat(baseline_returns) if baseline_returns else pd.Series(dtype=float)
         aggregate_cfg = StrategyConfig(**{**base_config.as_dict(), **params})
@@ -569,7 +687,13 @@ def run_sweep(
         )
         summary["instrument_summaries"] = per_instrument
         results.append(summary)
-    return results
+        if capture_details:
+            details.append({
+                "params": params,
+                "portfolio_result": bt,
+                "instrument_results": instrument_results,
+            })
+    return results, details
 
 
 def dump_results(payload: dict, path: Path) -> None:
