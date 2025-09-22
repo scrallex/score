@@ -1,0 +1,181 @@
+{
+  "mode": "base",
+  "coverage": 0.019771449301650645,
+  "percentiles": {
+    "coherence": {
+      "P10": 6.879415382299303e-05,
+      "P20": 0.0001761174011272182,
+      "P30": 0.0003033986649576548,
+      "P35": 0.0003962843131517513,
+      "P40": 0.000539404821929157,
+      "P50": 0.0008428791497289145,
+      "P60": 0.0011567205216549414,
+      "P70": 0.00139350819590911,
+      "P80": 0.0015855730625531361,
+      "P90": 0.001860964656126285
+    },
+    "entropy": {
+      "P10": 0.9981390353438737,
+      "P20": 0.9984144269374469,
+      "P30": 0.9986064918040909,
+      "P35": 0.9987276422262038,
+      "P40": 0.9988432794783451,
+      "P50": 0.9991571208502711,
+      "P60": 0.9994605951780708,
+      "P70": 0.9996966013350423,
+      "P80": 0.9998238825988728,
+      "P90": 0.999931205846177
+    },
+    "stability": {
+      "P10": 0.457743038593063,
+      "P20": 0.45969711773326816,
+      "P30": 0.46311675622862725,
+      "P40": 0.46604787493893507,
+      "P50": 0.4689789936492428,
+      "P60": 0.4714215925744992,
+      "P70": 0.4738641914997558,
+      "P80": 0.4767953102100635,
+      "P90": 0.4797264289203713
+    }
+  },
+  "base": {
+    "coverage": 0.019771449301650645,
+    "percentiles": {
+      "coherence": {
+        "P10": 6.879415382299303e-05,
+        "P20": 0.0001761174011272182,
+        "P30": 0.0003033986649576548,
+        "P35": 0.0003962843131517513,
+        "P40": 0.000539404821929157,
+        "P50": 0.0008428791497289145,
+        "P60": 0.0011567205216549414,
+        "P70": 0.00139350819590911,
+        "P80": 0.0015855730625531361,
+        "P90": 0.001860964656126285
+      },
+      "entropy": {
+        "P10": 0.9981390353438737,
+        "P20": 0.9984144269374469,
+        "P30": 0.9986064918040909,
+        "P35": 0.9987276422262038,
+        "P40": 0.9988432794783451,
+        "P50": 0.9991571208502711,
+        "P60": 0.9994605951780708,
+        "P70": 0.9996966013350423,
+        "P80": 0.9998238825988728,
+        "P90": 0.999931205846177
+      },
+      "stability": {
+        "P10": 0.457743038593063,
+        "P20": 0.45969711773326816,
+        "P30": 0.46311675622862725,
+        "P40": 0.46604787493893507,
+        "P50": 0.4689789936492428,
+        "P60": 0.4714215925744992,
+        "P70": 0.4738641914997558,
+        "P80": 0.4767953102100635,
+        "P90": 0.4797264289203713
+      }
+    },
+    "summary": {
+      "trace_count": 300,
+      "total_windows": 5544,
+      "total_alerts": 11,
+      "coverage_weighted": 0.001984126984126984,
+      "coverage_mean": 0.0011111111111111113,
+      "coverage_min": 0.0,
+      "coverage_max": 0.030303030303030304,
+      "lead_mean": 6,
+      "lead_std": 0.0,
+      "lead_ci95": [
+        6.0,
+        6.0
+      ],
+      "lead_min": 6,
+      "lead_max": 6,
+      "lead_hits": 11,
+      "p_value_mean": 0.9711085,
+      "p_value_std": 0.14833638888342013,
+      "p_value_ci95": [
+        0.954322657405718,
+        0.9878943425942821
+      ],
+      "p_value_median": 1.0,
+      "p_value_min": 0.21205,
+      "p_value_max": 1.0,
+      "precision_mean": 1.0,
+      "precision_std": 0.0,
+      "precision_ci95": [
+        1.0,
+        1.0
+      ]
+    }
+  },
+  "metric": {
+    "key": "p_value_min",
+    "value": 0.21205,
+    "threshold": 0.05
+  },
+  "optimization": {
+    "mode": "base",
+    "candidates": [
+      {
+        "label": "base",
+        "target": 0.019771449301650645,
+        "coverage": 0.001984126984126984,
+        "coverage_observed": 0.019771449301650645,
+        "p_metric": 0.21205,
+        "lead_mean": 6,
+        "fails_threshold": true,
+        "config_path": "/score/results/logistics_cov2000_ent99990_config.json",
+        "summary_path": "/score/results/logistics_cov2000_ent99990_config.permutation.json"
+      },
+      {
+        "label": "candidate_1",
+        "target": 0.009771,
+        "coverage": 0.0,
+        "coverage_observed": 0.005940504262651913,
+        "p_metric": 1.0,
+        "lead_mean": null,
+        "fails_threshold": true,
+        "config_path": "/score/results/logistics_cov2000_ent99990_config.opt1.json",
+        "summary_path": "/score/results/logistics_cov2000_ent99990_config.permutation_opt1.json"
+      },
+      {
+        "label": "candidate_2",
+        "target": 0.014771,
+        "coverage": 0.0,
+        "coverage_observed": 0.01079267186649737,
+        "p_metric": 1.0,
+        "lead_mean": null,
+        "fails_threshold": true,
+        "config_path": "/score/results/logistics_cov2000_ent99990_config.opt2.json",
+        "summary_path": "/score/results/logistics_cov2000_ent99990_config.permutation_opt2.json"
+      },
+      {
+        "label": "candidate_4",
+        "target": 0.024771,
+        "coverage": 0.0,
+        "coverage_observed": 0.020905133321240704,
+        "p_metric": 1.0,
+        "lead_mean": null,
+        "fails_threshold": true,
+        "config_path": "/score/results/logistics_cov2000_ent99990_config.opt4.json",
+        "summary_path": "/score/results/logistics_cov2000_ent99990_config.permutation_opt4.json"
+      },
+      {
+        "label": "candidate_5",
+        "target": 0.029771,
+        "coverage": 0.0,
+        "coverage_observed": 0.026210774532922185,
+        "p_metric": 1.0,
+        "lead_mean": null,
+        "fails_threshold": true,
+        "config_path": "/score/results/logistics_cov2000_ent99990_config.opt5.json",
+        "summary_path": "/score/results/logistics_cov2000_ent99990_config.permutation_opt5.json"
+      }
+    ]
+  },
+  "pvalue_metric": "min",
+  "pvalue_threshold": 0.05
+}

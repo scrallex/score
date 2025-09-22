@@ -37,13 +37,21 @@ def extract_metrics(state: dict) -> np.ndarray:
     return np.asarray(rows, dtype=np.float64)
 
 
-def build_quantile_sets(sample_size: int) -> Tuple[List[float], List[float], List[float | None]]:
+def build_quantile_sets(
+    sample_size: int,
+    *,
+    extra_coh: Optional[Iterable[float]] = None,
+    extra_ent: Optional[Iterable[float]] = None,
+    extra_stab: Optional[Iterable[float]] = None,
+) -> Tuple[List[float], List[float], List[float | None]]:
     coherence = list(np.arange(0.45, 0.91, 0.02))
     if sample_size > 600:
         coherence.extend(np.arange(0.91, 0.99, 0.01))
     else:
         coherence.extend([0.91, 0.93, 0.95])
     coherence.extend([0.97, 0.98, 0.99, 0.995])
+    if extra_coh:
+        coherence.extend(extra_coh)
     coherence = sorted({round(float(q), 4) for q in coherence})
 
     entropy: List[float] = []
@@ -53,6 +61,8 @@ def build_quantile_sets(sample_size: int) -> Tuple[List[float], List[float], Lis
         entropy.extend(np.arange(0.02, 0.20, 0.02))
     entropy.extend(np.arange(0.20, 0.60, 0.02))
     entropy.append(0.60)
+    if extra_ent:
+        entropy.extend(extra_ent)
     entropy = sorted({round(float(q), 4) for q in entropy})
 
     stability: List[float | None] = [None]
@@ -61,6 +71,8 @@ def build_quantile_sets(sample_size: int) -> Tuple[List[float], List[float], Lis
         stability.extend([0.90, 0.92, 0.94])
     else:
         stability.append(0.90)
+    if extra_stab:
+        stability.extend(extra_stab)
     # Preserve None at head while deduplicating numeric entries.
     stability_head = [None]
     stability_tail = sorted({round(float(q), 4) for q in stability if isinstance(q, float)})
@@ -95,12 +107,21 @@ def choose_thresholds(
     metrics: np.ndarray,
     target_low: float,
     target_high: float,
+    *,
+    extra_coh_qs: Optional[Iterable[float]] = None,
+    extra_ent_qs: Optional[Iterable[float]] = None,
+    extra_stab_qs: Optional[Iterable[float]] = None,
 ) -> Tuple[Dict[str, float], Dict[str, int | None], float]:
     coherence = metrics[:, 0]
     entropy = metrics[:, 1]
     stability = metrics[:, 2]
 
-    coh_qs, ent_qs, stab_qs = build_quantile_sets(len(metrics))
+    coh_qs, ent_qs, stab_qs = build_quantile_sets(
+        len(metrics),
+        extra_coh=extra_coh_qs,
+        extra_ent=extra_ent_qs,
+        extra_stab=extra_stab_qs,
+    )
 
     in_range: list[Tuple[Dict[str, float], Dict[str, int | None], float]] = []
     candidates: list[Tuple[Dict[str, float], Dict[str, int | None], float]] = []
@@ -145,11 +166,22 @@ def compute_configuration(
     metrics: np.ndarray,
     target_low: float,
     target_high: float,
+    *,
+    extra_coh_qs: Optional[Iterable[float]] = None,
+    extra_ent_qs: Optional[Iterable[float]] = None,
+    extra_stab_qs: Optional[Iterable[float]] = None,
 ) -> Tuple[dict, dict, float]:
     if metrics.size == 0:
         raise ValueError("No signal metrics available for calibration")
 
-    thresholds, percentiles, coverage = choose_thresholds(metrics, target_low, target_high)
+    thresholds, percentiles, coverage = choose_thresholds(
+        metrics,
+        target_low,
+        target_high,
+        extra_coh_qs=extra_coh_qs,
+        extra_ent_qs=extra_ent_qs,
+        extra_stab_qs=extra_stab_qs,
+    )
     coherence = metrics[:, 0]
     entropy = metrics[:, 1]
     stability = metrics[:, 2]
@@ -277,7 +309,14 @@ def optimise_permutation_guardrail(
 
         lower = max(args.min_coverage, rounded_centre - args.optimize_width)
         upper = rounded_centre + args.optimize_width
-        cfg, percentiles, coverage = compute_configuration(metrics, lower, upper)
+        cfg, percentiles, coverage = compute_configuration(
+            metrics,
+            lower,
+            upper,
+            extra_coh_qs=args.extra_coherence,
+            extra_ent_qs=args.extra_entropy,
+            extra_stab_qs=args.extra_stability,
+        )
 
         cfg_path = out_path.with_suffix(f".opt{idx}.json")
         cfg_path.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
@@ -493,15 +532,59 @@ def main() -> None:
         default=None,
         help="Explicit coverage centres (fractions) to include during optimisation",
     )
+    parser.add_argument(
+        "--extra-coherence",
+        nargs="*",
+        type=float,
+        help="Additional coherence percentiles to include (values in (0, 100) or (0, 1))",
+    )
+    parser.add_argument(
+        "--extra-entropy",
+        nargs="*",
+        type=float,
+        help="Additional entropy percentiles to include (values in (0, 100) or (0, 1))",
+    )
+    parser.add_argument(
+        "--extra-stability",
+        nargs="*",
+        type=float,
+        help="Additional stability percentiles to include (values in (0, 100) or (0, 1))",
+    )
     args = parser.parse_args()
 
     if args.dynamic_target is not None and args.domain_root is None:
         parser.error("--domain-root is required when --dynamic-target is specified")
 
+    def _normalize_percentiles(values: Optional[Iterable[float]]) -> Optional[List[float]]:
+        if not values:
+            return None
+        normalized: List[float] = []
+        for raw in values:
+            if raw is None:
+                continue
+            val = float(raw)
+            if val > 1.0:
+                val /= 100.0
+            if not 0.0 < val < 1.0:
+                raise ValueError("Percentiles must lie in the open interval (0, 100) or (0, 1)")
+            normalized.append(val)
+        return normalized if normalized else None
+
+    args.extra_coherence = _normalize_percentiles(args.extra_coherence)
+    args.extra_entropy = _normalize_percentiles(args.extra_entropy)
+    args.extra_stability = _normalize_percentiles(args.extra_stability)
+
     state_path = args.state
     state = load_state(state_path)
     metrics = extract_metrics(state)
-    base_cfg, base_percentiles, base_coverage = compute_configuration(metrics, args.target_low, args.target_high)
+    base_cfg, base_percentiles, base_coverage = compute_configuration(
+        metrics,
+        args.target_low,
+        args.target_high,
+        extra_coh_qs=args.extra_coherence,
+        extra_ent_qs=args.extra_entropy,
+        extra_stab_qs=args.extra_stability,
+    )
 
     out_path = args.output
     if out_path is None:
@@ -594,6 +677,9 @@ def main() -> None:
                 metrics,
                 dynamic_low,
                 dynamic_high,
+                extra_coh_qs=args.extra_coherence,
+                extra_ent_qs=args.extra_entropy,
+                extra_stab_qs=args.extra_stability,
             )
             out_path.write_text(json.dumps(dynamic_cfg, indent=2), encoding="utf-8")
             dynamic_summary = summarise_domain(
