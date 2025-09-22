@@ -40,9 +40,28 @@ def blend_metrics(metrics: Mapping[str, float], features: Mapping[str, float]) -
     divergence = float(features.get("state_divergence_rate", 0.0))
     constraint = float(features.get("constraint_violation_distance", 0.0))
 
-    adjusted_coherence = _clamp(coherence + 5e-4 * resource + 3e-4 * irreversible)
-    adjusted_entropy = _clamp(entropy - 0.05 * irreversible + 0.04 * (divergence + features.get("pattern_break_score", 0.0)))
-    adjusted_stability = _clamp(stability + 0.05 * (1.0 - constraint) - 0.04 * divergence)
+    logistics_irrev = float(features.get("logistics_irreversibility", 0.0))
+    logistics_momentum = float(features.get("logistics_momentum", 0.5))
+    logistics_entropy = float(features.get("logistics_cluster_entropy", 0.0))
+
+    adjusted_coherence = _clamp(
+        coherence + 5e-4 * resource + 3e-4 * irreversible + 2e-3 * logistics_irrev - 1e-3 * (1.0 - logistics_momentum)
+    )
+    adjusted_entropy = _clamp(
+        entropy
+        - 0.05 * irreversible
+        + 0.04 * (divergence + features.get("pattern_break_score", 0.0))
+        - 0.08 * logistics_irrev
+        + 0.05 * (1.0 - logistics_momentum)
+        + 0.02 * logistics_entropy
+    )
+    adjusted_stability = _clamp(
+        stability
+        + 0.05 * (1.0 - constraint)
+        - 0.04 * divergence
+        + 0.05 * logistics_momentum
+        - 0.03 * logistics_entropy
+    )
 
     return {
         **metrics,

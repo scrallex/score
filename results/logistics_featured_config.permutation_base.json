@@ -1,0 +1,3037 @@
+{
+  "config": "results/logistics_featured_config.json",
+  "thresholds": {
+    "min_coh": 0.0021968632608302843,
+    "max_ent": 0.9851625067864219,
+    "min_stab": 0.49084012121913
+  },
+  "records": [
+    {
+      "trace": "logistics_0001_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0002_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 33
+    },
+    {
+      "trace": "logistics_0003_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0004_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0005_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0006_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "logistics_0007_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0008_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0009_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0010_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0011_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0012_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "logistics_0013_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0014_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0015_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "logistics_0016_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0017_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0018_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0019_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0020_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0021_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0022_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 18
+    },
+    {
+      "trace": "logistics_0023_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 28
+    },
+    {
+      "trace": "logistics_0024_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0025_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0026_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0027_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0028_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0029_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0030_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0031_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0032_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0033_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0034_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0035_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 18
+    },
+    {
+      "trace": "logistics_0036_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "logistics_0037_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0038_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 18
+    },
+    {
+      "trace": "logistics_0039_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0040_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0041_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 33
+    },
+    {
+      "trace": "logistics_0042_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0043_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0044_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0045_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0046_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0047_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0048_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0049_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0050_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0051_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "logistics_0052_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0053_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 28
+    },
+    {
+      "trace": "logistics_0054_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "logistics_0055_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0056_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 28
+    },
+    {
+      "trace": "logistics_0057_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0058_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0059_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0060_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "logistics_0061_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0062_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0063_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0064_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0065_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0066_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0067_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0068_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 28
+    },
+    {
+      "trace": "logistics_0069_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0070_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0071_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0072_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0073_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0074_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0075_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0076_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0077_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 33
+    },
+    {
+      "trace": "logistics_0078_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0079_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0080_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 26
+    },
+    {
+      "trace": "logistics_0081_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0082_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0083_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0084_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0085_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0086_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0087_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0088_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0089_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0090_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0091_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0092_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0093_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0094_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0095_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0096_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0097_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0098_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0099_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0100_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0101_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 33
+    },
+    {
+      "trace": "logistics_0102_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0103_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0104_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0105_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "logistics_0106_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0107_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0108_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0109_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0110_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 18
+    },
+    {
+      "trace": "logistics_0111_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "logistics_0112_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0113_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0114_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0115_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0116_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0117_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "logistics_0118_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0119_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0120_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0121_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0122_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0123_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0124_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0125_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 33
+    },
+    {
+      "trace": "logistics_0126_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0127_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0128_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0129_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0130_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0131_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0132_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0133_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 18
+    },
+    {
+      "trace": "logistics_0134_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0135_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0136_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0137_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0138_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0139_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0140_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0141_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0142_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0143_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0144_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0145_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0146_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0147_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "logistics_0148_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0149_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0150_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0151_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0152_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0153_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0154_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0155_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0156_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0157_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0158_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0159_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "logistics_0160_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0161_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0162_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0163_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0164_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 33
+    },
+    {
+      "trace": "logistics_0165_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0166_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0167_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0168_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0169_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0170_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0171_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0172_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0173_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0174_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0175_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0176_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0177_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0178_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0179_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0180_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0181_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0182_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 28
+    },
+    {
+      "trace": "logistics_0183_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0184_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0185_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0186_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0187_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0188_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0189_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0190_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0191_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 33
+    },
+    {
+      "trace": "logistics_0192_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0193_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0194_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0195_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0196_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0197_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0198_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0199_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0200_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0201_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0202_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 18
+    },
+    {
+      "trace": "logistics_0203_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0204_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0205_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0206_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0207_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0208_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0209_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0210_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0211_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0212_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0213_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0214_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0215_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0216_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0217_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0218_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0219_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0220_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0221_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 33
+    },
+    {
+      "trace": "logistics_0222_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0223_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0224_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0225_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0226_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0227_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0228_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0229_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 18
+    },
+    {
+      "trace": "logistics_0230_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0231_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0232_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0233_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 28
+    },
+    {
+      "trace": "logistics_0234_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "logistics_0235_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0236_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0237_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "logistics_0238_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 18
+    },
+    {
+      "trace": "logistics_0239_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0240_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0241_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0242_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0243_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0244_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0245_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0246_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0247_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0248_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 28
+    },
+    {
+      "trace": "logistics_0249_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0250_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0251_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0252_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0253_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0254_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0255_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 10
+    },
+    {
+      "trace": "logistics_0256_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0257_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0258_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0259_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0260_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 33
+    },
+    {
+      "trace": "logistics_0261_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0262_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0263_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0264_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0265_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0266_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0267_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0268_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0269_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0270_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0271_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0272_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0273_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0274_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0275_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 26
+    },
+    {
+      "trace": "logistics_0276_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0277_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0278_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0279_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0280_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 18
+    },
+    {
+      "trace": "logistics_0281_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 33
+    },
+    {
+      "trace": "logistics_0282_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0283_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0284_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0285_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0286_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0287_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 33
+    },
+    {
+      "trace": "logistics_0288_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0289_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0290_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0291_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0292_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0293_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 25
+    },
+    {
+      "trace": "logistics_0294_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0295_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 17
+    },
+    {
+      "trace": "logistics_0296_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 28
+    },
+    {
+      "trace": "logistics_0297_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    },
+    {
+      "trace": "logistics_0298_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 12
+    },
+    {
+      "trace": "logistics_0299_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 20
+    },
+    {
+      "trace": "logistics_0300_corrupt.trace",
+      "coverage": 0.0,
+      "lead": null,
+      "p_value": 1.0,
+      "alerts": 0,
+      "alerts_pre_failure": 0,
+      "precision": null,
+      "window_count": 9
+    }
+  ],
+  "summary": {
+    "trace_count": 300,
+    "total_windows": 5544,
+    "total_alerts": 0,
+    "coverage_weighted": 0.0,
+    "coverage_mean": 0.0,
+    "coverage_min": 0.0,
+    "coverage_max": 0.0,
+    "lead_mean": null,
+    "lead_std": null,
+    "lead_ci95": null,
+    "lead_min": null,
+    "lead_max": null,
+    "lead_hits": 0,
+    "p_value_mean": 1.0,
+    "p_value_std": 0.0,
+    "p_value_ci95": [
+      1.0,
+      1.0
+    ],
+    "p_value_median": 1.0,
+    "p_value_min": 1.0,
+    "p_value_max": 1.0,
+    "precision_mean": null,
+    "precision_std": null,
+    "precision_ci95": null
+  }
+}

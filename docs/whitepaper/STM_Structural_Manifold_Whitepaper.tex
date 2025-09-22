@@ -147,6 +147,15 @@ lines, enabling the guardrail to differentiate mechanical edits from semantic
 repairs. Both adapters retain backward compatibility with previous corpora
 while providing higher-fidelity features for the new calibration sweep.
 
+Recent feature engineering adds irreversibility detectors, predicate-momentum
+signals, and action-cluster entropy derived from the PlanBench trace tokens.
+Irreversibility weights one-way transitions (e.g. \texttt{deliver},
+\texttt{unload}) more heavily, momentum highlights accelerating state change,
+and the entropy term captures how chaotically a trace oscillates between loading,
+movement, and delivery clusters. These signals are blended into the foreground
+metrics whenever \path{scripts/enrich_features.py} is invoked with
+\texttt{--features logistics --blend-metrics}.
+
 \subsection{Router Calibration}
 \label{subsec:calibration}
 Guardrail thresholds operate on percentiles of coherence, entropy, and stability.
@@ -398,8 +407,11 @@ permutation artefacts live under \path{results/} as
 \texttt{logistics\_baseline\_config.json} / \texttt{logistics\_baseline\_perm.json} and
 \texttt{logistics\_causal\_config\_opt.json} / \texttt{logistics\_causal\_perm\_opt.json}, with a
 diff-friendly summary in \path{results/experiment1\_summary.json} and the broader
-sweep catalogue in \path{results/logistics\_sweep\_summary.json}. The causal features therefore
-increase sensitivity and lead, but further tuning is required to push $p_{\min}$ below $0.05$.
+sweep catalogue in \path{results/logistics\_sweep\_summary.json}. Follow-on sweeps that
+incorporate irreversibility, momentum, and action-cluster entropy retained the
+lead-time improvement but did not yet cross the $p_{\min} < 0.05$ threshold, so
+feature engineering remains the most promising lever before attempting larger-scale data
+collection.
 
 \paragraph{Null results for Blocksworld and Mystery.} Even the lowest guardrail
 settings leave Blocksworld at $p_{\min}=0.62$ and Mystery at

@@ -11,7 +11,7 @@ from typing import Any, Dict, List
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from scripts.features import CausalFeatureExtractor
+from scripts.features import CausalFeatureExtractor, build_logistics_features
 from scripts.experiments.build_causal_domain import blend_metrics  # type: ignore
 
 
@@ -50,15 +50,41 @@ def default_output_path(input_path: Path, suffix: str) -> Path:
     return input_path.with_name(f"{stem}_{suffix}{input_path.suffix}")
 
 
+def enrich_with_logistics_features(state: Dict[str, Any]) -> int:
+    signals = state.get("signals")
+    if not isinstance(signals, list):
+        raise ValueError("State does not contain a 'signals' list")
+    settings = state.get("settings", {})
+    token_dir_value = settings.get("directory")
+    if not token_dir_value:
+        raise ValueError("Settings directory missing; cannot locate token streams")
+    token_dir = Path(token_dir_value)
+    if not token_dir.exists():
+        raise FileNotFoundError(f"Token directory not found: {token_dir}")
+
+    features = build_logistics_features(state)
+
+    if len(features) != len(signals):
+        raise ValueError(
+            f"Token window count ({len(features)}) does not match signal count ({len(signals)})"
+        )
+
+    for window, feats in zip(signals, features):
+        logistics_bucket = window.setdefault("features", {}).setdefault("logistics", {})
+        logistics_bucket.update(feats)
+    return len(features)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Enrich STM states with derived features")
     parser.add_argument("input", type=Path, help="State JSON produced by STM pipeline")
     parser.add_argument("--output", type=Path, help="Output path (defaults to <input>_causal.json)")
     parser.add_argument(
         "--features",
-        choices=("causal",),
-        default="causal",
-        help="Feature set to compute",
+        choices=("causal", "logistics"),
+        nargs="+",
+        default=["causal"],
+        help="Feature sets to compute",
     )
     parser.add_argument(
         "--blend-metrics",
@@ -68,22 +94,35 @@ def main() -> None:
     args = parser.parse_args()
 
     state = load_state(args.input)
-    updated = 0
-    if args.features == "causal":
-        updated = enrich_with_causal_features(state)
-        if args.blend_metrics:
-            for window in state.get("signals", []):
-                if not isinstance(window, dict):
-                    continue
-                features = window.get("features", {}).get("causal")
-                metrics = window.get("metrics", {})
-                if isinstance(features, dict) and isinstance(metrics, dict):
-                    window["metrics"] = blend_metrics(metrics, features)
+    total_windows = 0
+
+    if "causal" in args.features:
+        enrich_with_causal_features(state)
+    if "logistics" in args.features:
+        enrich_with_logistics_features(state)
+
+    if args.blend_metrics:
+        for window in state.get("signals", []):
+            if not isinstance(window, dict):
+                continue
+            metrics = window.get("metrics", {})
+            if not isinstance(metrics, dict):
+                continue
+            causal_feats = window.get("features", {}).get("causal", {})
+            logistics_feats = window.get("features", {}).get("logistics", {})
+            combined: Dict[str, float] = {}
+            if isinstance(causal_feats, dict):
+                combined.update(causal_feats)
+            if isinstance(logistics_feats, dict):
+                combined.update(logistics_feats)
+            if combined:
+                window["metrics"] = blend_metrics(metrics, combined)
 
     output_path = args.output or default_output_path(args.input, args.features)
     write_state(output_path, state)
 
-    print(json.dumps({"output": str(output_path), "windows": updated}, indent=2))
+    total_windows = len(state.get("signals", []))
+    print(json.dumps({"output": str(output_path), "windows": total_windows}, indent=2))
 
 
 if __name__ == "__main__":
