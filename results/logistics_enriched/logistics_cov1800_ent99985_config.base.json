@@ -1,0 +1,19 @@
+{
+  "router": {
+    "foreground": {
+      "min_coh": 0.003891334520721352,
+      "max_ent": 0.9262868956235494,
+      "min_stab": 0.59225703386346
+    },
+    "foreground_percentiles": {
+      "coh": 94,
+      "ent": 12,
+      "stab": 60
+    },
+    "coverage": 0.017749244712990938,
+    "triggers": {
+      "min_sig_qgrams": 2,
+      "max_ann_dist": 0.2
+    }
+  }
+}

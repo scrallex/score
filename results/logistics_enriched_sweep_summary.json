@@ -1,0 +1,82 @@
+[
+  {
+    "coverage_target_percent": 1.6,
+    "entropy_percentile": 99.985,
+    "coverage_weighted": 0.0,
+    "lead_mean": null,
+    "p_value_min": 1.0,
+    "config_path": "/sep/score/results/logistics_enriched/logistics_cov1600_ent99985_config.json",
+    "permutation_path": "/sep/score/results/logistics_enriched/logistics_cov1600_ent99985_config.permutation.json",
+    "mode": "optimized"
+  },
+  {
+    "coverage_target_percent": 1.6,
+    "entropy_percentile": 99.99,
+    "coverage_weighted": 0.0,
+    "lead_mean": null,
+    "p_value_min": 1.0,
+    "config_path": "/sep/score/results/logistics_enriched/logistics_cov1600_ent99990_config.json",
+    "permutation_path": "/sep/score/results/logistics_enriched/logistics_cov1600_ent99990_config.permutation.json",
+    "mode": "optimized"
+  },
+  {
+    "coverage_target_percent": 1.8,
+    "entropy_percentile": 99.985,
+    "coverage_weighted": 0.0,
+    "lead_mean": null,
+    "p_value_min": 1.0,
+    "config_path": "/sep/score/results/logistics_enriched/logistics_cov1800_ent99985_config.json",
+    "permutation_path": "/sep/score/results/logistics_enriched/logistics_cov1800_ent99985_config.permutation.json",
+    "mode": "optimized"
+  },
+  {
+    "coverage_target_percent": 1.8,
+    "entropy_percentile": 99.99,
+    "coverage_weighted": 0.0,
+    "lead_mean": null,
+    "p_value_min": 1.0,
+    "config_path": "/sep/score/results/logistics_enriched/logistics_cov1800_ent99990_config.json",
+    "permutation_path": "/sep/score/results/logistics_enriched/logistics_cov1800_ent99990_config.permutation.json",
+    "mode": "optimized"
+  },
+  {
+    "coverage_target_percent": 2.0,
+    "entropy_percentile": 99.985,
+    "coverage_weighted": 0.0,
+    "lead_mean": null,
+    "p_value_min": 1.0,
+    "config_path": "/sep/score/results/logistics_enriched/logistics_cov2000_ent99985_config.json",
+    "permutation_path": "/sep/score/results/logistics_enriched/logistics_cov2000_ent99985_config.permutation.json",
+    "mode": "optimized"
+  },
+  {
+    "coverage_target_percent": 2.0,
+    "entropy_percentile": 99.99,
+    "coverage_weighted": 0.0,
+    "lead_mean": null,
+    "p_value_min": 1.0,
+    "config_path": "/sep/score/results/logistics_enriched/logistics_cov2000_ent99990_config.json",
+    "permutation_path": "/sep/score/results/logistics_enriched/logistics_cov2000_ent99990_config.permutation.json",
+    "mode": "optimized"
+  },
+  {
+    "coverage_target_percent": 2.2,
+    "entropy_percentile": 99.985,
+    "coverage_weighted": 0.0,
+    "lead_mean": null,
+    "p_value_min": 1.0,
+    "config_path": "/sep/score/results/logistics_enriched/logistics_cov2200_ent99985_config.json",
+    "permutation_path": "/sep/score/results/logistics_enriched/logistics_cov2200_ent99985_config.permutation.json",
+    "mode": "optimized"
+  },
+  {
+    "coverage_target_percent": 2.2,
+    "entropy_percentile": 99.99,
+    "coverage_weighted": 0.0,
+    "lead_mean": null,
+    "p_value_min": 1.0,
+    "config_path": "/sep/score/results/logistics_enriched/logistics_cov2200_ent99990_config.json",
+    "permutation_path": "/sep/score/results/logistics_enriched/logistics_cov2200_ent99990_config.permutation.json",
+    "mode": "optimized"
+  }
+]

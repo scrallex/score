@@ -8,11 +8,11 @@ import json
 import shutil
 import sys
 from pathlib import Path
-from typing import Dict, Mapping
+from typing import Dict, Mapping, List
 
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 
-from scripts.features import CausalFeatureExtractor
+from scripts.features import CausalFeatureExtractor, build_logistics_features
 from scripts.features.causal_features import _clamp
 
 
@@ -43,17 +43,29 @@ def blend_metrics(metrics: Mapping[str, float], features: Mapping[str, float]) -
     logistics_irrev = float(features.get("logistics_irreversibility", 0.0))
     logistics_momentum = float(features.get("logistics_momentum", 0.5))
     logistics_entropy = float(features.get("logistics_cluster_entropy", 0.0))
+    logistics_balance = float(features.get("logistics_predicate_balance", 0.5))
+    logistics_delta = float(features.get("logistics_predicate_delta", 0.0))
+
+    momentum_delta = logistics_momentum - 0.5
+    balance_delta = logistics_balance - 0.5
 
     adjusted_coherence = _clamp(
-        coherence + 5e-4 * resource + 3e-4 * irreversible + 2e-3 * logistics_irrev - 1e-3 * (1.0 - logistics_momentum)
+        coherence
+        + 7e-4 * resource
+        + 4e-4 * irreversible
+        + 1.8e-3 * logistics_irrev
+        + 1.0e-3 * momentum_delta
+        + 7e-4 * balance_delta
+        - 8e-4 * logistics_delta
     )
     adjusted_entropy = _clamp(
         entropy
         - 0.05 * irreversible
         + 0.04 * (divergence + features.get("pattern_break_score", 0.0))
-        - 0.08 * logistics_irrev
-        + 0.05 * (1.0 - logistics_momentum)
-        + 0.02 * logistics_entropy
+        - 0.07 * logistics_irrev
+        + 0.05 * (0.5 - momentum_delta)
+        + 0.03 * logistics_entropy
+        + 0.015 * logistics_delta
     )
     adjusted_stability = _clamp(
         stability
@@ -61,6 +73,7 @@ def blend_metrics(metrics: Mapping[str, float], features: Mapping[str, float]) -
         - 0.04 * divergence
         + 0.05 * logistics_momentum
         - 0.03 * logistics_entropy
+        + 0.01 * balance_delta
     )
 
     return {
@@ -71,32 +84,48 @@ def blend_metrics(metrics: Mapping[str, float], features: Mapping[str, float]) -
     }
 
 
-def enrich_state_file(path: Path, extractor: CausalFeatureExtractor) -> None:
+def enrich_state_file(path: Path, extractor: CausalFeatureExtractor, include_logistics: bool) -> None:
     data = load_json(path)
     signals = data.get("signals")
     if not isinstance(signals, list):
         return
+    logistics_payload: list[Mapping[str, float]] = []
+    if include_logistics:
+        try:
+            logistics_payload = build_logistics_features(data)
+        except Exception:
+            logistics_payload = []
     history = []
     for window in signals:
         if not isinstance(window, dict):
             history.append({})
             continue
         features = extractor.extract(window, history=history)
-        window.setdefault("features", {})["causal"] = features
+        buckets = window.setdefault("features", {})
+        buckets["causal"] = features
+        if include_logistics and logistics_payload:
+            idx = len(history)
+            if idx < len(logistics_payload):
+                buckets["logistics"] = logistics_payload[idx]
+                merged_features = {**features, **logistics_payload[idx]}
+            else:
+                merged_features = dict(features)
+        else:
+            merged_features = dict(features)
         metrics = window.get("metrics", {})
-        window["metrics"] = blend_metrics(metrics, features)
+        window["metrics"] = blend_metrics(metrics, merged_features)
         history.append(window)
     dump_json(path, data)
 
 
-def enrich_domain_states(destination: Path) -> None:
+def enrich_domain_states(destination: Path, include_logistics: bool) -> None:
     extractor = CausalFeatureExtractor()
     for subset in ("invalid", "gold"):
         states_dir = destination / subset / "states"
         if not states_dir.exists():
             continue
         for state_path in sorted(states_dir.glob("*.json")):
-            enrich_state_file(state_path, extractor)
+            enrich_state_file(state_path, extractor, include_logistics)
 
 
 def main() -> None:
@@ -108,15 +137,26 @@ def main() -> None:
         type=Path,
         help="Optional aggregated state JSON to copy into the destination",
     )
+    parser.add_argument(
+        "--include-logistics",
+        action="store_true",
+        help="Also compute logistics-specific features and blend them into metrics",
+    )
     args = parser.parse_args()
 
     copy_domain(args.source, args.destination)
 
+    aggregated_path = None
     if args.aggregated_state and args.aggregated_state.exists():
         target_path = args.destination / args.aggregated_state.name
         shutil.copy2(args.aggregated_state, target_path)
+        aggregated_path = target_path
 
-    enrich_domain_states(args.destination)
+    enrich_domain_states(args.destination, include_logistics=args.include_logistics)
+
+    if aggregated_path and aggregated_path.exists():
+        extractor = CausalFeatureExtractor()
+        enrich_state_file(aggregated_path, extractor, include_logistics=args.include_logistics)
 
 
 if __name__ == "__main__":

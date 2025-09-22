@@ -15,11 +15,11 @@ def clamp(value: float, lo: float = 0.0, hi: float = 1.0) -> float:
 
 
 IRREVERSIBLE_WEIGHTS: Dict[str, float] = {
-    "deliver": 1.0,
-    "unload": 0.9,
-    "load": 0.6,
-    "drive": 0.35,
-    "fly": 0.4,
+    "deliver": 1.25,
+    "unload": 1.1,
+    "load": 0.65,
+    "drive": 0.4,
+    "fly": 0.45,
 }
 
 CLUSTER_MAP: Dict[str, str] = {
@@ -89,6 +89,8 @@ def build_logistics_features(state: Mapping[str, Any]) -> List[Dict[str, float]]
     irreversibility_series: List[float] = []
     momentum_series: List[float] = []
     cluster_entropy_series: List[float] = []
+    predicate_balance_series: List[float] = []
+    predicate_delta_series: List[float] = []
 
     max_weight = max(IRREVERSIBLE_WEIGHTS.values()) or 1.0
     deltas: List[float] = []
@@ -101,11 +103,15 @@ def build_logistics_features(state: Mapping[str, Any]) -> List[Dict[str, float]]
 
         pos = positive_counts[idx]
         neg = negative_counts[idx]
-        if pos + neg > 0:
-            delta = (neg - pos) / (pos + neg)
+        total_predicates = pos + neg
+        if total_predicates > 0:
+            signed = (pos - neg) / total_predicates
         else:
-            delta = 0.0
+            signed = 0.0
+        delta = (-signed)  # negative pressure indicates increasing blockers
         deltas.append(delta)
+        predicate_balance_series.append(clamp(0.5 + 0.5 * signed))
+        predicate_delta_series.append(abs(delta))
 
         # Cluster entropy uses counts across clusters plus inferred "other" bucket.
         cluster_values = [bucket[idx] for bucket in cluster_store.values()]
@@ -117,23 +123,30 @@ def build_logistics_features(state: Mapping[str, Any]) -> List[Dict[str, float]]
 
     for idx, delta in enumerate(deltas):
         if idx == 0:
-            momentum = clamp(0.5 + 0.5 * delta)
+            momentum = clamp(0.5 + 0.6 * delta)
         elif idx == 1:
             diff = delta - deltas[idx - 1]
-            momentum = clamp(0.5 + 0.5 * diff)
+            momentum = clamp(0.5 + 0.55 * diff)
         else:
             accel = (delta - deltas[idx - 1]) - (deltas[idx - 1] - deltas[idx - 2])
-            momentum = clamp(0.5 + 0.3 * accel)
+            momentum = clamp(0.5 + 0.4 * accel)
         momentum_series.append(momentum)
 
     features: List[Dict[str, float]] = []
-    for irr, mom, ent in zip(irreversibility_series, momentum_series, cluster_entropy_series):
+    for irr, mom, ent, balance, delta in zip(
+        irreversibility_series,
+        momentum_series,
+        cluster_entropy_series,
+        predicate_balance_series,
+        predicate_delta_series,
+    ):
         features.append(
             {
                 "logistics_irreversibility": irr,
                 "logistics_momentum": mom,
                 "logistics_cluster_entropy": ent,
+                "logistics_predicate_balance": balance,
+                "logistics_predicate_delta": clamp(delta),
             }
         )
     return features
-

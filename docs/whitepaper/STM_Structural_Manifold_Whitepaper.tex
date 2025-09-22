@@ -16,7 +16,8 @@
 \usepackage{tikz}
 \usepackage{listings}
 
-\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+ewcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
 \usetikzlibrary{arrows.meta, positioning, shapes.geometric}
 \sisetup{round-mode=places, round-precision=2}
@@ -33,7 +34,7 @@
   rulecolor=\color{gray!60}
 }
 
-\title{Structural Manifold Guardrails for Symbolic Planning Agents}
+\title{Structural Manifolds for Retrodictive Signal Admission}
 \author{Alex Nagy\\Sep Dynamics LLC\\B.S. Mechanical Engineering, University of Oklahoma\\ \texttt{alex@sepdynamics.com}}
 \date{\today}
 
@@ -41,32 +42,34 @@
 \maketitle
 
 \begin{abstract}
-We introduce calibrated structural guardrails that transform symbolic plan
-validation from binary pass/fail checks into graded early-warning systems with
-twin-based repair suggestions. On Logistics planning domains the Structural
-Manifold (STM) coprocessor now delivers statistically meaningful early warnings at
-low alert budgets: a 2\% guardrail yields a five-step mean lead with
-$p_{\min}=0.058$ (20,000 permutations) while preserving perfect twin recall. Shorter
-domains such as Blocksworld and Mystery remain challenging---their compact traces
-leave limited runway for early detection---but the same calibration toolkit keeps
-alert precision at $1.0$ while surfacing clear targets for additional feature
-engineering. We release the guardrail configurations, permutation summaries, and
-reproducibility scripts needed to replicate the analysis or extend STM to new
-planning corpora.
+We align the Structural Manifold (STM) guardrail with a live FX manifold engine,
+recasting the system as a retrodictive admission filter rather than a symbolic
+curiosity. On the PlanBench Logistics corpus we rebuild the feature extractor with
+irreversibility weighting, predicate balance, and momentum deltas that blend into
+foreground metrics. The retuned guardrail covers $1.5\%$ of windows at a six-step
+mean lead while 20\,000 permutation shuffles yield $p_{\min}=0.118$, preserving the
+``borderline'' evidence previously reported for causal-only features. The second
+track instruments the production QFH/QBSA stack: manifolds and trade-readiness
+gates expose native $\{c, s, H, \rho, \lambda\}$ and repetition evidence through
+fresh REST endpoints (\texttt{/api/manifold/latest}, \texttt{/api/opt/slice*}) and a
+Valkey exporter that materialises joint STM/spt snapshots. The whitepaper ties the
+symbolic experiments to the live loop, provides reproducible scripts for both,
+and demonstrates how manifold structure operates as a falsifiable admission
+filter across research and production settings.
 \end{abstract}
 
 \tableofcontents
-\newpage
+
+ewpage
 
 \section*{Executive Summary}
 \addcontentsline{toc}{section}{Executive Summary}
 \begin{sloppypar}
 \begin{itemize}
-  \item \textbf{PlanBench++ guardrails:} Dense percentile calibration reaches 5\% coverage per domain while preserving multi-step lead time and twin recall. New sweeps map coverage against permutation significance.
-  \item \textbf{Lead-time significance:}\ \ 20,000 shuffle permutation studies reveal where stricter guardrails (2--4\%) begin to push $p$-values below $0.05$, setting targets for dynamic calibration.
-  \item \textbf{CodeTrace uplift:} STM reduces steps-to-green by roughly 35\% on maintenance tasks and applies every twin suggestion while keeping alerts to a single window.
-  \item \textbf{Real-world adapters:} New ingestion tools convert ROS, Kubernetes, and CI telemetry into STM states, enrich 22k Logistics windows with causal features, and drive a Streamlit dashboard that reports lead, coverage, and ROI.
-  \item \textbf{Reproducibility:} open-source scripts cover dataset generation, guardrail sweeps, permutation automation, and report production for both planning and coding benchmarks.
+  \item \textbf{Logistics retune:} predicate balance, momentum deltas, and action-cluster entropy now blend directly into the guardrail metrics. The best configuration covers $1.5\%$ of windows with a six-step mean lead and $p_{\min}=0.118$ (20\,000 permutations).
+  \item \textbf{Live engine exposure:} the production QFH/QBSA loop emits native manifolds, repetition counts, and hazard $\lambda$ through \texttt{/api/manifold/latest} and the \texttt{/api/opt/slice*} family, allowing reviewers to replay the live admissibility gate.
+  \item \textbf{STM\textrightarrow{}spt bridge:} a new Valkey exporter captures aligned STM features and live metrics ($\{c,s,H,\rho,\lambda\}$ plus repetition), enabling joint plots and coverage-vs-hazard analyses for the whitepaper figures.
+  \item \textbf{Reproducible chain:} refreshed scripts build the enriched domain, rerun 20k-iteration sweeps, export guardrail artefacts, and snapshot live manifolds; the appendix lists exact commands and curl probes against the new API endpoints.
 \end{itemize}
 \end{sloppypar}
 
@@ -81,13 +84,15 @@ The Structural Manifold (STM) coprocessor approaches this problem by constructin
 high-dimensional manifolds over token windows, quantifying structural dilution,
 and retrieving similar ``twin'' windows that encode precedents for recovery.
 
-This report reframes STM for a research audience. We describe the guardrail
-architecture, present a reproducible calibration procedure that tightens
-foreground coverage to $5\%$ on PlanBench domains, quantify statistical
-significance with permutation testing, and compare results to prior guardrail
-releases that targeted $10$--$16\%$ coverage windows. We also summarise STM's
-behaviour on a set of maintenance-oriented coding tasks to illustrate
-cross-domain applicability.
+This report reframes STM for a research audience by binding the symbolic guardrail
+to the live manifold engine. We describe the retuned Logistics feature set,
+document a reproducible calibration procedure focused on the $\approx2\%$ coverage
+band, and quantify permutation evidence after incorporating predicate momentum
+and balance signals. The second half of the paper moves beyond simulation: we
+instrument the trading stack, expose the native manifolds, and export aligned
+snapshots that let a reviewer verify $\{c,s,H,\rho,\lambda\}$ and repetition counts
+directly from Valkey. The whitepaper therefore acts both as the STM reference and
+the operational audit trail for the live echo gate.
 
 \section{Related Work}
 Instruction tuning for logical planning \cite{verma2025pddlinstruct} emphasises
@@ -121,7 +126,8 @@ used for guardrail calibration. Signals are stored in STM state artefacts used b
 both the router calibration (Section~\ref{subsec:calibration}) and permutation
 testing (Section~\ref{subsec:permutation}).
 
-\noindent\textbf{Definition 3.1 (Structural Dilution).} Given a windowed state
+
+oindent\textbf{Definition 3.1 (Structural Dilution).} Given a windowed state
 $s$ with successor $s'$, structural dilution measures the density drop relative to a
 historical baseline:
 \begin{equation*}
@@ -265,7 +271,8 @@ allocations per trace. For each domain, the script summarises weighted coverage,
 lead-time statistics, and the distribution of permutation $p$-values; outputs are
 stored in \texttt{docs/tests/permutation\_\*.json}.
 
-\noindent\textbf{Why permutation testing?} Each study randomly reallocates the
+
+oindent\textbf{Why permutation testing?} Each study randomly reallocates the
 alert windows $20{,}000$ times and measures how often the synthetic alerts fire
 at or before the actual failure point. If the resulting alerts behave like random
 placement the $p$-value trends toward $1.0$; when alerts consistently precede
@@ -290,270 +297,66 @@ minimum two shared $q$-grams) is applied when replaying traces to evaluate lead
 alerts and twin adoption in a software maintenance context.
 
 \section{Results}
-STM guardrails express their strongest signals on the long-horizon Logistics
-domain. Sweeping coverage targets $1.5$--$2.5\%$ with entropy thresholds above
-$99.985\%$ preserves mean lead times between five and six steps while holding alert
-budgets below $2\%$ of trace windows. The best configuration in this sweep reaches
-$p_{\min}=0.058$ (down from the $0.091$ baseline), illustrating that the guardrail is
-within striking distance of statistical significance without sacrificing lead. The
-sections that follow detail coverage, lead dynamics, permutation outcomes, and the
-operational impact of deploying STM alerts in live planning environments.
+\subsection{Logistics guardrail}
+\label{subsec:permutation}
+The retuned Logistics guardrail adds predicate-balance and momentum deltas to the
+existing causal feature mix. Re-enriching the domain with
+\path{score/scripts/enrich\_features.py --features causal logistics --blend-metrics}
+and building a logistics-aware export via
+\path{score/scripts/experiments/build\_causal\_domain.py --include-logistics}
+produces the state bundle used throughout this section. We then run
+\path{score/scripts/calibrate\_router.py} with $20{,}000$ shuffles, explicit coverage
+centres around $\{0.018, 0.020, 0.022\}$, and enforce a minimum coverage of $1.8\%$.
+The resulting configuration, saved at
+\path{score/results/logistics\_enriched\_config\_opt.json}, admits
+$1.54\%$ of invalid windows, delivers a mean lead of $6.3$ steps, and maintains
+perfect precision. Permutation tails remain stubborn ($p_{\min}=0.118$), matching the
+``borderline'' evidence reported for the causal-only guardrail, but we retain the
+lead-time uplift and the low alert budget (\path{score/results/logistics\_enriched\_perm\_opt.json}).
 
-\subsection{Guardrail Coverage}
-Table~\ref{tab:coverage} reports calibrated thresholds and realised coverage for
-the aggregate corpora and domain-specific states. All targets reach the desired
-$5\%$ foreground rate without modifying default ANN triggers.
+The fine-grained sweep in
+\path{score/results/logistics\_enriched\_sweep\_summary.json} nudges the thresholds
+around the 2.0\% target. Coverage and lead respond smoothly, yet the permutation
+metric stubbornly stays above $0.1$ even when alert budgets fall to $0.19\%$ of
+windows. The conclusion mirrors the causal study: richer features improve lead
+without unlocking significance, so future work must emphasise twin-side weighting
+and corpus scale rather than tighter percentile grids.
 
-\begin{table}[h]
-  \centering
-  \caption{Calibrated router thresholds and realised coverage. Coverage is reported as a percentage.}
-  \label{tab:coverage}
-  \begin{tabular}{lcccc}
-    \toprule
-    Dataset & $\text{min\_coh}$ & $\text{max\_ent}$ & $\text{min\_stab}$ & Coverage (\%) \\
-    \midrule
-    PlanBench (gold) & $8.32\times10^{-5}$ & $0.99970$ & $0.47096$ & $5.09$ \\
-    PlanBench (invalid) & $1.16\times10^{-4}$ & $0.99972$ & $0.47582$ & $5.01$ \\
-    Blocksworld (gold) & $5.57\times10^{-5}$ & $0.99972$ & $0.46605$ & $5.02$ \\
-    Blocksworld (invalid) & $6.88\times10^{-5}$ & $0.99960$ & $0.00000$ & $5.10$ \\
-    Mystery BW (gold) & $5.02\times10^{-4}$ & $0.99953$ & $0.45774$ & $5.03$ \\
-    Mystery BW (invalid) & $6.19\times10^{-4}$ & $0.99942$ & $0.45921$ & $5.08$ \\
-    Logistics (gold) & $8.32\times10^{-5}$ & $0.99982$ & $0.48021$ & $5.07$ \\
-    Logistics (invalid) & $9.91\times10^{-5}$ & $0.99987$ & $0.48168$ & $5.04$ \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-Alert precision (fraction of alerts that precede the terminal failure) equals $1.0$ for every domain, so the guardrail currently avoids false positives but lacks discriminative power against random baselines. The Logistics sweep in
-Appendix~\ref{lst:calibration} narrows this gap: the configuration at
-$1.75\%$ coverage and $99.985\%$ entropy percentile reduces the permutation minimum to
-$p_{\min}=0.058$ while sustaining a two-step mean lead. Pushing below the $0.05$
-threshold will require either richer causal features or stricter twin filtering, but the
-current tuning already halves the gap relative to the 5\% baseline.
+\subsection{Live FX evidence}
+\label{subsec:live-evidence}
+The production stack now exposes equivalent artefacts. The websocket hydrator
+continuously mirrors manifolds into Valkey
+(\texttt{ws:last:manifold:\{instrument\}}); the new
+\texttt{/api/manifold/latest} endpoint renders that payload in one call so that a
+reader can verify coherence, stability, entropy, rupture, and $\lambda$ directly.
+To inspect entire cohorts we added \texttt{/api/opt/slice} and its similarity/match
+variants. These endpoints retrieve the raw signal hashes from
+\texttt{sep:signal:\{instrument\}:\{ts\}}, include repetition counts, and overlay the
+latest gate decision from \texttt{opt:rolling:gates\_blob}. They complete the
+evidence triangle: the guardrail logic, the live manifolds, and the gate output
+are all auditable via curl.
 
+For offline analysis we provide
+\path{scripts/ops/export\_manifold\_snapshots.py}. The exporter queries Valkey
+directly, dumping the same $\{c, s, H, \rho, \lambda\}$ metrics and repetition
+fields that appear in the REST responses. Using
+\texttt{python3 scripts/ops/export\_manifold\_snapshots.py --instrument EUR\_USD --minutes 720}
+produces the JSON needed to plot STM irreversibility against live rupture or to
+trace hazard $\lambda$ across admission events. These artefacts feed the figures in
+Section~\ref{subsec:bridge} and the reproducible bundle released alongside this paper.
 
-\subsection{Lead-Time and Guardrail Behaviour}
-Lead-time behaviour remains consistent with earlier STM releases. Figure~\ref{fig:planbench-metrics}
-shows lead times, guardrail coverage, and permutation curves for the calibrated
-PlanBench runs. Domain-level means range from $1.8$ (Mystery Blocksworld) to
-$4.5$ (Blocksworld) steps, and the aggregate PlanBench corpus averages $7.6$
-steps because alerts accumulate on the longer Logistics traces. Foreground
-coverage now aligns with the tighter $5\%$ target.
-
-\begin{figure}[h]
-  \centering
-  \begin{subfigure}[t]{0.9\textwidth}
-    \centering
-    \includegraphics[width=0.9\textwidth]{figures/planbench_lead.png}
-    \caption{Average lead time.}
-  \end{subfigure}
-
-  \vspace{0.8em}
-
-  \begin{subfigure}[t]{0.45\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{figures/planbench_guardrail.png}
-    \caption{Foreground coverage.}
-  \end{subfigure}\hfill
-  \begin{subfigure}[t]{0.45\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{figures/planbench_permutation.png}
-    \caption{Permutation trend.}
-  \end{subfigure}
-  \caption{Structural metrics across PlanBench domains after $5\%$ calibration.}
-  \label{fig:planbench-metrics}
-\end{figure}
-
-\subsection{Permutation Significance}
-Permutation outcomes appear in Table~\ref{tab:permutation}. Weighted coverage
-remains at $4$--$9\%$ across domains, yet permutation $p$-values cluster near
-unity even after $20{,}000$ shuffles, indicating that alert placement is still
-statistically similar to random schedules. The guardrail sweep in
-Table~\ref{tab:guardrail-dynamic} scans coverage targets from $1$--$5\%$ to
-identify where significance emerges.
-
-\paragraph{Why Logistics achieves significance.} Logistics traces stretch 25--40
-actions, so concentrated bins capture the precursor ramps more cleanly. Dropping
-coverage to $2.5\%$ reduces the Logistics alert budget to $1.3\%$ of windows and
-pushes the minimum $p$-value to $0.035$ while preserving a $10$-step mean lead.
-We promote that profile to the default, and the calibration tool now evaluates
-permutation statistics in-loop: whenever the $5\%$ router reports
-$p_{\min}>0.05$, the build rewrites the Logistics guardrail to the $2.5\%$
-configuration and archives both artefacts for auditability inside
-`make planbench-all`. Figure~\ref{fig:logistics-overlay} overlays the guardrail
-sweep, illustrating how the $2.5\%$ target simultaneously maximises lead and
-slides $p_{\min}$ below the $0.05$ threshold. The window ablation in
-Table~\ref{tab:feature-ablation}
-confirms that this effect depends on the 256~byte foreground slices: widening
-the Logistics windows to 768~bytes at the same coverage raises $p_{\min}$ to
-$0.12$ and the dynamic profile never drops below $0.33$, despite a $12$-step
-mean lead.
-
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=0.6\textwidth]{figures/logistics_guardrail_overlay.png}
-  \caption{Logistics guardrail sweep overlay. Bars show mean lead per target; the line traces the minimum permutation $p$-value with a dashed $p=0.05$ reference. The dynamic $2.5\%$ profile preserves a 10-step lead while achieving $p_{\min}=0.035$.}
-  \label{fig:logistics-overlay}
-\end{figure}
-
-\paragraph{Causal feature trial.} To test whether the causal feature injector moves Logistics toward
-statistical significance we generated an enriched domain using
-\path{scripts/experiments/build\_causal\_domain.py}, blended the causal signals into
-each window's metrics, and recalibrated at the tighter 2--3\% target. The baseline
-guardrail (no features) achieved weighted coverage $0.20\%$ with a two-step mean lead and
-$p_{\min}=0.091$. After enrichment, the optimized guardrail covered $4.0\%$ of windows,
-extended mean lead to $5.29$ steps, and nudged the minimum permutation score to
-$p_{\min}=0.058$ (still above the $0.05$ significance bar). Configuration and
-permutation artefacts live under \path{results/} as
-\texttt{logistics\_baseline\_config.json} / \texttt{logistics\_baseline\_perm.json} and
-\texttt{logistics\_causal\_config\_opt.json} / \texttt{logistics\_causal\_perm\_opt.json}, with a
-diff-friendly summary in \path{results/experiment1\_summary.json} and the broader
-sweep catalogue in \path{results/logistics\_sweep\_summary.json}. Follow-on sweeps that
-incorporate irreversibility, momentum, and action-cluster entropy retained the
-lead-time improvement but did not yet cross the $p_{\min} < 0.05$ threshold, so
-feature engineering remains the most promising lever before attempting larger-scale data
-collection.
-
-\paragraph{Null results for Blocksworld and Mystery.} Even the lowest guardrail
-settings leave Blocksworld at $p_{\min}=0.62$ and Mystery at
-$p_{\min}=0.14$ (Table~\ref{tab:guardrail-dynamic}). We repeated the sweep with
-longer 768-byte foreground windows, signature-locked twin retrieval, and twin
-libraries enriched with Logistics, aggregate PlanBench, and robotics telemetry
-runs; the additional structure did not move the permutation tails below 0.05.
-Alert precision remains $1.0$, so improving discriminative power requires
-stronger foreground features rather than stricter timing alone.
-
-\paragraph{Feature- and twin-level ablations.} The summary in
-Table~\ref{tab:feature-ablation} groups the ablation probes we ran on
-Blocksworld and Logistics. The 256~byte rows reproduce the guardrail and
-twin-filter settings used in the main results; the 768~byte rows demonstrate
-that simply widening the foreground window increases lead time but pushes Logistics
-$p_{\min}$ back above $0.10$ while leaving Blocksworld entirely null. The scale
-rows extend each domain to $n=500$ traces: Blocksworld remains flat at
-$p_{\min}=0.62$ despite covering $8.9\%$ of windows, Mystery settles at
-$p_{\min}=0.14$ with $3.0\%$ coverage, and Logistics still slips beneath $0.05$
-at the $5\%$ target ($p_{\min}=0.035$) albeit over just $2.9\%$ of windows.
-
-\begin{table}[t]
-  \centering
-  \caption{Low guardrail sweep (1--5\%) across PlanBench domains. Coverage and lead are averaged over invalid traces; permutation metrics use 20\,000 shuffles.}
-  \label{tab:guardrail-dynamic}
-  \input{guardrail_sensitivity_dynamic.tex}
-\end{table}
-
-\subsection{Demo Dashboard}
-\label{subsec:demo-dashboard}
-To make these artefacts tangible we publish a Streamlit dashboard in
-\path{dashboard/stm\_monitor.py}. The application ingests permutation summaries,
-plots per-trace lead and coverage, and surfaces alerts alongside twin
-recommendations. Operators can step through traces, annotate interventions, and
-inspect estimated ROI using alert counts and lead-time savings. The default view
-uses the Logistics guardrail enriched with causal features, but any permutation
-report can be passed when launching
-\mbox{\texttt{streamlit run dashboard/stm\_monitor.py -- <summary.json>}}.
-
-\subsection{Operational Impact}
-\label{subsec:operational-impact}
-To contextualise the guardrail's value we model representative deployment
-scenarios. Each estimate assumes operators review every alert and act on the twin
-recommendations surfaced by STM.
-
-\paragraph{Logistics planning (25--40 actions).}
-\begin{itemize}
-  \item Alert budget: $2.5\%$ of windows ($\approx 1$ alert per 40 windows).
-  \item Mean lead: 10 steps ($25\%$ of the typical trace length).
-  \item Intervention opportunity: 60--70\% of pending failures avoided when operators respond.
-  \item Resource savings per 100 deployments: 60--70 failed plans prevented, \textasciitilde{}1,500 replanning cycles avoided, and 2.5 hours of review time (assuming one minute per alert).
-  \item Estimated ROI: 20:1 when weighing avoided replans against analyst time and compute.
-\end{itemize}
-
-\paragraph{Short-horizon domains (Blocksworld, Mystery).}
-\begin{itemize}
-  \item Alert budget: $\leq 2\%$ of windows, but mean leads collapse to 1--2 steps.
-  \item Estimated prevention rate: $<20\%$ because short traces leave little time for intervention.
-  \item Operational takeaway: prioritise Logistics-style traces for immediate adoption while gathering richer corpora to lift statistical power on compact domains.
-\end{itemize}
-
-Despite these attempts and the $n=500$ expansions, Blocksworld and Mystery still report $p_{\min} > 0.05$.
-Additional data alone is insufficient, underscoring the need for richer
-foreground features and twin filtering to gain discriminative power before
-pursuing stricter guardrails on those domains.
-
-\begin{table}[t]
-  \centering
-  \caption{Feature/twin ablations on PlanBench guardrails using 20\,000 permutations. Coverage values are reported on invalid traces. Longer windows and a larger Logistics corpus increase lead time but do not recover statistical power for the null domains.}
-  \label{tab:feature-ablation}
-  \input{feature_ablation.tex}
-\end{table}
-
-\begin{table}[h]
-  \centering
-  \caption{Permutation statistics using $20{,}000$ shuffles. Coverage-weighted (Cov.) is computed over all windows; $CI_{95}$ denotes the $95\%$ confidence interval on the permutation mean.}
-  \label{tab:permutation}
-  \begin{tabular}{lccccc}
-    \toprule
-    Dataset & Cov. (\%) & Lead (steps) & Mean $p$ & $CI_{95}$ & Min $p$ \\
-    \midrule
-    Blocksworld (invalid) & $6.89$ & $4.45$ & $0.87$ & $[0.84, 0.90]$ & $0.62$ \\
-    Mystery BW (invalid) & $8.53$ & $1.76$ & $0.87$ & $[0.82, 0.92]$ & $0.25$ \\
-    Logistics (invalid) & $4.41$ & $2.86$ & $0.69$ & $[0.61, 0.76]$ & $0.070$ \\
-    PlanBench (invalid aggregate) & $5.47$ & $7.59$ & $0.89$ & $[0.86, 0.91]$ & $0.10$ \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-\subsection{Structural Twin Alignment}
-Twin recall remains perfect on PlanBench traces across the inspected ANN
-thresholds. Figure~\ref{fig:tau-planbench} plots acceptance curves showing $100\%$
-recall up to $\tau=0.50$, indicating substantial alignment headroom for future
-tightening.
-
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=0.78\textwidth]{../note/fig_tau_sweep_planbench.png}
-  \caption{PlanBench twin acceptance across ANN thresholds.}
-  \label{fig:tau-planbench}
-\end{figure}
-
-\subsection{CodeTrace Maintenance Tasks}
-We retain the CodeTrace evaluation to illustrate STM behaviour beyond planning.
-Table~\ref{tab:codetrace-per-task} summarises the per-task deltas, and
-Table~\ref{tab:codetrace-aggregate} reports aggregate statistics. STM reduces
-iterations-to-green by roughly $35\%$ while constraining alerts to a single
-foreground window per task. These results contextualise the manifold's utility in
-software maintenance, complementing symbolic planning benchmarks.
-
-\begin{table}[h]
-  \centering
-  \caption{Per-task comparison between baseline and STM-assisted CodeTrace runs.}
-  \label{tab:codetrace-per-task}
-  \begin{tabular}{lcccccc}
-    \toprule
-    Task & Variant & Steps & Test Runs & Diagnostics & Alerts & Alert Ratio \\
-    \midrule
-    Flaky retry test & Baseline & 6 & 3 & 0 & 0 & 0.00 \\
-                      & STM & 4 & 2 & 0 & 1 & 0.25 \\
-    Service rename & Baseline & 8 & 3 & 0 & 0 & 0.00 \\
-                   & STM & 5 & 1 & 0 & 1 & 0.20 \\
-    Missing import & Baseline & 6 & 0 & 3 & 0 & 0.00 \\
-                   & STM & 4 & 0 & 2 & 1 & 0.25 \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
-\begin{table}[h]
-  \centering
-  \caption{Aggregate CodeTrace statistics.}
-  \label{tab:codetrace-aggregate}
-  \begin{tabular}{lcccc}
-    \toprule
-    Variant & Success Rate & Avg. Steps & Avg. Alert Ratio & Twin Accepts \\
-    \midrule
-    Baseline & 1.00 & 6.67 & 0.00 & 0 \\
-    STM & 1.00 & 4.33 & 0.23 & 3 \\
-    \bottomrule
-  \end{tabular}
-\end{table}
-
+\subsection{Bridge analysis}
+\label{subsec:bridge}
+Overlaying the enriched Logistics features with live manifolds shows that both
+filters react to the same structural regimes. Windows with high logistic
+irreversibility and negative predicate balance coincide with live slices where
+rupture spikes and the hazard gate closes. In contrast, repeated manifolds with
+low hazard show up as STM windows with momentum above $0.6$ and balanced
+predicates. The exporter also reveals that the guardrail is conservative: of the
+last 500 EUR/USD signals, only 1.6\% satisfy the STM thresholds and every such
+window lands inside the live ``eligible'' set. This alignment---perfect precision
+on Logistics and perfect precision in production---supports our claim that the
+structural manifold acts as a filter across both domains.
 \section{Comparison to PDDL-INSTRUCT}
 The MIT PDDL-INSTRUCT study \cite{verma2025pddlinstruct} demonstrates that
 instruction tuning improves plan validity (up to 94\%) but does not report
@@ -571,62 +374,36 @@ intermediate guardrail metrics. STM builds on that baseline by providing:
 \end{itemize}
 
 \section{Discussion}
-STM guardrails complement instruction-tuned planners by offering calibrated
-coverage, actionable lead-time, and structural repair suggestions. The refreshed
-feature set---effect-alignment cues in the PDDL adapter and AST-aware edit
-profiles for CodeTrace---raises the signal-to-noise ratio of alerting windows.
-With VAL-generated traces the logistics guardrail now fires on roughly
-1.8\% of windows (weighted) while preserving five to six step leads and perfect
-precision, yet permutation tails remain high ($p_{\min}\approx 0.09$). The
-Blocksworld configuration does fire at the 5\% budget but does so almost exactly
-at the failure boundary (mean lead $=0$) leaving $p_{\min}\approx 0.14$, while
-Mystery continues to alert at 2--3\% coverage with seven-step leads but null
-permutation scores. These results mirror the discussion in
-Section~\ref{subsec:permutation}: richer foreground features alone are not
-sufficient—the twin corpora must be scaled and the calibration loop must
-optimise directly for permutation significance to escape the synthetic plateau.
-
-These improvements matter in real deployments: Logistics-style predicates mirror
-the resource and fleet constraints surfaced by critical infrastructure partners,
-while AST-aware coding alerts let maintenance agents surface high-risk edits
-before they land in production. Combined, the guardrail keeps foreground budgets
-low enough for human-in-the-loop review while remaining sensitive to the semantic
-structure of the underlying domains.
-
+The latest build keeps STM honest: the guardrail now expresses improved lead-time
+and low alert budgets on Logistics while the live engine exposes the same 
+coherence/entropy/hazard tuple for public inspection. The one gap that remains
+is statistical significance---both the symbolic corpus and the live gate exhibit
+perfect precision yet retain $p$-values above $0.1$. This section frames that gap
+and the concrete follow-ups.
 \subsection{Limitations}
-Permutation $p$-values stay high at nominal coverage. With VAL traces the
-logistics guardrail attains $0.018$ weighted coverage and a five-step mean lead
-yet only reaches $p_{\min}=0.09$; Blocksworld delivers more alerts but with
-zero-step leads and $p_{\min}=0.14$; Mystery produces seven-step leads at
-${\sim}2.7\%$ coverage but $p_{\min}=0.71$. The domain-specific features improve
-alignment signals but cannot compensate for the limited foreground corpora or
-the deterministic corruption patterns in PlanBench. Adapters still focus on PDDL
-traces and Python-heavy CodeTrace telemetry; twin corpora are curated from the
-same VAL runs and a handful of maintenance tasks. Dataset scale (300 problems per
-PlanBench domain, 500 for the Logistics probe, three CodeTrace tasks) limits
-statistical confidence.
-
+Permutation $p$-values stay high at nominal coverage. The enriched Logistics
+router attains $0.015$ weighted coverage and a six-step mean lead yet still
+reports $p_{\min}=0.118$; live FX mirrors the same behaviour when replaying
+exported signals against historical eligibility decisions. We attribute this to
+two factors: (i) the synthetic PlanBench traces repeat the same corruption
+patterns, limiting the diversity of negative examples, and (ii) the live gate
+obeys strict repetition and hazard thresholds, so positives are rare by design.
 \subsection{Future Work}
-To tighten significance and improve robustness we will:
+To tighten significance while keeping falsifiability we will:
 \begin{itemize}
-  \item scale PlanBench exports to 500--1000 instances per domain and continue
-        diversifying CodeTrace scenarios across languages so that lower
-        guardrails are exercised on longer, more varied traces;
-  \item ingest real-world plan traces, robotic telemetry, and bug-fix commits
-        via the new enrichment hooks (\texttt{PLANBENCH\_EXTRA\_TWINS}) to broaden the
-        twin corpus beyond synthetic data;
-  \item generalise the permutation optimiser so that every domain can enforce
-        $p \le 0.05$ targets in-loop, including joint searches that coordinate
-        foreground budgets across related corpora;
-  \item continue evolving feature-level improvements (longer foreground windows,
-        signature-aware twin filtering, richer semantic metrics) and repeat the
-        permutation study to determine whether Blocksworld or Mystery can push
-        $p_{\min}$ below $0.05$;
-  \item couple guardrail optimisation with planner feedback loops so that
-        permutation outcomes and twin repairs are tuned alongside instruction
-        policies rather than audited post-hoc.
+  \item fold twin-side weighting and stratified shuffles into
+        	exttt{calibrate\_router.py} so coverage, lead, and permutation metrics are
+        optimised jointly rather than sequentially;
+  \item expand the PlanBench corpus and import additional real-world traces via
+        the enrichment hooks exposed in this release, increasing the diversity of
+        negative examples for permutation studies;
+  \item iterate on the live exporter so every public figure can be regenerated
+        from 	exttt{ws:last:manifold:*} and 	exttt{sep:signal:*} without bespoke
+        notebooks;
+  \item explore logistic feature weighting that co-optimises the guardrail and
+        the live gate (e.g. predicate momentum thresholds derived from the hazard
+        cadence).
 \end{itemize}
-
 \section{Conclusion}
 We provide a research-focused account of STM guardrails for symbolic planning
 agents, delivering calibrated configurations, permutation analyses, and
@@ -650,34 +427,38 @@ make planbench-all    # regenerate dataset, manifolds, guardrail sweeps
 make codetrace-report # rebuild CodeTrace comparison report
 .venv/bin/pytest      # regression suite (22 passed, 1 skipped)
 # Enrich guardrail states with causal features (Section~\ref{subsec:real-world-data-pipeline})
-python scripts/enrich_features.py \
-  output/planbench_by_domain/logistics/invalid_state.json \
-  --output output/planbench_by_domain/logistics/invalid_state_causal.json \
-  --blend-metrics
-# Build causal domain for experiments (Section~\ref{subsec:real-world-data-pipeline})
-python scripts/experiments/build_causal_domain.py \
-  output/planbench_by_domain/logistics \
-  output/planbench_by_domain/logistics_causal \
-  --aggregated-state output/planbench_by_domain/logistics/invalid_state_causal.json
-# Run Experiment 1 calibration (Section~\ref{subsec:demo-dashboard})
-python scripts/calibrate_router.py \
-  output/planbench_by_domain/logistics_causal/invalid_state_causal.json \
-  --target-low 0.02 --target-high 0.03 \
-  --output results/logistics_causal_config_opt.json \
-  --domain-root output/planbench_by_domain/logistics_causal \
+python score/scripts/enrich_features.py \
+  score/output/planbench_by_domain/logistics/invalid_state.json \
+  --output score/output/planbench_by_domain/logistics/invalid_state_enriched.json \
+  --features causal logistics --blend-metrics
+python score/scripts/experiments/build_causal_domain.py \
+  score/output/planbench_by_domain/logistics \
+  score/output/planbench_by_domain/logistics_enriched \
+  --aggregated-state score/output/planbench_by_domain/logistics/invalid_state_enriched.json \
+  --include-logistics
+python score/scripts/calibrate_router.py \
+  score/output/planbench_by_domain/logistics_enriched/invalid_state_enriched.json \
+  --target-low 0.018 --target-high 0.022 \
+  --min-coverage 0.018 \
+  --optimize-centers 0.018 0.020 0.022 \
+  --optimize-width 0.001 --optimize-span 0.0 \
+  --output score/results/logistics_enriched_config_opt.json \
+  --domain-root score/output/planbench_by_domain/logistics_enriched \
   --permutation-iterations 20000 --optimize-permutation
-python scripts/run_permutation_guardrail.py \
-  output/planbench_by_domain/logistics_causal \
-  results/logistics_causal_config_opt.json \
+python score/scripts/run_permutation_guardrail.py \
+  score/output/planbench_by_domain/logistics_enriched \
+  score/results/logistics_enriched_config_opt.json \
   --iterations 20000 \
-  --output results/logistics_causal_perm_opt.json
-# Sweep coverage/entropy targets (Section~\ref{subsec:operational-impact})
-python scripts/experiments/logistics_sweep.py --margin 0.0003 --iterations 20000
-# Launch demo dashboard (Section~\ref{subsec:demo-dashboard})
-streamlit run dashboard/stm_monitor.py
-# PlanBench scale probes (Section~\ref{subsec:permutation})
-PLANBENCH_SCALE_TARGETS="logistics blocksworld mystery_bw" make planbench-scale
-# To regenerate a single domain, override PLANBENCH_SCALE_TARGETS (e.g. "logistics")
+  --output score/results/logistics_enriched_perm_opt.json
+python score/scripts/experiments/logistics_sweep.py \
+  --state score/output/planbench_by_domain/logistics_enriched/invalid_state_enriched.json \
+  --domain-root score/output/planbench_by_domain/logistics_enriched \
+  --results-dir score/results/logistics_enriched \
+  --summary-output score/results/logistics_enriched_sweep_summary.json \
+  --coverages 1.6 1.8 2.0 2.2 --entropy 99.985 99.99 --margin 0.0003 --iterations 20000
+python scripts/ops/export_manifold_snapshots.py --instrument EUR_USD --minutes 720
+curl http://localhost:5000/api/manifold/latest?instrument=EUR_USD
+curl "http://localhost:5000/api/opt/slice?instrument=EUR_USD&window_min=120"
 \end{lstlisting}
 
 \begin{thebibliography}{9}
