@@ -98,3 +98,76 @@ def test_backtester_produces_trades(sample_candles: pd.DataFrame) -> None:
     assert summary["trade_count"] == len(result.trades)
     assert isinstance(summary["avg_return_bps"], float)
     assert summary["bootstrap_p_value"] is None or 0.0 <= summary["bootstrap_p_value"] <= 1.0
+
+
+def test_session_filter_blocks_entries_outside_window() -> None:
+    timestamps = pd.to_datetime(
+        [
+            "2024-01-01T08:00:00Z",
+            "2024-01-01T09:00:00Z",
+            "2024-01-01T10:00:00Z",
+            "2024-01-01T11:00:00Z",
+        ]
+    )
+    timestamp_ns = timestamps.astype("int64")
+    timestamp_ms = (timestamp_ns // 1_000_000).astype("int64")
+    candles = pd.DataFrame(
+        {
+            "timestamp": timestamps,
+            "timestamp_ms": timestamp_ms,
+            "open": np.linspace(1.1000, 1.1030, len(timestamps)),
+            "high": np.linspace(1.1005, 1.1035, len(timestamps)),
+            "low": np.linspace(1.0995, 1.1025, len(timestamps)),
+            "close": np.linspace(1.1000, 1.1030, len(timestamps)),
+            "volume": np.linspace(1000, 1300, len(timestamps)),
+        }
+    )
+
+    base_signal = {
+        "instrument": "TEST",
+        "coherence": 0.8,
+        "stability": 0.8,
+        "entropy": 0.2,
+        "rupture": 0.2,
+        "lambda_hazard": 0.2,
+        "repetition_count": 3,
+        "repetition_first_seen_ms": int(timestamp_ms[0]),
+    }
+    prices = [1.1000, 1.1010, 1.1020, 1.1030]
+    signals = pd.DataFrame(
+        {
+            **{key: [value] * len(timestamps) for key, value in base_signal.items()},
+            "timestamp": timestamps,
+            "timestamp_ms": timestamp_ms,
+            "timestamp_ns": timestamp_ns,
+            "price": prices,
+            "signature": [f"sig{i}" for i in range(len(timestamps))],
+            "window_index": list(range(len(timestamps))),
+        }
+    )
+
+    cfg = StrategyConfig(
+        min_repetitions=1,
+        max_hazard=0.9,
+        min_coherence=0.0,
+        min_stability=0.0,
+        max_entropy=1.0,
+        direction="momentum",
+        momentum_lookback=1,
+        exit_horizon=1,
+        hazard_exit_threshold=None,
+        position_mode="unit",
+        tp_mode="OFF",
+        session={"start": "09:00Z", "end": "11:00Z"},
+    )
+
+    runner = EchoBacktester(candles=candles, signals=signals, instrument="TEST", config=cfg)
+    result = runner.run()
+
+    assert result.trades, "Expected at least one trade inside the configured session"
+    start_minute = 9 * 60
+    end_minute = 11 * 60
+    for trade in result.trades:
+        minute = trade.entry_ts.hour * 60 + trade.entry_ts.minute
+        assert start_minute <= minute < end_minute
+        assert cfg.session.contains(int(trade.entry_ts.value // 1_000_000))

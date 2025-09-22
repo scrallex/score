@@ -9,6 +9,7 @@ import math
 import random
 import sys
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, Iterator, List, Optional, Sequence, Tuple
 
@@ -31,6 +32,81 @@ except ModuleNotFoundError:  # pragma: no cover - fallback for test environments
     PathMetrics = guards_mod.PathMetrics  # type: ignore[attr-defined]
     throttle_factor = guards_mod.throttle_factor  # type: ignore[attr-defined]
 
+SESSION_PRESETS: Dict[str, Tuple[str, str]] = {
+    "LDN": ("07:00", "15:00"),
+    "NY": ("12:00", "21:00"),
+    "TKO": ("23:00", "07:00"),
+    "SYD": ("21:00", "05:00"),
+}
+
+
+def _parse_time_string(raw: str) -> int:
+    value = raw.strip().upper()
+    if value.endswith("Z"):
+        value = value[:-1]
+    for fmt in ("%H:%M", "%H:%M:%S"):
+        try:
+            parsed = datetime.strptime(value, fmt)
+        except ValueError:
+            continue
+        return parsed.hour * 60 + parsed.minute
+    raise ValueError(f"Invalid session time format: '{raw}'")
+
+
+@dataclass(slots=True)
+class SessionWindow:
+    label: Optional[str]
+    start_minute: int
+    end_minute: int
+
+    def contains(self, timestamp_ms: int) -> bool:
+        ts = pd.to_datetime(timestamp_ms, unit="ms", utc=True)
+        minute = ts.hour * 60 + ts.minute
+        if self.start_minute <= self.end_minute:
+            return self.start_minute <= minute < self.end_minute
+        return minute >= self.start_minute or minute < self.end_minute
+
+    def to_dict(self) -> Dict[str, object]:
+        return {
+            "label": self.label,
+            "start_minute": self.start_minute,
+            "end_minute": self.end_minute,
+        }
+
+    @classmethod
+    def from_spec(cls, spec: "SessionWindow | dict | str | None") -> Optional["SessionWindow"]:
+        if spec is None:
+            return None
+        if isinstance(spec, cls):
+            return spec
+        if isinstance(spec, str):
+            name = spec.strip().upper()
+            if not name:
+                return None
+            window = SESSION_PRESETS.get(name)
+            if window is None:
+                raise ValueError(f"Unknown session preset '{spec}'")
+            start, end = window
+            return cls(label=name, start_minute=_parse_time_string(start), end_minute=_parse_time_string(end))
+        if isinstance(spec, dict):
+            if {"start_minute", "end_minute"}.issubset(spec):
+                return cls(
+                    label=str(spec.get("label")) if spec.get("label") else None,
+                    start_minute=int(spec["start_minute"]),
+                    end_minute=int(spec["end_minute"]),
+                )
+            start_raw = spec.get("start")
+            end_raw = spec.get("end")
+            if not (start_raw and end_raw):
+                raise ValueError("Session mapping requires 'start' and 'end' keys")
+            return cls(
+                label=str(spec.get("label")) if spec.get("label") else None,
+                start_minute=_parse_time_string(str(start_raw)),
+                end_minute=_parse_time_string(str(end_raw)),
+            )
+        raise TypeError(f"Unsupported session specification type: {type(spec)!r}")
+
+
 @dataclass(slots=True)
 class StrategyConfig:
     """Configuration for a single echo trading strategy."""
@@ -50,8 +126,37 @@ class StrategyConfig:
     position_mode: str = "throttle"  # or "unit"
     use_atr_targets: bool = False
     seed: Optional[int] = None
+    session: Optional[SessionWindow | dict | str] = None
+    atr_n: Optional[int] = None
+    atr_k: Optional[float] = None
+    tp_mode: str = "OFF"  # "ATR", "BPS", or "OFF"
+    sl_bps: float = 0.0
+    tp_bps: float = 0.0
+
+    def __post_init__(self) -> None:
+        self.session = SessionWindow.from_spec(self.session)
+        # Normalize ATR parameters for backwards compatibility
+        if self.atr_n is None:
+            self.atr_n = int(self.atr_window)
+        else:
+            self.atr_window = int(self.atr_n)
+        if self.atr_k is None:
+            self.atr_k = float(self.tp_multiplier)
+        else:
+            self.atr_k = float(self.atr_k)
+        mode = (self.tp_mode or "OFF").upper()
+        if mode not in {"ATR", "BPS", "OFF"}:
+            raise ValueError(f"Unsupported tp_mode '{self.tp_mode}'")
+        self.tp_mode = mode
+        if mode in {"ATR", "BPS"}:
+            self.use_atr_targets = True
+        self.sl_bps = float(self.sl_bps)
+        self.tp_bps = float(self.tp_bps)
 
     def as_dict(self) -> Dict[str, object]:
+        session_dict: Optional[Dict[str, object]] = None
+        if isinstance(self.session, SessionWindow):
+            session_dict = self.session.to_dict()
         return {
             "min_repetitions": self.min_repetitions,
             "max_hazard": self.max_hazard,
@@ -68,6 +173,12 @@ class StrategyConfig:
             "position_mode": self.position_mode,
             "use_atr_targets": self.use_atr_targets,
             "seed": self.seed,
+            "session": session_dict,
+            "atr_n": self.atr_n,
+            "atr_k": self.atr_k,
+            "tp_mode": self.tp_mode,
+            "sl_bps": self.sl_bps,
+            "tp_bps": self.tp_bps,
         }
 
 
@@ -196,6 +307,9 @@ class EchoBacktester:
         if self.config.seed is not None:
             random.seed(self.config.seed)
             np.random.seed(self.config.seed)
+        self._session_window: Optional[SessionWindow] = (
+            self.config.session if isinstance(self.config.session, SessionWindow) else None
+        )
         self._prepare_auxiliary_columns()
 
     # ------------------------------------------------------------------
@@ -302,6 +416,8 @@ class EchoBacktester:
         self.signals["price_shift"] = self.signals["price"].shift(self.config.momentum_lookback)
 
     def _is_eligible(self, row: pd.Series) -> bool:
+        if self._session_window and not self._session_window.contains(int(row["timestamp_ms"])):
+            return False
         if int(row["repetition_count"]) < self.config.min_repetitions:
             return False
         if float(row["lambda_hazard"]) > self.config.max_hazard:
@@ -363,12 +479,30 @@ class EchoBacktester:
         return False, "hold"
 
     def _atr_targets(self, row: pd.Series, direction: int) -> Tuple[float, float]:
+        mode = self.config.tp_mode
+        entry = float(row["price"])
+        if mode == "BPS":
+            basis = 10_000.0
+            sl_bps = max(0.0, self.config.sl_bps)
+            tp_bps = max(0.0, self.config.tp_bps)
+            if sl_bps <= 0 and tp_bps <= 0:
+                return entry * 0.99, entry * 1.01
+            sl_offset = entry * (sl_bps / basis)
+            tp_offset = entry * (tp_bps / basis)
+            if direction > 0:
+                sl = entry - sl_offset if sl_bps > 0 else entry * 0.99
+                tp = entry + tp_offset if tp_bps > 0 else entry * 1.01
+            else:
+                sl = entry + sl_offset if sl_bps > 0 else entry * 1.01
+                tp = entry - tp_offset if tp_bps > 0 else entry * 0.99
+            return sl, tp
+
         atr = float(row.get("atr", 0.0))
         if atr <= 0:
-            return float(row["price"]) * 0.99, float(row["price"]) * 1.01
-        entry = float(row["price"])
+            return entry * 0.99, entry * 1.01
         sl_mult = max(1e-4, self.config.sl_multiplier)
-        tp_mult = max(1e-4, self.config.tp_multiplier)
+        tp_source = self.config.atr_k if mode == "ATR" else self.config.tp_multiplier
+        tp_mult = max(1e-4, tp_source)
         if direction > 0:
             sl = entry - atr * sl_mult
             tp = entry + atr * tp_mult
@@ -406,26 +540,34 @@ def run_sweep(
     grid: Dict[str, Sequence[object]],
     bootstrap_iterations: int = 500,
     seed: Optional[int] = None,
+    instrument_overrides: Optional[Dict[str, Dict[str, object]]] = None,
 ) -> List[Dict[str, object]]:
     """Run a grid sweep of strategy parameters across instruments."""
     results: List[Dict[str, object]] = []
+    overrides = instrument_overrides or {}
     for params in parameter_grid(grid):
-        cfg = StrategyConfig(**{**base_config.as_dict(), **params})
         all_trades: List[Trade] = []
         baseline_returns = []
+        per_instrument: Dict[str, Dict[str, object]] = {}
         for inst, candles in candles_by_instrument.items():
             signals = signals_by_instrument[inst]
+            cfg_dict = {**base_config.as_dict(), **params, **overrides.get(inst, {})}
+            cfg = StrategyConfig(**cfg_dict)
             runner = EchoBacktester(candles=candles, signals=signals, instrument=inst, config=cfg)
             res = runner.run()
             all_trades.extend(res.trades)
             baseline_returns.append(res.baseline)
+            per_instrument[inst] = res.summary()
+
         merged_signals = pd.concat(baseline_returns) if baseline_returns else pd.Series(dtype=float)
-        bt = BacktestResult(trades=all_trades, baseline=merged_signals, signals=pd.DataFrame(), config=cfg)
+        aggregate_cfg = StrategyConfig(**{**base_config.as_dict(), **params})
+        bt = BacktestResult(trades=all_trades, baseline=merged_signals, signals=pd.DataFrame(), config=aggregate_cfg)
         summary = bt.summary()
         summary.update({"instrument_count": len(candles_by_instrument), "params": params})
         summary["bootstrap_p_value"] = BacktestResult._bootstrap_p_value(
             np.array([t.pnl_pct for t in all_trades]), iterations=bootstrap_iterations, seed=seed
         )
+        summary["instrument_summaries"] = per_instrument
         results.append(summary)
     return results
 

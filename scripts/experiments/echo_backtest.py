@@ -15,6 +15,30 @@ from stm_backtest import build_signals, load_candles_csv, preprocess_candles
 from stm_backtest.backtester import StrategyConfig, dump_results, run_sweep
 
 
+KEY_MAP = {
+    "coherence_min": "min_coherence",
+    "stability_min": "min_stability",
+    "entropy_max": "max_entropy",
+    "hazard_max": "max_hazard",
+    "atr_n": "atr_n",
+    "atr_k": "atr_k",
+    "tp_mode": "tp_mode",
+    "sl_bps": "sl_bps",
+    "tp_bps": "tp_bps",
+    "session": "session",
+}
+
+
+def normalize_params(raw: dict | None) -> dict:
+    if not raw:
+        return {}
+    normalized: Dict[str, object] = {}
+    for key, value in raw.items():
+        target = KEY_MAP.get(key, key)
+        normalized[target] = value
+    return normalized
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="STM echo backtesting pipeline")
     parser.add_argument("--config", required=True, help="YAML configuration for the sweep")
@@ -92,6 +116,7 @@ def main() -> None:
 
     candles_by_inst: Dict[str, pd.DataFrame] = {}
     signals_by_inst: Dict[str, pd.DataFrame] = {}
+    overrides_by_inst: Dict[str, Dict[str, object]] = {}
 
     for inst_cfg in instruments_cfg:
         symbol = inst_cfg.get("symbol")
@@ -116,10 +141,11 @@ def main() -> None:
             verbose=args.verbose,
         )
         signals_by_inst[symbol] = signals
+        overrides_by_inst[symbol] = normalize_params(inst_cfg.get("overrides", {}))
 
     strategy_cfg = cfg.get("strategy", {})
-    base_params = strategy_cfg.get("base", {})
-    grid_params = strategy_cfg.get("grid", cfg.get("grid", {}))
+    base_params = normalize_params(strategy_cfg.get("base", {}))
+    grid_params = normalize_params(strategy_cfg.get("grid", cfg.get("grid", {})))
     base_config = StrategyConfig(**{**StrategyConfig().as_dict(), **base_params})
 
     bootstrap_cfg = cfg.get("bootstrap", {})
@@ -135,6 +161,7 @@ def main() -> None:
         grid=grid_params,
         bootstrap_iterations=iterations,
         seed=seed,
+        instrument_overrides=overrides_by_inst,
     )
 
     payload = {
@@ -143,6 +170,7 @@ def main() -> None:
             "grid": grid_params,
             "bootstrap_iterations": iterations,
             "seed": seed,
+            "instrument_overrides": overrides_by_inst,
         },
         "results": results,
     }
