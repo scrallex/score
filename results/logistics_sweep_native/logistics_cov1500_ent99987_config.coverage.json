@@ -1,0 +1,181 @@
+{
+  "mode": "base",
+  "coverage": 0.014547413793103448,
+  "percentiles": {
+    "coherence": {
+      "P10": 0.41573620052377347,
+      "P20": 0.4186048027166436,
+      "P30": 0.4215021094295821,
+      "P35": 0.4227210088431925,
+      "P40": 0.42410367568221474,
+      "P50": 0.4263891973137248,
+      "P60": 0.4287795245646002,
+      "P70": 0.43230737371701444,
+      "P80": 0.436812543732799,
+      "P90": 0.4501398016722451
+    },
+    "entropy": {
+      "P10": 0.9195322272717154,
+      "P20": 0.9208065256592537,
+      "P30": 0.9216902538097332,
+      "P35": 0.9221481378080413,
+      "P40": 0.9225180250458336,
+      "P50": 0.923277504778901,
+      "P60": 0.9241585253367494,
+      "P70": 0.9249811070203063,
+      "P80": 0.9266302565654608,
+      "P90": 0.9281476366025609
+    },
+    "stability": {
+      "P10": 0.7460317313671112,
+      "P20": 0.7472527325153351,
+      "P30": 0.7479853332042694,
+      "P40": 0.7487179338932037,
+      "P50": 0.7494505345821381,
+      "P60": 0.7501831501722336,
+      "P70": 0.7509157508611679,
+      "P80": 0.751892551779747,
+      "P90": 0.7545787543058395
+    }
+  },
+  "base": {
+    "coverage": 0.014547413793103448,
+    "percentiles": {
+      "coherence": {
+        "P10": 0.41573620052377347,
+        "P20": 0.4186048027166436,
+        "P30": 0.4215021094295821,
+        "P35": 0.4227210088431925,
+        "P40": 0.42410367568221474,
+        "P50": 0.4263891973137248,
+        "P60": 0.4287795245646002,
+        "P70": 0.43230737371701444,
+        "P80": 0.436812543732799,
+        "P90": 0.4501398016722451
+      },
+      "entropy": {
+        "P10": 0.9195322272717154,
+        "P20": 0.9208065256592537,
+        "P30": 0.9216902538097332,
+        "P35": 0.9221481378080413,
+        "P40": 0.9225180250458336,
+        "P50": 0.923277504778901,
+        "P60": 0.9241585253367494,
+        "P70": 0.9249811070203063,
+        "P80": 0.9266302565654608,
+        "P90": 0.9281476366025609
+      },
+      "stability": {
+        "P10": 0.7460317313671112,
+        "P20": 0.7472527325153351,
+        "P30": 0.7479853332042694,
+        "P40": 0.7487179338932037,
+        "P50": 0.7494505345821381,
+        "P60": 0.7501831501722336,
+        "P70": 0.7509157508611679,
+        "P80": 0.751892551779747,
+        "P90": 0.7545787543058395
+      }
+    },
+    "summary": {
+      "trace_count": 300,
+      "total_windows": 5598,
+      "total_alerts": 61,
+      "coverage_weighted": 0.010896748838871026,
+      "coverage_mean": 0.017188552188552187,
+      "coverage_min": 0.0,
+      "coverage_max": 0.1111111111111111,
+      "lead_mean": 5.344262295081967,
+      "lead_std": 1.153043015989131,
+      "lead_ci95": [
+        5.054903515898465,
+        5.63362107426547
+      ],
+      "lead_min": 4,
+      "lead_max": 7,
+      "lead_hits": 61,
+      "p_value_mean": 0.8980673333333333,
+      "p_value_std": 0.2175927130261854,
+      "p_value_ci95": [
+        0.873444399891217,
+        0.9226902667754496
+      ],
+      "p_value_median": 1.0,
+      "p_value_min": 0.2426,
+      "p_value_max": 1.0,
+      "precision_mean": 1.0,
+      "precision_std": 0.0,
+      "precision_ci95": [
+        1.0,
+        1.0
+      ]
+    }
+  },
+  "metric": {
+    "key": "p_value_min",
+    "value": 0.2426,
+    "threshold": 0.05
+  },
+  "optimization": {
+    "mode": "base",
+    "candidates": [
+      {
+        "label": "base",
+        "target": 0.014547413793103448,
+        "coverage": 0.010896748838871026,
+        "coverage_observed": 0.014547413793103448,
+        "p_metric": 0.2426,
+        "lead_mean": 5.344262295081967,
+        "fails_threshold": true,
+        "config_path": "/sep/score/results/logistics_sweep_native/logistics_cov1500_ent99987_config.json",
+        "summary_path": "/sep/score/results/logistics_sweep_native/logistics_cov1500_ent99987_config.permutation.json"
+      },
+      {
+        "label": "candidate_1",
+        "target": 0.004547,
+        "coverage": 0.005001786352268668,
+        "coverage_observed": 0.0010775862068965517,
+        "p_metric": 0.6638,
+        "lead_mean": 5,
+        "fails_threshold": true,
+        "config_path": "/sep/score/results/logistics_sweep_native/logistics_cov1500_ent99987_config.opt1.json",
+        "summary_path": "/sep/score/results/logistics_sweep_native/logistics_cov1500_ent99987_config.permutation_opt1.json"
+      },
+      {
+        "label": "candidate_2",
+        "target": 0.009547,
+        "coverage": 0.007681314755269739,
+        "coverage_observed": 0.005567528735632184,
+        "p_metric": 0.6638,
+        "lead_mean": 5.348837209302325,
+        "fails_threshold": true,
+        "config_path": "/sep/score/results/logistics_sweep_native/logistics_cov1500_ent99987_config.opt2.json",
+        "summary_path": "/sep/score/results/logistics_sweep_native/logistics_cov1500_ent99987_config.permutation_opt2.json"
+      },
+      {
+        "label": "candidate_4",
+        "target": 0.019547,
+        "coverage": 0.012861736334405145,
+        "coverage_observed": 0.015625,
+        "p_metric": 0.2426,
+        "lead_mean": 6.361111111111111,
+        "fails_threshold": true,
+        "config_path": "/sep/score/results/logistics_sweep_native/logistics_cov1500_ent99987_config.opt4.json",
+        "summary_path": "/sep/score/results/logistics_sweep_native/logistics_cov1500_ent99987_config.permutation_opt4.json"
+      },
+      {
+        "label": "candidate_5",
+        "target": 0.024547,
+        "coverage": 0.012861736334405145,
+        "coverage_observed": 0.020563936781609195,
+        "p_metric": 0.2426,
+        "lead_mean": 6.361111111111111,
+        "fails_threshold": true,
+        "config_path": "/sep/score/results/logistics_sweep_native/logistics_cov1500_ent99987_config.opt5.json",
+        "summary_path": "/sep/score/results/logistics_sweep_native/logistics_cov1500_ent99987_config.permutation_opt5.json"
+      }
+    ]
+  },
+  "pvalue_metric": "min",
+  "pvalue_threshold": 0.05
+}

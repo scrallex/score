@@ -35,6 +35,7 @@ def run_calibration(
     margin: float,
     iterations: int,
     results_dir: Path,
+    use_native: bool,
 ) -> Dict[str, float]:
     coverage_fraction = percentage_to_fraction(coverage_percent)
     entropy_fraction = percentage_to_fraction(entropy_percent)
@@ -64,6 +65,9 @@ def run_calibration(
         "--extra-entropy",
         f"{entropy_fraction:.8f}",
     ]
+
+    if use_native:
+        cmd.append("--use-native-quantum")
 
     subprocess.run(cmd, check=True, cwd=REPO_ROOT)
 
@@ -137,6 +141,11 @@ def main() -> None:
         default=Path("results/logistics_sweep_summary.json"),
         help="Path to aggregated summary JSON",
     )
+    parser.add_argument(
+        "--use-native-quantum",
+        action="store_true",
+        help="Prefer the native QFH/QBSA metrics when calibrating",
+    )
     args = parser.parse_args()
 
     args.results_dir.mkdir(parents=True, exist_ok=True)
@@ -152,6 +161,7 @@ def main() -> None:
                 margin=args.margin,
                 iterations=args.iterations,
                 results_dir=args.results_dir.resolve(),
+                use_native=args.use_native_quantum,
             )
             results.append(sweep_result)
             print(
