@@ -11,7 +11,12 @@ from typing import Any, Dict, List
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-from scripts.features import CausalFeatureExtractor, build_logistics_features
+from scripts.features import (
+    CausalFeatureExtractor,
+    build_logistics_features,
+    native_metrics_provider as logistics_native_provider,
+)
+from sep_text_manifold import native
 from scripts.experiments.build_causal_domain import blend_metrics  # type: ignore
 
 
@@ -50,7 +55,11 @@ def default_output_path(input_path: Path, suffix: str) -> Path:
     return input_path.with_name(f"{stem}_{suffix}{input_path.suffix}")
 
 
-def enrich_with_logistics_features(state: Dict[str, Any]) -> int:
+def enrich_with_logistics_features(
+    state: Dict[str, Any],
+    *,
+    metrics_provider=None,
+) -> int:
     signals = state.get("signals")
     if not isinstance(signals, list):
         raise ValueError("State does not contain a 'signals' list")
@@ -62,7 +71,7 @@ def enrich_with_logistics_features(state: Dict[str, Any]) -> int:
     if not token_dir.exists():
         raise FileNotFoundError(f"Token directory not found: {token_dir}")
 
-    features = build_logistics_features(state)
+    features = build_logistics_features(state, metrics_provider=metrics_provider)
 
     if len(features) != len(signals):
         raise ValueError(
@@ -91,15 +100,23 @@ def main() -> None:
         action="store_true",
         help="Blend causal features into coherence/entropy/stability metrics",
     )
+    parser.add_argument(
+        "--use-native-quantum",
+        action="store_true",
+        help="Prefer the native QFH/QBSA engine when available",
+    )
     args = parser.parse_args()
+
+    native.set_use_native(args.use_native_quantum)
 
     state = load_state(args.input)
     total_windows = 0
 
     if "causal" in args.features:
         enrich_with_causal_features(state)
+    metrics_provider = logistics_native_provider if args.use_native_quantum else None
     if "logistics" in args.features:
-        enrich_with_logistics_features(state)
+        enrich_with_logistics_features(state, metrics_provider=metrics_provider)
 
     if args.blend_metrics:
         for window in state.get("signals", []):

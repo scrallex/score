@@ -12,6 +12,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import numpy as np
 
 from run_permutation_guardrail import summarise_domain
+from sep_text_manifold import native
 
 def load_state(path: Path) -> dict:
     if not path.exists():
@@ -550,7 +551,14 @@ def main() -> None:
         type=float,
         help="Additional stability percentiles to include (values in (0, 100) or (0, 1))",
     )
+    parser.add_argument(
+        "--use-native-quantum",
+        action="store_true",
+        help="Prefer the native QFH/QBSA metrics when analysing states",
+    )
     args = parser.parse_args()
+
+    native.set_use_native(args.use_native_quantum)
 
     if args.dynamic_target is not None and args.domain_root is None:
         parser.error("--domain-root is required when --dynamic-target is specified")

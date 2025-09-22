@@ -15,6 +15,7 @@ except ImportError:  # pragma: no cover - plotting optional
     plt = None
 
 from sep_text_manifold.pipeline import analyse_directory
+from sep_text_manifold import native
 from sep_text_manifold.feedback import suggest_twin_action
 from stm_adapters.pddl_trace import PDDLTraceAdapter
 
@@ -557,10 +558,17 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
         default=None,
         help="Annotation stored alongside enrichment metadata",
     )
+    parser.add_argument(
+        "--use-native-quantum",
+        action="store_true",
+        help="Prefer the native QFH/QBSA kernel for manifold construction when available",
+    )
     args = parser.parse_args(argv)
 
     global ENABLE_PLOTS
     ENABLE_PLOTS = args.plots
+
+    native.set_use_native(args.use_native_quantum)
 
     if not args.output:
         parser.error("--output/--out-root is required")

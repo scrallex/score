@@ -38,6 +38,8 @@ virtual environment and install the package in editable mode:
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
+# Build the optional native QFH/QBSA bindings (requires a C++20 toolchain and TBB)
+pip install -e .[native]
 ```
 
 Once installed you can ingest a corpus and perform an initial analysis
@@ -115,7 +117,13 @@ python scripts/calibrate_router.py \
   --domain-root output/planbench_by_domain/logistics \
   --dynamic-target 0.025 --dynamic-window 0.005 \
   --pvalue-threshold 0.05 --pvalue-metric min \
+  --use-native-quantum \
   --output analysis/router_config_logistics_invalid_5pct.json
+
+When the native bindings are installed, add `--use-native-quantum` to
+`scripts/planbench_to_stm.py`, `scripts/enrich_features.py`, and
+`scripts/experiments/build_causal_domain.py` to ensure the manifolds are built
+with the QFH/QBSA kernel rather than the simplified fallback.
 
 If VAL traces are not available you can synthesise them directly from the
 generated plans:

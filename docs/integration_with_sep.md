@@ -62,14 +62,21 @@ wrap:
    first and falls back to the simplified metrics when the native
    kernel is unavailable.
 
-4. **Validate with unit tests.**  Write tests in `tests/` that feed
+4. **Toggle the native metrics from the CLI when needed.**  Scripts such as
+   `planbench_to_stm.py`, `calibrate_router.py`, `enrich_features.py`, and
+   `experiments/build_causal_domain.py` expose a `--use-native-quantum` flag.
+   Enable it once the native extension is installed to ensure manifolds and
+   derived features are generated with QFH/QBSA metrics; omit it to fall back
+   to the pure-Python approximations.
+
+5. **Validate with unit tests.**  Write tests in `tests/` that feed
    known input sequences into your wrapper and check that the
    resulting metrics match those produced by the original SEP
    executables.  Use the test patterns defined in the SEP repository
    (e.g. alternating bits, random noise, steady state) to ensure
    correctness.
 
-5. **Optimise performance.**  For large corpora you may want to run
+6. **Optimise performance.**  For large corpora you may want to run
    the quantum engine on a GPU, as the SEP implementation does.  The
    same approach applies: wrap the GPU kernels in a shared library and
    call them from Python, or offload the heavy computation to a

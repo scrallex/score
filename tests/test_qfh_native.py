@@ -2,6 +2,8 @@ import random
 
 import pytest
 
+from sep_text_manifold import native
+
 
 sep_quantum = pytest.importorskip("sep_quantum", reason="sep_quantum native module not available")
 
@@ -106,32 +108,32 @@ def test_native_wrappers_expose_events_and_results():
     assert all(isinstance(entry, native.QFHAggregateEvent) for entry in aggregates)
 
 
-def test_encode_window_matches_native_and_fallback(monkeypatch):
-    from sep_text_manifold import encode, native
+def test_encode_window_matches_native_and_fallback():
+    from sep_text_manifold import encode
 
     if not native.HAVE_NATIVE:
         pytest.skip("sep_quantum bindings not built")
 
-    random.seed(42)
-    window = bytes(random.getrandbits(8) for _ in range(32))
-    bits = encode.bytes_to_bits(window)
-
-    native_result = native.analyze_window(bits)
-    native_metrics = encode.encode_window(window)
-    rupture_ratio = float(native_result.rupture_ratio)
-    assert native_metrics["coherence"] == pytest.approx(float(native_result.coherence))
-    assert native_metrics["stability"] == pytest.approx(1.0 - rupture_ratio)
-    assert native_metrics["entropy"] == pytest.approx(float(native_result.entropy))
-    assert native_metrics["rupture"] == pytest.approx(rupture_ratio)
-    assert native_metrics["lambda_hazard"] == pytest.approx(rupture_ratio)
-
-    original_flag = native.HAVE_NATIVE
-    monkeypatch.setattr(native, "HAVE_NATIVE", False)
+    previous_mode = native.use_native()
     try:
-        fallback_metrics = encode.encode_window(window)
-    finally:
-        monkeypatch.setattr(native, "HAVE_NATIVE", original_flag)
+        native.set_use_native(True)
+        random.seed(42)
+        window = bytes(random.getrandbits(8) for _ in range(32))
+        bits = encode.bytes_to_bits(window)
 
-    expected_fallback = encode.compute_metrics(bits)
-    for key, value in expected_fallback.items():
-        assert fallback_metrics[key] == pytest.approx(value)
+        native_result = native.analyze_window(bits)
+        native_metrics = encode.encode_window(window)
+        rupture_ratio = float(native_result.rupture_ratio)
+        assert native_metrics["coherence"] == pytest.approx(float(native_result.coherence))
+        assert native_metrics["stability"] == pytest.approx(1.0 - rupture_ratio)
+        assert native_metrics["entropy"] == pytest.approx(float(native_result.entropy))
+        assert native_metrics["rupture"] == pytest.approx(rupture_ratio)
+        assert native_metrics["lambda_hazard"] == pytest.approx(rupture_ratio)
+
+        native.set_use_native(False)
+        fallback_metrics = encode.encode_window(window)
+        expected_fallback = encode.compute_metrics(bits)
+        for key, value in expected_fallback.items():
+            assert fallback_metrics[key] == pytest.approx(value)
+    finally:
+        native.set_use_native(previous_mode)

@@ -102,7 +102,7 @@ def encode_window(window: bytes) -> Dict[str, float]:
     produce a single metrics dictionary for a window of data.
     """
     bits = bytes_to_bits(window)
-    if native.HAVE_NATIVE:
+    if native.use_native():
         try:
             result = native.analyze_window(bits)
             rupture_ratio = float(result.rupture_ratio)
@@ -116,18 +116,19 @@ def encode_window(window: bytes) -> Dict[str, float]:
         except Exception:  # pragma: no cover - fall back to simplified metrics
             # Older native builds expose only analyze_bits; reuse the compatibility
             # wrapper before reverting to the pure-Python implementation.
-            try:
-                metrics = native.analyze_bits(bits)
-            except Exception:
-                pass
-            else:
-                return {
-                    "coherence": metrics.get("coherence", 0.0),
-                    "stability": metrics.get("stability", 0.0),
-                    "entropy": metrics.get("entropy", 0.0),
-                    "rupture": metrics.get("rupture", 0.0),
-                    "lambda_hazard": metrics.get("lambda_hazard", metrics.get("rupture", 0.0)),
-                }
+            if native.HAVE_NATIVE:
+                try:
+                    metrics = native.analyze_bits(bits)
+                except Exception:
+                    pass
+                else:
+                    return {
+                        "coherence": metrics.get("coherence", 0.0),
+                        "stability": metrics.get("stability", 0.0),
+                        "entropy": metrics.get("entropy", 0.0),
+                        "rupture": metrics.get("rupture", 0.0),
+                        "lambda_hazard": metrics.get("lambda_hazard", metrics.get("rupture", 0.0)),
+                    }
     return compute_metrics(bits)
 
 

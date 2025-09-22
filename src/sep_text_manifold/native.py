@@ -51,8 +51,13 @@ __all__ = [
     "analyze_bits",
     "analyze_window",
     "bits_from_bytes",
+    "set_use_native",
     "transform_rich",
+    "use_native",
 ]
+
+
+_USE_NATIVE = False
 
 
 def _require_native(name: str) -> None:
@@ -110,3 +115,16 @@ def bits_from_bytes(data: bytes) -> Iterable[int]:
     for byte in data:
         for shift in range(7, -1, -1):
             yield (byte >> shift) & 1
+
+
+def set_use_native(enabled: bool) -> None:
+    """Toggle whether high-level helpers should prefer the native kernel."""
+
+    global _USE_NATIVE
+    _USE_NATIVE = bool(enabled) and HAVE_NATIVE
+
+
+def use_native() -> bool:
+    """Return ``True`` when the native engine should be used by defaults."""
+
+    return HAVE_NATIVE and _USE_NATIVE

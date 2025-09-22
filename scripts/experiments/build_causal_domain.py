@@ -12,7 +12,12 @@ from typing import Dict, Mapping, List
 
 sys.path.append(str(Path(__file__).resolve().parents[2]))
 
-from scripts.features import CausalFeatureExtractor, build_logistics_features
+from scripts.features import (
+    CausalFeatureExtractor,
+    build_logistics_features,
+    native_metrics_provider as logistics_native_provider,
+)
+from sep_text_manifold import native
 from scripts.features.causal_features import _clamp
 
 
@@ -84,7 +89,13 @@ def blend_metrics(metrics: Mapping[str, float], features: Mapping[str, float]) -
     }
 
 
-def enrich_state_file(path: Path, extractor: CausalFeatureExtractor, include_logistics: bool) -> None:
+def enrich_state_file(
+    path: Path,
+    extractor: CausalFeatureExtractor,
+    include_logistics: bool,
+    *,
+    metrics_provider=None,
+) -> None:
     data = load_json(path)
     signals = data.get("signals")
     if not isinstance(signals, list):
@@ -92,7 +103,7 @@ def enrich_state_file(path: Path, extractor: CausalFeatureExtractor, include_log
     logistics_payload: list[Mapping[str, float]] = []
     if include_logistics:
         try:
-            logistics_payload = build_logistics_features(data)
+            logistics_payload = build_logistics_features(data, metrics_provider=metrics_provider)
         except Exception:
             logistics_payload = []
     history = []
@@ -118,14 +129,14 @@ def enrich_state_file(path: Path, extractor: CausalFeatureExtractor, include_log
     dump_json(path, data)
 
 
-def enrich_domain_states(destination: Path, include_logistics: bool) -> None:
+def enrich_domain_states(destination: Path, include_logistics: bool, *, metrics_provider=None) -> None:
     extractor = CausalFeatureExtractor()
     for subset in ("invalid", "gold"):
         states_dir = destination / subset / "states"
         if not states_dir.exists():
             continue
         for state_path in sorted(states_dir.glob("*.json")):
-            enrich_state_file(state_path, extractor, include_logistics)
+            enrich_state_file(state_path, extractor, include_logistics, metrics_provider=metrics_provider)
 
 
 def main() -> None:
@@ -142,7 +153,14 @@ def main() -> None:
         action="store_true",
         help="Also compute logistics-specific features and blend them into metrics",
     )
+    parser.add_argument(
+        "--use-native-quantum",
+        action="store_true",
+        help="Prefer the native QFH/QBSA engine when available",
+    )
     args = parser.parse_args()
+
+    native.set_use_native(args.use_native_quantum)
 
     copy_domain(args.source, args.destination)
 
@@ -152,11 +170,22 @@ def main() -> None:
         shutil.copy2(args.aggregated_state, target_path)
         aggregated_path = target_path
 
-    enrich_domain_states(args.destination, include_logistics=args.include_logistics)
+    metrics_provider = logistics_native_provider if args.use_native_quantum else None
+
+    enrich_domain_states(
+        args.destination,
+        include_logistics=args.include_logistics,
+        metrics_provider=metrics_provider,
+    )
 
     if aggregated_path and aggregated_path.exists():
         extractor = CausalFeatureExtractor()
-        enrich_state_file(aggregated_path, extractor, include_logistics=args.include_logistics)
+        enrich_state_file(
+            aggregated_path,
+            extractor,
+            include_logistics=args.include_logistics,
+            metrics_provider=metrics_provider,
+        )
 
 
 if __name__ == "__main__":

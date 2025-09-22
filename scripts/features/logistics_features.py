@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, Iterable, List, Mapping
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional
+
+from sep_text_manifold import native
+from sep_text_manifold.encode import bytes_to_bits, signature_from_metrics
+MetricsProvider = Callable[[Mapping[str, Any]], Mapping[str, Any]]
 
 
 def clamp(value: float, lo: float = 0.0, hi: float = 1.0) -> float:
@@ -49,11 +53,85 @@ def _entropy(values: Iterable[float]) -> float:
     return -sum(p * math.log(p, 2) for p in probs)
 
 
-def build_logistics_features(state: Mapping[str, Any]) -> List[Dict[str, float]]:
+def _default_metrics_provider(window: Mapping[str, Any]) -> Mapping[str, Any]:
+    metrics = window.get("metrics") if isinstance(window, Mapping) else None
+    if isinstance(metrics, Mapping):
+        return metrics
+    return {}
+
+
+def _extract_metrics(provider: MetricsProvider, window: Mapping[str, Any]) -> Dict[str, float]:
+    raw = provider(window)
+    coherence = float(raw.get("coherence", 0.0))
+    entropy = float(raw.get("entropy", 0.0))
+    rupture = float(raw.get("rupture", raw.get("lambda_hazard", 0.0)))
+    stability = float(raw.get("stability", 1.0 - rupture))
+    lambda_hazard = float(raw.get("lambda_hazard", rupture))
+    return {
+        "coherence": clamp(coherence),
+        "entropy": clamp(entropy),
+        "rupture": clamp(rupture),
+        "stability": clamp(stability),
+        "lambda_hazard": clamp(lambda_hazard),
+    }
+
+
+def _result_to_mapping(result: Any) -> Dict[str, float]:
+    return {
+        "coherence": float(getattr(result, "coherence", 0.0)),
+        "entropy": float(getattr(result, "entropy", 0.0)),
+        "rupture": float(getattr(result, "rupture_ratio", getattr(result, "rupture", 0.0))),
+        "stability": float(getattr(result, "stability", 1.0 - getattr(result, "rupture_ratio", 0.0))),
+        "lambda_hazard": float(getattr(result, "lambda_hazard", getattr(result, "rupture_ratio", 0.0))),
+    }
+
+
+def native_metrics_provider(window: Mapping[str, Any]) -> Mapping[str, Any]:
+    if not native.HAVE_NATIVE:
+        return _default_metrics_provider(window)
+
+    payload = None
+    if isinstance(window, Mapping):
+        payload = window.get("window_bytes")
+        if payload is None:
+            payload = window.get("bytes")
+        if payload is None:
+            payload = window.get("data")
+
+    if isinstance(payload, (bytes, bytearray)):
+        try:
+            bits = list(bytes_to_bits(bytes(payload)))
+            result = native.analyze_window(bits)
+        except Exception:
+            return _default_metrics_provider(window)
+        return _result_to_mapping(result)
+
+    return _default_metrics_provider(window)
+
+
+def build_logistics_features(
+    state: Mapping[str, Any],
+    *,
+    metrics_provider: Optional[MetricsProvider] = None,
+) -> List[Dict[str, float]]:
     signals = state.get("signals") or []
     total_windows = len(signals)
     if total_windows == 0:
         return []
+
+    provider = metrics_provider or _default_metrics_provider
+    settings = state.get("settings", {}) if isinstance(state, Mapping) else {}
+    precision_value = (
+        settings.get("signature_precision")
+        if isinstance(settings, Mapping)
+        else None
+    )
+    if precision_value is None:
+        precision_value = state.get("signature_precision", 2)
+    try:
+        signature_precision = int(precision_value)
+    except (TypeError, ValueError):
+        signature_precision = 2
 
     irreversible_scores = [0.0] * total_windows
     action_counts = [0.0] * total_windows
@@ -147,6 +225,30 @@ def build_logistics_features(state: Mapping[str, Any]) -> List[Dict[str, float]]
                 "logistics_cluster_entropy": ent,
                 "logistics_predicate_balance": balance,
                 "logistics_predicate_delta": clamp(delta),
+            }
+        )
+
+    for idx, window in enumerate(signals):
+        if idx >= len(features):
+            break
+        window_payload = window if isinstance(window, Mapping) else {}
+        metrics = _extract_metrics(provider, window_payload)
+        signature = window_payload.get("signature")
+        if not isinstance(signature, str):
+            signature = signature_from_metrics(
+                metrics["coherence"],
+                metrics["stability"],
+                metrics["entropy"],
+                precision=signature_precision,
+            )
+        features[idx].update(
+            {
+                "coherence": metrics["coherence"],
+                "stability": metrics["stability"],
+                "entropy": metrics["entropy"],
+                "rupture": metrics["rupture"],
+                "lambda_hazard": metrics["lambda_hazard"],
+                "signature": signature,
             }
         )
     return features
