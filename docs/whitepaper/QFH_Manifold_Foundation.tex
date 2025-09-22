@@ -32,6 +32,17 @@ We also document the repetition signature used to bucket windows (\texttt{sig	ex
 \section{Implementation}
 The production implementation comprises (i) a C++ kernel linked through a pybind11 module (`sep\_quantum`), (ii) Python helpers that expose native results (`sep\_text\_manifold.native`), and (iii) CLI tooling that toggles the native engine via `--use-native-quantum`. Figure~\ref{fig:synthetic-events} confirms the event distribution emitted by the kernel on canonical synthetic patterns.
 
+\subsection{Native Metric Flow Across Services}
+Native metrics now propagate along a single path shared by trading and planning:
+\begin{enumerate}
+  \item \textbf{Candle ingestion}: `scripts/ops/prime\_qfh\_history.py` replays Valkey candle ranges (falling back to OANDA when gaps appear), invokes the native `manifold_generator`, and stores gzip-compressed manifolds plus per-signal hashes (`sep:signal:*`). Recent changes attach both nanosecond and millisecond timestamps so downstream exports remain numeric.
+  \item \textbf{Snapshot export}: `scripts/ops/export\_manifold\_snapshots.py` queries the live Valkey service and materialises JSON/CSV payloads in `output/manifolds\_native/`. These snapshots feed the whitepaper figures and provide a consistent interface for analytics beyond the cluster network.
+  \item \textbf{Planner integration}: the `native_metrics_provider` wires the same kernel into PlanBench ingestion (`--use-native-quantum`), ensuring every logistics window carries QFH metrics, hazard weights, and STM feature enrichments before guardrail calibration.
+  \item \textbf{Bridge analytics}: the enriched state (`invalid\_state\_logistics\_native.json`) coupled with live FX measurements allows `compute_bridge_metrics.py` to correlate STM irreversibility against QBSA hazard without bespoke adapters.
+\end{enumerate}
+
+This flow unifies the instrumentation for both the spt trading stack and the STM planning harness, eliminating historic divergences between Python and native code paths.
+
 \section{Synthetic Validation}
 We generate representative bitstreams (constant, alternating, biased random walks, bursty noise, and uniform noise) using `scripts/experiments/qfh\_synthetic.py`. Each sample is analysed with the native kernel and summarised in Figure~\ref{fig:synthetic-events}. Expected behaviours include low entropy/high coherence for constant streams and high entropy/low coherence for uniform noise.
 
@@ -62,7 +73,7 @@ Running the PlanBench ingestion pipeline with `--use-native-quantum` regenerates
 \end{figure}
 
 \section{Live FX Manifolds}
-We prime 30 days of EUR/USD, GBP/USD, and USD/JPY data with the native kernel (pending Valkey connectivity) and export manifolds for distribution analysis. Figure~\ref{fig:fx-metrics} illustrates the spread of coherence, entropy, and hazard values. Figure~\ref{fig:echo-vs-lambda} reproduces the echo-count vs hazard relationship across warmup snapshots.
+We prime 30 days of EUR/USD, GBP/USD, and USD/JPY data with the native kernel (via the Valkey-backed `prime\_qfh\_history.py` workflow) and export manifolds for distribution analysis. Figure~\ref{fig:fx-metrics} illustrates the spread of coherence, entropy, and hazard values. Figure~\ref{fig:echo-vs-lambda} reproduces the echo-count vs hazard relationship across warmup snapshots, while Figure~\ref{fig:lambda-admission} shows that the live gate retains monotonic calibration when binned by the native hazard estimate.
 
 \begin{figure}[t]
   \centering
@@ -80,8 +91,17 @@ We prime 30 days of EUR/USD, GBP/USD, and USD/JPY data with the native kernel (p
   \label{fig:echo-vs-lambda}
 \end{figure}
 
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.75\linewidth]{../figures/fig2b_spt_lambda_calibration.png}
+  \caption{Admission rate vs hazard buckets derived from the native gate telemetry.}
+  \label{fig:lambda-admission}
+\end{figure}
+
 \section{Bridge Analysis}
 Using the enriched logistics state (`invalid\_state\_logistics\_native.json`) and the native guardrail config, we recompute STM irreversibility vs QBSA hazard. Figure~\ref{fig:logistics-irr-lambda} visualises the scatter while Figure~\ref{fig:bridge-summary} summarises Pearson and Spearman correlations against the spt rupture proxy.
+
+The `native_metrics_provider` injects the QFH metrics directly into STM feature derivation, so bridge comparisons now operate on identical coherence, stability, entropy, rupture, and $\lambda$ definitions across markets and planners.
 
 \begin{figure}[t]
   \centering
@@ -105,26 +125,30 @@ The native QFH/QBSA manifold is now integrated into the STM pipelines and makes 
 
 \appendix
 \section{Reproducibility}
-The following commands reproduce the native artefacts:
+All commands are executed from the project root (`/sep/score`) with the virtual environment at `score/.venv` activated.
+The following script regenerates the native artefacts end-to-end:
 \begin{verbatim}
 # Build native bindings
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
 pip install -e .[native]
 
-# Regenerate PlanBench domains (one example)
-../venv/bin/python scripts/planbench_to_stm.py \
+# Regenerate PlanBench domains (logistics shown)
+python scripts/planbench_to_stm.py \
   --input-root data/planbench_public \
   --domains logistics \
   --output output/planbench_by_domain/logistics \
   --use-native-quantum
 
 # Enrich logistics features
-../venv/bin/python scripts/enrich_features.py \
+python scripts/enrich_features.py \
   output/planbench_by_domain/logistics/invalid_state.json \
   --features logistics --use-native-quantum \
   --output output/planbench_by_domain/logistics/invalid_state_logistics_native.json
 
 # Calibrate guardrail with native metrics
-../venv/bin/python scripts/calibrate_router.py \
+python scripts/calibrate_router.py \
   output/planbench_by_domain/logistics/invalid_state.json \
   --target-low 0.05 --target-high 0.07 \
   --domain-root output/planbench_by_domain/logistics \
@@ -134,26 +158,43 @@ pip install -e .[native]
   --use-native-quantum
 
 # Synthetic dataset
-../venv/bin/python scripts/experiments/qfh_synthetic.py \
+python scripts/experiments/qfh_synthetic.py \
   --output results/qfh_synthetic_native.json
 
 # Logistic sweep with native metrics
-../venv/bin/python scripts/experiments/logistics_sweep.py \
+python scripts/experiments/logistics_sweep.py \
   --state output/planbench_by_domain/logistics/invalid_state.json \
   --domain-root output/planbench_by_domain/logistics \
   --results-dir results/logistics_sweep_native \
   --summary-output results/logistics_sweep_summary_native.json \
   --use-native-quantum
 
+# Prime 30 days of hotband manifolds inside the running stack
+docker compose -f docker-compose.hotband.yml exec backend \
+  python scripts/ops/prime_qfh_history.py \
+  --pairs EUR_USD,USD_JPY,GBP_USD,EUR_JPY,USD_CAD,NZD_USD,AUD_USD,USD_CHF \
+  --days 30
+
+# Export live FX snapshots (JSON + CSV) for figure inputs
+for pair in EUR_USD USD_JPY GBP_USD EUR_JPY USD_CAD NZD_USD AUD_USD USD_CHF; do
+  docker compose -f docker-compose.hotband.yml exec backend \
+    python scripts/ops/export_manifold_snapshots.py \
+    --instrument "$pair" \
+    --minutes $((30*24*60)) \
+    --out output/manifolds_native/${pair}_snapshots.json;
+done
+
 # Whitepaper figures
-../venv/bin/python scripts/plot_whitepaper_figures.py \
+python scripts/plot_whitepaper_figures.py \
   --sweep results/logistics_sweep_summary_native.json \
-  --warmup-dir output/warmup_manifolds \
+  --warmup-dir output/warmup/EUR_USD \
   --logistics-state output/planbench_by_domain/logistics/invalid_state_logistics_native.json \
   --synthetic results/qfh_synthetic_native.json \
-  --planbench-native output/planbench_by_domain/logistics/invalid_state.json \
-  --fx-manifolds output/manifolds_native/EUR_USD \
-  --bridge-metrics docs/note/bridge_metrics.json
+  --planbench-native output/planbench_by_domain/logistics/gold_state_logistics_native.json \
+  --fx-manifolds output/manifolds_native \
+  --bridge-metrics docs/note/bridge_metrics.json \
+  --outdir docs/figures \
+  --note-dir docs/note
 \end{verbatim}
 
 \end{document}
