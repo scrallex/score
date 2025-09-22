@@ -1,0 +1,7 @@
+{
+  "hazard_threshold": 0.525647288715193,
+  "pass_low_hazard": 375,
+  "fail_low_hazard": 2290,
+  "pass_high_hazard": 580,
+  "fail_high_hazard": 2051
+}

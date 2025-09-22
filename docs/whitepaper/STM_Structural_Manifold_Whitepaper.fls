@@ -303,6 +303,11 @@ INPUT /usr/share/texlive/texmf-dist/tex/latex/base/ts1cmtt.fd
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/ts1cmtt.fd
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/ts1cmtt.fd
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/tctt1000.tfm
+INPUT ../figures/fig1b_logistics_perm_distribution.png
+INPUT ../figures/fig1b_logistics_perm_distribution.png
+INPUT ../figures/fig1b_logistics_perm_distribution.png
+INPUT ../figures/fig1b_logistics_perm_distribution.png
+INPUT ../figures/fig1b_logistics_perm_distribution.png
 INPUT ../figures/fig1_logistics_sweep.png
 INPUT ../figures/fig1_logistics_sweep.png
 INPUT ../figures/fig1_logistics_sweep.png
@@ -316,6 +321,11 @@ INPUT ../figures/fig2_spt_echo_vs_lambda.png
 INPUT ../figures/fig2_spt_echo_vs_lambda.png
 INPUT ../figures/fig2_spt_echo_vs_lambda.png
 INPUT ../figures/fig2_spt_echo_vs_lambda.png
+INPUT ../figures/fig2b_spt_lambda_calibration.png
+INPUT ../figures/fig2b_spt_lambda_calibration.png
+INPUT ../figures/fig2b_spt_lambda_calibration.png
+INPUT ../figures/fig2b_spt_lambda_calibration.png
+INPUT ../figures/fig2b_spt_lambda_calibration.png
 INPUT ./table_spt_receipts.tex
 INPUT ./table_spt_receipts.tex
 INPUT table_spt_receipts.tex
@@ -324,6 +334,9 @@ INPUT ../figures/fig3_logistics_irreversibility_vs_lambda.png
 INPUT ../figures/fig3_logistics_irreversibility_vs_lambda.png
 INPUT ../figures/fig3_logistics_irreversibility_vs_lambda.png
 INPUT ../figures/fig3_logistics_irreversibility_vs_lambda.png
+INPUT ./table_bridge_contingency.tex
+INPUT ./table_bridge_contingency.tex
+INPUT table_bridge_contingency.tex
 INPUT /usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmti10.tfm
 INPUT STM_Structural_Manifold_Whitepaper.aux
 INPUT ./STM_Structural_Manifold_Whitepaper.out

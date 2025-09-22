@@ -1,8 +1,10 @@
 # Fdb version 4
-["pdflatex"] 1758522343.52105 "STM_Structural_Manifold_Whitepaper.tex" "STM_Structural_Manifold_Whitepaper.pdf" "STM_Structural_Manifold_Whitepaper" 1758522344.84588 0
-  "../figures/fig1_logistics_sweep.png" 1758522043.27198 33112 62a9e5902670a7f922d9d95eeade1064 ""
-  "../figures/fig2_spt_echo_vs_lambda.png" 1758522043.56199 43675 305bfbd8b26e61007e996ae9af50edb1 ""
-  "../figures/fig3_logistics_irreversibility_vs_lambda.png" 1758522043.922 58946 a888083d6ac8e74d361871b1f60376a8 ""
+["pdflatex"] 1758523015.46612 "STM_Structural_Manifold_Whitepaper.tex" "STM_Structural_Manifold_Whitepaper.pdf" "STM_Structural_Manifold_Whitepaper" 1758523017.43724 0
+  "../figures/fig1_logistics_sweep.png" 1758523008.36827 33112 62a9e5902670a7f922d9d95eeade1064 ""
+  "../figures/fig1b_logistics_perm_distribution.png" 1758523008.61128 27774 18bf9883f99f1133207620eb4243ce33 ""
+  "../figures/fig2_spt_echo_vs_lambda.png" 1758523008.92929 43675 305bfbd8b26e61007e996ae9af50edb1 ""
+  "../figures/fig2b_spt_lambda_calibration.png" 1758523009.15529 25478 01d36f22c9ec562fc224d72cf89a9ab7 ""
+  "../figures/fig3_logistics_irreversibility_vs_lambda.png" 1758523009.54131 58946 a888083d6ac8e74d361871b1f60376a8 ""
   "/etc/texmf/web2c/texmf.cnf" 1758413466.68198 475 c0e671620eb5563b2130f56340a5fde8 ""
   "/root/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/tcbx1095.600pk" 1758522263.29547 13556 9a215c8379e9d6c6ab8e7154200143e8 ""
   "/root/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1095.600pk" 1758413992.73609 12644 92c4258a4d77d566753e4184360ab2a6 ""
@@ -182,10 +184,11 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1707919699 40399 f2c302f7d2af602abb742093540a5834 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1758413751.13215 165012 f177baa1c39a3ebd62c3096a43521a0d ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1758413823 6831130 3e11db87c1927b5463e7e43e2978a80a ""
-  "STM_Structural_Manifold_Whitepaper.aux" 1758522344.68488 5823 8f8e970951890f5c567d9b5477b0c013 "pdflatex"
-  "STM_Structural_Manifold_Whitepaper.out" 1758522344.68588 3573 5cb8876fae5e30820272b7233a287ffa "pdflatex"
-  "STM_Structural_Manifold_Whitepaper.tex" 1758522338.29469 28257 163b4d321f93f9506ad490fcf3751221 ""
-  "STM_Structural_Manifold_Whitepaper.toc" 1758522344.68688 1976 809c5aa442a39acf99b07f2eaf5796c5 "pdflatex"
+  "STM_Structural_Manifold_Whitepaper.aux" 1758523017.21552 6919 733ed5565d7067fc75ac259a2805d4bd "pdflatex"
+  "STM_Structural_Manifold_Whitepaper.out" 1758523017.21653 3573 5cb8876fae5e30820272b7233a287ffa "pdflatex"
+  "STM_Structural_Manifold_Whitepaper.tex" 1758523002.67211 29446 0eb94d67c78cf40b20371173f501a3b9 ""
+  "STM_Structural_Manifold_Whitepaper.toc" 1758523017.21753 1980 f26c9d06bf5334b5954aa5658bd8127e "pdflatex"
+  "table_bridge_contingency.tex" 1758522986.98766 199 0ae2d91f1e2e8cda4e02980b7eb83323 ""
   "table_spt_receipts.tex" 1758522257.2423 386 b22054060c24ee501d672e12f36e0099 ""
   "table_stm_guardrail.tex" 1758522243.25788 337 faabc9b811e126af65505680c10e3cbe ""
   (generated)

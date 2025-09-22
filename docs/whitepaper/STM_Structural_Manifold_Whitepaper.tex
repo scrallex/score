@@ -324,6 +324,13 @@ and corpus scale rather than tighter percentile grids.
 
 \begin{figure}[h]
   \centering
+  \includegraphics[width=0.72\linewidth]{../figures/fig1b_logistics_perm_distribution.png}
+  \caption{Permutation $p_{\min}$ distribution across the tight Logistics sweep (1.6--2.2\%).}
+  \label{fig:logistics-perm-dist}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
   \includegraphics[width=0.72\linewidth]{../figures/fig1_logistics_sweep.png}
   \caption{Logistics sweep (1.6--2.2\% coverage): coverage target vs permutation $p_{min}$.}
   \label{fig:logistics-sweep}
@@ -366,6 +373,13 @@ Section~\ref{subsec:bridge} and the reproducible bundle released alongside this 
   \label{fig:spt-echo-lambda}
 \end{figure}
 
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.72\linewidth]{../figures/fig2b_spt_lambda_calibration.png}
+  \caption{Live gate calibration curve: admission rate as a function of hazard $\lambda$.}
+  \label{fig:spt-lambda-calibration}
+\end{figure}
+
 \begin{table}[h]
   \centering
   \caption{Live engine receipts referenced in Section~\ref{subsec:live-evidence}.}
@@ -386,12 +400,26 @@ window lands inside the live ``eligible'' set. This alignment---perfect precisio
 on Logistics and perfect precision in production---supports our claim that the
 structural manifold acts as a filter across both domains.
 
+Pearson correlation between STM irreversibility and the estimated hazard measured on
+the enriched Logistics corpus is $r=0.057$ ($p=2.9\times10^{-5}$), while Spearman
+correlation is $\rho=0.017$ ($p=0.205$). Using the dataset's median hazard ($\lambda=0.526$)
+as a cutoff, STM-passing windows are more prevalent in the high-hazard regime
+(22.0\%) than in the low-hazard regime (14.1\%), see Table~\ref{tab:bridge-contingency}.
+
 \begin{figure}[h]
   \centering
   \includegraphics[width=0.72\linewidth]{../figures/fig3_logistics_irreversibility_vs_lambda.png}
   \caption{Logistics windows (enriched domain): STM irreversibility vs estimated hazard $\lambda$.}
   \label{fig:logistics-irrev-lambda}
 \end{figure}
+
+\begin{table}[h]
+  \centering
+  \caption{STM pass/fail versus low/high hazard buckets ($\lambda\leq0.526$).
+  Percentages shown for the STM pass rows.}
+  \label{tab:bridge-contingency}
+  \input{table_bridge_contingency.tex}
+\end{table}
 \section{Comparison to PDDL-INSTRUCT}
 The MIT PDDL-INSTRUCT study \cite{verma2025pddlinstruct} demonstrates that
 instruction tuning improves plan validity (up to 94\%) but does not report
