@@ -353,7 +353,7 @@ reader can verify coherence, stability, entropy, rupture, and $\lambda$ directly
 To inspect entire cohorts we added \texttt{/api/opt/slice} and its similarity/match
 variants. These endpoints retrieve the raw signal hashes from
 \texttt{sep:signal:\{instrument\}:\{ts\}}, include repetition counts, and overlay the
-latest gate decision from \texttt{opt:rolling:gates\_blob}. They complete the
+latest gate decision from \texttt{gate:last}. They complete the
 evidence triangle: the guardrail logic, the live manifolds, and the gate output
 are all auditable via curl.
 
