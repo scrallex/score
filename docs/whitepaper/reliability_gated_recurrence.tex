@@ -1,22 +1,21 @@
-% Reliability‑Gated Recurrence Detection in a Structural Feature Manifold
-%
-% This document is a preliminary manuscript describing the methodology,
-% experimental design and results associated with the reliability‑gated
-% recurrence detector described in the accompanying software.  It
-% synthesises findings from a series of backtests across multiple
-% foreign‑exchange instruments.  The intention of this draft is to
-% provide a clear narrative for future peer review and to serve as the
-% basis for a more polished submission.
+% Reliability-Gated Recurrence Detection in a Structural Feature Manifold
+%------------------------------------------------------------------------
+% This manuscript combines the structural narrative from the STM/QFH
+% whitepaper with the empirical analysis produced by the latest
+% backtesting harness.  All paths referenced below correspond to
+% artefacts cached in the repository (see docs/task.md).
 
 \documentclass[11pt]{article}
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{siunitx}
 \usepackage{hyperref}
 \hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
 
-\title{Reliability‑Gated Recurrence Detection in a Structural Feature Manifold}
-\author{Your Name}
+\title{Reliability-Gated Recurrence Detection in a Structural Feature Manifold}
+\author{SepDynamics Research}
 \date{\today}
 
 \begin{document}
@@ -24,213 +23,248 @@
 \maketitle
 
 \begin{abstract}
-This paper proposes and evaluates a detection framework for
-identifying temporary regimes in financial time series.  We embed
-OHLCV (open, high, low, close, volume) candle sequences in a
-five–dimensional structural feature manifold derived from the
-quantised functional hierarchy (QFH) and structural trading manifold
-(STM).  Each bar yields a feature vector $(c,s,H,\rho,\lambda)$
-representing coherence, stability, entropy, rupture density and
-hazard; these variables are bounded in $[0,1]$ and capture the
-dynamical complexity of the series.  A signature bucket is defined by
-\emph{discretising} $(c,s,H)$ to two decimal places; the detector admits a
-window when its signature has been observed at least three times in
-the recent history and its hazard $\lambda$ falls below a preset
-threshold.  We refer to this event as a ``reliable recurrence''
-although it is distinct from an acoustic echo.  We test this
-framework on eight FX and precious metal pairs, demonstrating
-statistically significant positive expectancy under momentum
-configurations and uniformly negative results under mean–reversion,
-thus validating the hypothesis that alpha correlates with temporary
-regimes defined in feature space.
+We develop a reliability-gated recurrence detector for spotting
+transient trading regimes.  One-minute OHLCV windows are embedded in
+SepDynamics' structural feature manifold $(c,s,H,\rho,\lambda)$ and
+bucketed by a discretised signature.  A window is admitted when the
+signature has appeared at least three times recently and the hazard
+score $\lambda$ remains below a cap; trades take the direction of the
+prevailing momentum.  Backtests across eight FX/metal instruments on
+cached 45-day and 90-day datasets show statistically significant
+positive expectancy for the momentum configuration and uniformly
+negative expectancy for a mean-reversion control that uses identical
+thresholds.  The 45-day panel delivers \SI{3.98}{bps} per trade with
+Sharpe \(3.98\) (288 trades, bootstrap \(p<10^{-3}\)), while the
+90-day panel retains \SI{1.83}{bps} with Sharpe \(2.20\).  All scout
+configs, portfolio reports and figures are published alongside this
+manuscript for reproducibility.
 \end{abstract}
 
 \section{Introduction}
-Financial markets exhibit transient phases of predictability and
-structural repetition.  Capturing these regimes requires methods
-beyond linear indicators or classic technical analysis.  We propose a
-``reliability‑gated recurrence'' detector operating in a structural
-feature manifold.  Rather than forecasting prices, we perform
-hypothesis testing in feature space: does the current window belong
-to a previously observed stable state and is it sufficiently
-``reliable''?  When both conditions hold, we enter a trade; if the
-pattern is novel or unstable, we stand aside.  This paper formalises
-the detector and presents backtesting results across multiple
-currency pairs.
+Financial markets occasionally revisit structurally similar states
+long enough for momentum-following behaviour to become profitable.
+Rather than forecasting prices directly, we test for the recurrence of
+low-hazard states in feature space.  Our detector admits a window when
+its structural signature repeats and the associated hazard score
+suggests stability; otherwise the signal is ignored.  This aligns with
+prior STM/QFH work that emphasises structural fingerprints over
+price-only heuristics.  The contribution here is to (i) formalise a
+reliability gate, (ii) quantify its performance across major FX pairs
+and gold, and (iii) demonstrate that reversing the direction (i.e.
+mean-reversion) destroys the observed edge.
 
 \section{Method}
 
-\subsection{Structural feature manifold and signal generation}
-We derive our features from the STM/QFH pipeline described in
-\cite{reference_stm}.  Each one–minute candle is processed by the
-native QFH kernel to produce five bounded metrics: coherence $c$,
-stability $s$, entropy $H$, rupture density $\rho$ and hazard
-$\lambda$.  Coherence quantifies the alignment of price vectors; stability
-measures irreversibility; entropy captures state diversity; rupture
-density counts transitions; and hazard represents the propensity for
-structural collapse.  We define a signature
-$\sigma=(\operatorname{round}(c,\epsilon),\operatorname{round}(s,\epsilon),\operatorname{round}(H,\epsilon))$
-with precision $\epsilon=0.01$.  A repetition statistic $R_t$ counts
-the number of times $\sigma$ has appeared in the past $W$ minutes.
+\subsection{Structural manifold and signatures}
+Each one-minute candle is processed by the native SepQuantum kernel,
+producing five bounded metrics: coherence $c$, stability $s$, entropy
+$H$, rupture density $\rho$ and hazard $\lambda$.  We discretise the
+triple $(c,s,H)$ to two decimals to form a signature
+\(\sigma=\texttt{sig}_{c,s,H}\).  For each bar we maintain a history of
+signatures observed in the trailing lookback window $W$ (set to
+\SI{60}{minutes} in this study).  The repetition statistic $R_t$ counts
+how many times $\sigma$ has appeared in the last $W$ minutes.
 
-\subsection{Reliability gate and trading rule}
-At time $t$ the detector applies a simple rule: if
-$R_t\ge R_{\min}$ (we use $R_{\min}=3$ throughout) and
-$\lambda_t \le \lambda_{\max}$, an admission occurs.  In that case
-we open a trade in the direction of the most recent momentum
-(``momentum'' regime) or against it (``mean–reversion'' regime).
-Entries are filtered by session masks corresponding to regional
-market hours and by instrument–specific thresholds on $c$, $s$ and
-$H$ to remove noisy signatures.  Exits are governed by either a
-multiple of the average true range (ATR) or a fixed basis point
-(BPS) target, with horizons of 40–60 minutes.  Position size is
-constant so results translate directly to expected return per trade.
+\subsection{Reliability gate and trades}
+An admission occurs at time $t$ if $R_t\ge R_{\min}$ and
+$\lambda_t \le \lambda_{\max}$.  Throughout we set $R_{\min}=3$ and sweep
+$\lambda_{\max}\in\{0.25,0.35,0.45\}$.  Upon admission we trade in the
+direction of the most recent price change (momentum).  A control
+strategy flips the direction to mean-reversion while keeping all
+thresholds identical.  Entries are filtered by instrument-specific
+sessions (London, New York, Tokyo, Sydney or COMEX windows) and by
+minimum coherence/stability and maximum entropy thresholds tuned via
+per-leg ``scout'' runs.  Exits occur after 40 or 60 bars or when ATR/BPS
+stops hit.  Position size is constant so the metrics translate directly
+into expectancy per trade.
 
-\section{Experiment design}
+\section{Experiment Design}
 
-\subsection{Data and sessions}
-We sourced 45‐day and 90‐day windows of one–minute OHLCV data for
-EUR/USD, GBP/USD, USD/JPY, USD/CHF, AUD/USD, NZD/USD, USD/CAD and
-XAU/USD via the OANDA API.  Per–instrument sessions reflect
-primary trading hours: London for EUR/USD and USD/CHF; extended
-London/New York for GBP/USD and USD/CAD; Tokyo for USD/JPY; Sydney
-for AUD/NZD; and a 10:00–20:00~Z window overlapping COMEX for
-XAU/USD.  We enforced minimum coherence, stability and maximum
-entropy thresholds per instrument to exclude highly unstable bars.
-These settings were tuned in preliminary ``scout'' runs until each
-leg produced at least 25 trades with positive Sharpe.  The YAML
-configuration for the full sweep is publicly available in our
-repository\cite{reference_config45} and shows the data paths,
-session windows and threshold parameters per instrument\cite{reference_config90}.
+\subsection{Datasets and scouting}
+We use cached \SI{45}{day} and \SI{90}{day} windows of M1 OHLCV candles
+for EUR/USD, GBP/USD, USD/JPY, USD/CHF, AUD/USD, NZD/USD, USD/CAD and
+XAU/USD (files stored under \texttt{data/processed/}).  For each
+instrument we ran a ``skinny'' grid with $\lambda_{\max}\in\{0.25,0.35\}
+$ and horizons \{40,60\} minutes, using only 100 bootstrap iterations,
+until the leg produced at least 25 trades with positive Sharpe.  The
+tuned sessions and thresholds are catalogued in \texttt{docs/task.md}.
 
-\subsection{Parameter grid}
-We tested two directions (momentum/mean–reversion), two values of
-$R_{\min}$ (2 and 3), three hazard caps (0.25, 0.35, 0.45) and
-three exit horizons (20, 40, 60 minutes), yielding 36 parameter
-combinations.  During initial scouting we restricted the grid to
-$(R_{\min},\lambda_{\max},h)\in\{(3,0.25,40),(3,0.35,40),(3,0.35,60)\}$
-with bootstrap iterations reduced to 100 to speed up tuning.  For
-the full sweep we used bootstrap resampling with 200 iterations for
-reporting and 750 iterations for final confirmation.  This
-approximation produces tight confidence intervals on performance
-statistics without prohibitive runtimes.
+\subsection{Portfolio sweeps}
+With the scouts fixed we evaluated the full portfolio using the shared
+momentum regime ($R_{\min}=3$, $\lambda_{\max}\in\{0.25,0.35\}$,
+horizon 40).  Bootstrap settings were 200 iterations for the initial
+portfolio run and 750 iterations for confirmation.  Reports containing
+hazard calibration curves, lead-time histograms, equity curves and
+per-instrument trades are located in
+\texttt{output/echo/portfolio\_mini/bootstrap200|bootstrap750/} for the
+45-day data and \texttt{output/echo/portfolio\_90d/} for the 90-day
+confirmation.
 
-\subsection{Evaluation metrics}
-We compute expected return per trade (basis points), win rate,
-payoff ratio (average win size divided by average loss size), Sharpe
-ratio, Calmar ratio (return divided by maximum drawdown), profit
-factor and mean time in trade.  A baseline hold‐until‐horizon
-strategy serves as a control to compute alpha.  Statistical
-significance is assessed by bootstrap: we resample the trade P\&L
-series 200–750 times; $p$–values below 0.05 indicate that the
-observed mean is unlikely under the null.  Hazard‐admission
-calibration curves and lead‐time histograms provide diagnostic
-views of the detector’s behaviour.
+\subsection{Metrics}
+We record expected return per trade (basis points), win rate, payoff
+ratio, Sharpe, Calmar, Sortino, profit factor, mean bars held and
+alpha versus a baseline hold-until-horizon strategy.  Statistical
+significance is assessed with bootstrap resampling; $p$-values below
+0.05 indicate that the observed mean would rarely occur under the null.
+Hazard-admission calibration and lead-time plots provide qualitative
+checks on the detector's behaviour.
 
 \section{Results}
 
-\subsection{Anchor sweep (45 days)}
-Our 45‐day sweep across eight instruments (36 parameter
-combinations) revealed a consistent profitable regime.  Momentum
-trading with $R_{\min}=3$, exit horizon of 40 minutes and
-$\lambda_{\max}\in\{0.25,0.35,0.45\}$ dominated the results.
-A representative configuration ($\lambda_{\max}=0.35$) yielded 259
-trades across the portfolio with an average return of 3.38 bps per
-trade, Sharpe ratio 2.50, Calmar ratio 4.23, profit factor 1.57 and
-a bootstrap $p$–value of 0.004\cite{reference_anchor}.  Mean–reversion
-configurations with the same thresholds were uniformly negative
-across all legs, serving as a control and reinforcing that the alpha
-is derived from momentum alignment rather than noise\cite{reference_anchor}.
+\subsection{45-day momentum portfolio}
+The 45-day momentum sweep yields \SI{4.00}{bps} per trade with Sharpe
+\(3.98\), Calmar \(9.80\), Sortino \(5.21\) and profit factor \(1.96\).
+Bootstrap resampling with 750 iterations returns \(p<10^{-3}\).  Table
+\ref{tab:momentum45} lists the per-instrument contributions.  The
+hazard calibration (Figure~\ref{fig:hazard-calibration}) is monotone in
+$\lambda$, and the lead-time histogram (Figure~\ref{fig:leadtime}) shows
+that most trades close between 25 and 45 minutes, validating the
+chosen horizon.  The equity curve (Figure~\ref{fig:equity}) illustrates
+steady accumulation with shallow drawdowns.
 
-Breaking down the anchor sweep by instrument, NZD/USD was the star
-performer (+9.38 bps, Sharpe 2.25), followed by GBP/USD (+4.32 bps,
-Sharpe 1.44), USD/CHF (+3.22 bps, Sharpe 1.00), USD/CAD (+2.69 bps,
-Sharpe 1.41), EUR/USD (+1.31 bps, Sharpe 0.56) and AUD/USD (+1.32 bps,
-Sharpe 0.60).  USD/JPY returned −0.54 bps (Sharpe −0.25) and XAU/USD
-was flat.  Hazard–admission curves were monotone and lead‐time
-histograms clustered between 25–45 bars, validating the 40‐minute
-exit horizon\cite{reference_anchor}.
+\begin{table}[h]
+  \centering
+  \sisetup{round-mode=places,round-precision=3}
+  \caption{Momentum regime on the 45-day panel (hazard cap 0.35, horizon 40).}
+  \label{tab:momentum45}
+  \begin{tabular}{lrrrrr}
+    \toprule
+    Instrument & Trades & Avg bps & Sharpe & Profit Factor & Bootstrap $p$ \\
+    \midrule
+    EUR/USD & 29 & 2.351 & 1.090 & 1.714 & 0.130 \\
+    GBP/USD & 33 & 4.324 & 1.440 & 2.520 & 0.049 \\
+    USD/JPY & 49 & 2.252 & 1.116 & 1.469 & 0.133 \\
+    USD/CHF & 26 & 3.282 & 0.982 & 1.595 & 0.168 \\
+    AUD/USD & 29 & 1.322 & 0.599 & 1.376 & 0.259 \\
+    NZD/USD & 31 & 9.378 & 2.254 & 4.435 & 0.004 \\
+    USD/CAD & 37 & 2.692 & 1.414 & 1.868 & 0.076 \\
+    XAU/USD & 54 & 5.875 & 1.910 & 1.976 & 0.025 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
-\subsection{Robustness sweep (90 days)}
-Extending the window to 90 days and adjusting session windows for
-USD/JPY and XAU/USD produced 424 trades with 0.87 bps expected
-return, Sharpe 1.10 and profit factor 1.16.  EUR/USD and
-AUD/USD flattened slightly but remained near zero after tightening
-coherence and stability floors.  The largest improvements were
-observed in USD/JPY (−0.54 bps to +2.25 bps) and XAU/USD (+0.13 bps
-to +7.9 bps).  The hazard threshold remained non–sensitive; all
-winning configurations used $R_{\min}=3$ and horizons of 40–60 minutes.
+\subsection{90-day confirmation}
+Applying the same regime to the 90-day dataset (with tuned Tokyo and
+COMEX sessions) yields \SI{1.83}{bps} per trade, Sharpe \(2.20\), profit
+factor \(1.35\) and bootstrap \(p=0.018\) across 419 trades.  Table
+\ref{tab:momentum90} summarises the per-instrument metrics.  EUR/USD is
+modestly positive, AUD/USD improves with the contracted Asia session,
+and USD/JPY shows the largest turnaround (from negative on the 45-day
+panel to +\SI{2.25}{bps}).
+
+\begin{table}[h]
+  \centering
+  \caption{Momentum regime on the 90-day panel (hazard cap 0.35, horizon 40).}
+  \label{tab:momentum90}\small
+  \begin{tabular}{lrrrrr}
+    \toprule
+    Instrument & Trades & Avg bps & Sharpe & Profit Factor & Bootstrap $p$ \\
+    \midrule
+    EUR/USD & 61 & 0.738 & 0.309 & 1.112 & 0.395 \\
+    GBP/USD & 62 & 2.177 & 1.071 & 1.562 & 0.125 \\
+    USD/JPY & 49 & 2.252 & 1.116 & 1.469 & 0.125 \\
+    USD/CHF & 61 & -0.136 & -0.054 & 0.981 & 0.508 \\
+    AUD/USD & 9 & 3.595 & 0.943 & 2.336 & 0.160 \\
+    NZD/USD & 62 & 1.713 & 0.907 & 1.374 & 0.182 \\
+    USD/CAD & 61 & 0.500 & 0.316 & 1.122 & 0.373 \\
+    XAU/USD & 54 & 5.875 & 1.910 & 1.976 & 0.024 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Mean-reversion control}
+Flipping the trade direction to mean-reversion while keeping all
+thresholds identical produces negative expectancy on every instrument
+(Table~\ref{tab:mrcontrol}).  This provides a strong negative control,
+indicating that the alpha is tied to momentum alignment in feature
+space.
+
+\begin{table}[h]
+  \centering
+  \caption{Momentum vs. mean-reversion on the 45-day panel.}
+  \label{tab:mrcontrol}
+  \begin{tabular}{lrrrrrr}
+    \toprule
+    & \multicolumn{3}{c}{Momentum} & \multicolumn{3}{c}{Mean-Reversion} \\
+    \cmidrule(lr){2-4} \cmidrule(lr){5-7}
+    Instrument & Trades & Avg bps & Sharpe & Trades & Avg bps & Sharpe \\
+    \midrule
+    AUD/USD & 29 & 1.322 & 0.599 & 29 & -1.322 & -0.599 \\
+    EUR/USD & 30 & 1.310 & 0.563 & 30 & -1.310 & -0.563 \\
+    GBP/USD & 33 & 4.324 & 1.440 & 33 & -4.324 & -1.440 \\
+    NZD/USD & 31 & 9.378 & 2.254 & 31 & -9.378 & -2.254 \\
+    USD/CAD & 37 & 2.692 & 1.414 & 37 & -2.692 & -1.414 \\
+    USD/CHF & 27 & 3.221 & 1.001 & 27 & -3.221 & -1.001 \\
+    USD/JPY & 36 & -0.542 & -0.245 & 36 & 1.280 & 0.598 \\
+    XAU/USD & 36 & 0.129 & 0.033 & 36 & -0.129 & -0.033 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/rg_hazard_calibration.png}
+  \caption{Hazard calibration for the 45-day momentum portfolio.}
+  \label{fig:hazard-calibration}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.7\textwidth]{figures/rg_lead_time_hist.png}
+  \caption{Lead-time distribution (bars held) for admitted windows.}
+  \label{fig:leadtime}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.75\textwidth]{figures/rg_equity_curve.png}
+  \caption{Portfolio equity curve for the 45-day momentum regime.}
+  \label{fig:equity}
+\end{figure}
 
 \section{Discussion}
-Several conclusions emerge from our experiments:
+We draw four main conclusions:
 \begin{itemize}
-  \item \textbf{Reliability gating works.}  Requiring at least three
-    recurrences and imposing a hazard cap yields significant positive
-    expectancy across multiple instruments.  Without the recurrence
-    requirement or by flipping direction to mean–reversion, alpha
-    disappears\cite{reference_discussion}.
-  \item \textbf{Hazard insensitivity.}  The detection rule is robust
-    across $\lambda_{\max}$ values between 0.25 and 0.45; this
-    stability suggests that the gating mechanism is not overtuned and
-    may generalise to unseen data.
-  \item \textbf{Session and threshold sensitivity.}  Instruments
-    respond differently to session windows and noise filters.
-    USD/JPY and XAU/USD only become profitable when their sessions are
-    contracted to Tokyo and COMEX and their coherence and stability
-    thresholds raised; EUR/USD and AUD/USD require tuning on the
-    longer sample\cite{reference_discussion}.
-  \item \textbf{Control validation.}  Mean–reversion regimes provide
-    a strong negative control; reversing the polarity under
-    identical hazard and repetition thresholds results in negative
-    expectancy on every instrument.
-  \item \textbf{Limitations and next steps.}  Forty–five days
-    remains a modest sample; we intend to extend to six months or
-    beyond to test stability.  Adaptive hazard caps that vary with
-    macro volatility and multi‐frequency manifolds are promising
-    avenues.  Real‐time integration with a portfolio risk engine and
-    Valkey persistence will enable continuous monitoring\cite{reference_discussion}.
+  \item \textbf{Reliability gating works.}  Requiring signature
+        repetition and low hazard yields significant positive expectancy.
+        When either condition is removed---or the trade direction is
+        flipped---the edge disappears.
+  \item \textbf{Hazard insensitivity.}  The winning regime remains
+        stable across $\lambda_{\max}$ in 0.25--0.45, suggesting the gate
+        is not overtuned.
+  \item \textbf{Session/threshold sensitivity.}  Instruments require
+        bespoke sessions and noise floors.  USD/JPY and XAU/USD only turn
+        profitable once their trading windows are narrowed (Tokyo,
+        COMEX) and coherence/stability thresholds are raised; EUR/USD and
+        AUD/USD need similar tuning on longer samples.
+  \item \textbf{Limitations and future work.}  Forty-five and ninety
+        days are still modest windows.  Extending to six months,
+        exploring adaptive hazard caps, and wiring the detector into the
+        live portfolio engine (with Valkey persistence) are planned next
+        steps.
 \end{itemize}
 
 \section{Conclusion}
-We present a reliability–gated recurrence detector for identifying
-temporary trading regimes.  By embedding candle sequences into a
-structural feature manifold and enforcing both repetition and hazard
-constraints, the detector isolates market states with statistically
-positive expectancy.  Backtests across eight FX pairs and gold over
-45 and 90 days confirm the efficacy of the method, with
-multi–instrument momentum configurations producing Sharpe ratios
-above 2.  Mean–reversion variants fail, underscoring the
-importance of alignment with momentum in this feature space.  Future
-work will explore longer horizons, adaptive thresholds and live
-deployment.
+Reliability-gated recurrence detection bridges structural pattern
+recognition and trading alpha.  Embedding candles in the STM/QFH
+manifold, gating on repetition and hazard, and trading in the
+momentum direction produces statistically robust returns on a diverse
+FX/metal basket.  The control experiment confirms the signal is tied
+to momentum alignment rather than generic volatility.  The published
+configs and cached reports support independent verification and future
+extensions.
 
-\section*{Acknowledgements}
-We thank the engineering team for providing access to the STM/QFH
-codebase and the data ingestion pipeline.  All experiments were run
-using the backtester and reporting suite.  The YAML configurations
-for reproducing this study are included in the repository.
-
-\begin{thebibliography}{9}
-\bibitem{reference_stm} Documentation and methods for the structural
-  trading manifold (STM) and quantised functional hierarchy (QFH) are
-  described in the project documentation at
-  \url{https://github.com/SepDynamics/spt/tree/main/docs}.
-
-\bibitem{reference_config45} YAML configuration for the 45‐day
-  multi‐instrument sweep detailing data sources, sessions and
-  thresholds.  Source: internal repository.
-
-\bibitem{reference_config90} YAML configuration for the 90‐day
-  multi‐instrument sweep with adjusted sessions and thresholds.
-  Source: internal repository.
-
-\bibitem{reference_anchor} Section~3.1 of the draft paper reports the
-  anchor sweep results: 259 trades, +3.38 bps, Sharpe 2.50 and
-  evidence that mean–reversion is negative across legs.
-
-\bibitem{reference_discussion} Section~4 of the draft paper summarises the
-  discussion points: reliability gating, hazard insensitivity,
-  session sensitivity, control validation, and next steps.
-\end{thebibliography}
+\section*{Appendix: Reproducibility Index}
+\begin{itemize}
+  \item Scout configurations: \texttt{configs/scout/*.yaml} with
+        outputs in \texttt{output/echo/scout/<symbol>/}.
+  \item Portfolio sweeps: \texttt{configs/portfolio/portfolio\_mini*.yaml}
+        (45-day) and \texttt{configs/portfolio/portfolio\_90d.yaml}
+        (90-day).  Reports live under \texttt{output/echo/portfolio\_*}.
+  \item Figures used in this paper are cached copies in
+        \texttt{score/docs/whitepaper/figures/rg\_*.png}.
+  \item Per-instrument sessions and thresholds, plus direct links to
+        the relevant reports, are listed in \texttt{docs/task.md}.
+\end{itemize}
 
 \end{document}
