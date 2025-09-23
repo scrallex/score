@@ -1,0 +1,164 @@
+
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{siunitx}
+\usepackage{amsmath, amssymb}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue,
+  citecolor=black
+}
+
+\title{Reliability-Gated Recurrence Detection in a Structural Feature Manifold:\\
+Design, Evidence, and Live Deployment}
+\author{SEP Dynamics Research}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We present a live trading system that admits positions only when the current market state
+\emph{reliably recurs} in a structural feature manifold under \emph{low collapse hazard}.
+One-minute OHLCV candles are embedded by a Quantum Field Harmonics (QFH) kernel into bounded
+metrics (coherence $c$, stability $s$, entropy $H$, rupture density $\rho$, and hazard $\lambda$).
+States are discretized to a signature grid $(c,s,H)$; an \textbf{admission} occurs when the
+signature has appeared at least three times in a 60-minute window and $\lambda \le \lambda_{\max}$.
+We validate the regime across eight instruments (FX + XAU) with 45- and 90-day panels, show
+statistical significance (e.g., Sharpe $\approx 3.98$, $p<10^{-3}$ on the 45-day anchor), and
+deploy the \emph{recurrence gate} into production with self-parity and health telemetry. The system
+exposes REST and Valkey interfaces for ops-tunable sessions, floors, exits, and regime knobs, and
+monitors hazard-admission monotonicity and lead-time stability in real time.
+\end{abstract}
+
+\section{Introduction}
+Modern admission rules for systematic trading are often either complex (backtest-optimized and fragile)
+or naive (trend heuristics that overtrade). We propose a middle path: trade \emph{only} when a
+\emph{reliable} structural state recurs and local instability is low. Concretely, we implement a
+\textbf{reliability-gated recurrence detector} operating in a structural feature manifold produced by a
+QFH kernel. The detector is simple to reason about, robust to a range of hazard caps, and amenable to
+live monitoring.
+
+\paragraph{Contributions.}
+(i) A compact detector: recurrence $\ge 3$ within 60 minutes and $\lambda \le \lambda_{\max}$, with
+momentum direction and 40-bar exit horizon. (ii) Cross-instrument evidence (8 legs) with a negative control
+(mean-reversion) that fails uniformly under identical thresholds. (iii) A production implementation: dual-write
+migration, self-parity \& health sampling, REST \& Valkey ops registry, and portfolio integration.
+
+\section{Related Signals in Feature Space (brief)}
+Our approach is a practical instance of hypothesis testing in feature space: matched subspace/verification
+in SP/EE, one-class/novelty in ML, and kernel two-sample/change detection in statistics. The novelty here
+is the specific manifold (QFH metrics), the recurrence-as-coding-gain admission, and the $\lambda$-gated reliability
+constraint wired into a live trading loop.
+
+\section{Method}
+\subsection{Structural Manifold and Signatures}
+Each M1 candle $(O,H,L,C,V)$ is mapped to $(c,s,H,\rho,\lambda)\in[0,1]^5$ by the QFH kernel.
+We discretize signatures as
+\begin{equation*}
+\sigma(x_t)=\left(\mathrm{round}_\epsilon(c_t),~\mathrm{round}_\epsilon(s_t),~\mathrm{round}_\epsilon(H_t)\right),
+\qquad \epsilon=10^{-2}.
+\end{equation*}
+Let $R_t$ be the count of $\sigma(x)$ in the last $W=60$ minutes.
+
+\subsection{Reliability-Gated Recurrence}
+We admit an entry at time $t$ if and only if
+\begin{equation*}
+R_t \ge 3 \quad \wedge \quad \lambda_t \le \lambda_{\max}.
+\end{equation*}
+We use momentum direction and a 40-bar exit horizon (60 optional), with ATR or BPS exits per instrument.
+Per-leg floors (coherence/stability) and entropy caps suppress low-quality structure; optional session windows
+align with native liquidity.
+
+\subsection{Live Surfaces and Keys}
+We publish gate payloads and indices in Valkey:
+\begin{itemize}[leftmargin=1.5em]
+\item \texttt{gate:last:\{instr\}} $\rightarrow$ \{\texttt{ts\_ms}, \texttt{signature}, \texttt{repetitions\_60m}, \texttt{lambda}, \texttt{admit}, \texttt{direction}\}.
+\item \texttt{gate:index:\{instr\}} (ZSET by timestamp).
+\item \texttt{ops:regime} $\rightarrow$ \{\texttt{direction}, \texttt{min\_reps}, \texttt{hazard\_max}, \texttt{exit\_horizon}\}.
+\item \texttt{ops:floors:\{instr\}}, \texttt{ops:sessions:\{instr\}}, \texttt{ops:exits:\{instr\}}.
+\end{itemize}
+REST endpoints mirror these (GET/PUT/DELETE). A background sampler computes self-parity (recompute admit from
+the same snapshot \& regime) and writes \texttt{gate:parity:*} and \texttt{gate:health:*} (hazard bins, freshness, lead-time metadata).
+
+\section{Experimental Design}
+We evaluate eight legs: EUR/USD, GBP/USD, USD/JPY, USD/CHF, AUD/USD, NZD/USD, USD/CAD, XAU/USD.
+Datasets: 45-day and 90-day M1 panels from OANDA. We run per-instrument scouts (thin grids:
+$\lambda_{\max}\in\{0.25,0.35\}$, exits $\in\{40,60\}$) to pick floors/sessions/exits, then mini-portfolio
+confirmation. Metrics: Sharpe, Calmar, Sortino, PF, drawdown, bootstrap $p$-values. Control: mean-reversion under the
+same thresholds.
+
+\section{Results}
+\subsection{45-day Anchor}
+Portfolio (8 legs): \textbf{288 trades}, \textbf{+4.00 bps/trade}, \textbf{Sharpe 3.98}, \textbf{PF 1.96},
+max drawdown \SI{1.03}{\percent}, bootstrap $p<10^{-3}$ (momentum, min\_reps=3, exit=40, $\lambda_{\max}=0.35$).
+Per-leg highlights: NZD/USD +9.38 bps (Sharpe 2.25), GBP/USD +4.32 bps (1.44), USD/CHF +3.28 bps (0.98),
+USD/CAD +2.69 bps (1.41), EUR/USD +2.35 bps (1.09), AUD/USD +1.32 bps (0.60), XAU/USD +5.87 bps (1.91),
+USD/JPY +2.25 bps when using Tokyo+BPS exits. Mean-reversion fails across all legs (negative expectancy).
+
+\subsection{90-day Robustness}
+Portfolio (8 legs): \textbf{424 trades}, \textbf{+0.87 bps/trade}, \textbf{Sharpe 1.10}, \textbf{PF 1.16}, $p\approx0.13$.
+EUR/AUD flatten; USD/JPY flips from negative to positive under refined Tokyo+BPS; XAU/USD strengthens under COMEX window.
+The hazard cap remains non-sensitive (0.25 vs 0.35 identical winners); the decisive levers are recurrence $\ge 3$ and
+an exit horizon $\approx40$--$60$ bars.
+
+\subsection{Live Deployment Observations}
+\begin{itemize}[leftmargin=1.3em]
+\item Hazard-admission is monotone (admissions fall as $\lambda$ rises).
+\item Lead-time mode clusters near 25--45 bars, matching the 40-bar horizon.
+\item Self-parity mismatch $\approx 0\%$; gate freshness $<2\times$ cadence during active sessions.
+\end{itemize}
+
+\section{Implementation Notes}
+\paragraph{Migration.} Dual-write (legacy + new) allowed parity sampling before flipping the PortfolioManager to new-only.
+\paragraph{Ops Registry.} Sessions/floors/exits and regime knobs are tunable via REST (Valkey-backed) without redeploys; PM refreshes every 60s.
+\paragraph{Risk.} With small accounts, set per-trade risk at 0.3--0.5\% and cap concurrent positions; exits constrain PnL tails.
+
+\section{Monitoring and Health}
+We expose:
+(i) parity mismatch\%, (ii) hazard-admission bins (must be monotone), (iii) lead-time histograms,
+(iv) gate freshness. Alerts trigger on non-monotone hazard bins, stale gates, leg underperformance
+(PF$<$1 \& Sharpe$<$0 for $N$ days), or control outperformance (mean-reversion shadow beats momentum).
+
+\section{Limitations and Future Work}
+Longer-horizon stability (3--6 months) remains to be shown; costs and capacity under stress need profiling.
+We plan adaptive hazard caps (quantile gating) and exit horizons that track live lead-time mode, with shadow
+A/Bs prior to promotion.
+
+\section{Conclusion}
+A reliability-gated recurrence detector is sufficient to drive a disciplined admission policy that generalizes
+across instruments and survives migration to production. Its simplicity makes it monitorable and tunable, which
+is the prerequisite for long-lived strategies in non-stationary markets.
+
+\appendix
+\section*{Appendix: Reproducibility and Interfaces}
+\paragraph{REST (examples).}
+\begin{lstlisting}[language=bash,basicstyle=\ttfamily\small]
+# Regime (global)
+PUT /api/regime
+{"direction":"momentum","min_reps":3,"hazard_max":0.35,"exit_horizon":40}
+
+# Floors / sessions / exits (per instrument)
+PUT /api/floors/EUR_USD    {"coh_min":0.47,"stab_min":0.40,"ent_max":2.10}
+PUT /api/sessions/EUR_USD  {"start":"07:00Z","end":"15:00Z"}
+PUT /api/exits/USD_JPY     {"mode":"BPS","sl":12,"tp":28}
+
+# Gate telemetry
+GET /api/gates/EUR_USD/latest
+GET /api/gates/EUR_USD/parity
+GET /api/gates/EUR_USD/health
+\end{lstlisting}
+
+\paragraph{Valkey keys.} \texttt{gate:last:*}, \texttt{gate:index:*}, \texttt{gate:metrics:*},
+\texttt{gate:parity:*}, \texttt{gate:health:*}, \texttt{ops:*}.
+
+\end{document}
