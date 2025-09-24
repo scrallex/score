@@ -5,11 +5,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import sys
 from pathlib import Path
 from typing import Dict, List
 
 import pandas as pd
 import yaml
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from sep_common.echo_strategy_profile import load_strategy_profile
 
 from stm_backtest import build_signals, load_candles_csv, preprocess_candles
 from stm_backtest.backtester import StrategyConfig, dump_results, run_sweep
@@ -105,6 +113,25 @@ def main() -> None:
     args = parse_args()
     cfg_path = Path(args.config)
     cfg = load_config(cfg_path)
+    raw_profile_path = (
+        cfg.get("strategy", {}).get("profile_path")
+        or (cfg.get("strategy_profile") or {}).get("path")
+        or cfg.get("profile_path")
+        or (cfg.get("profile") or {}).get("path")
+        or os.getenv("ECHO_STRATEGY_PROFILE")
+    )
+    if raw_profile_path:
+        candidate = Path(raw_profile_path)
+        profile_path = candidate if candidate.is_absolute() else (cfg_path.parent / candidate).resolve()
+    else:
+        profile_path = REPO_ROOT / "config" / "echo_strategy.yaml"
+    try:
+        strategy_profile = load_strategy_profile(profile_path)
+    except Exception as exc:
+        strategy_profile = None
+        if args.verbose:
+            print(f"[profile] fallback to config overrides ({exc})")
+
     outputs = resolve_output_paths(cfg, args.output)
 
     data_cfg = cfg.get("data", {})
@@ -135,20 +162,54 @@ def main() -> None:
         tz = inst_cfg.get("tz", "UTC")
         raw = load_candles_csv(csv_path, timestamp_col=timestamp_col, tz=tz)
         candles = preprocess_candles(raw, enforce_m1=enforce_m1)
-        candles_by_inst[symbol] = candles
+        symbol_key = str(symbol).upper()
+        candles_by_inst[symbol_key] = candles
         signals = build_or_load_signals(
             candles=candles,
-            instrument=symbol,
+            instrument=symbol_key,
             cfg=signal_cfg,
             cache_dir=cache_root,
             verbose=args.verbose,
         )
-        signals_by_inst[symbol] = signals
-        overrides_by_inst[symbol] = normalize_params(inst_cfg.get("overrides", {}))
+        signals_by_inst[symbol_key] = signals
+        overrides_by_inst[symbol_key] = normalize_params(inst_cfg.get("overrides", {}))
 
     strategy_cfg = cfg.get("strategy", {})
     base_params = normalize_params(strategy_cfg.get("base", {}))
     grid_params = normalize_params(strategy_cfg.get("grid", cfg.get("grid", {})))
+
+    if strategy_profile:
+        global_cfg = strategy_profile.global_config
+        guards = strategy_profile.guard_defaults()
+        base_params.setdefault("min_repetitions", global_cfg.get("min_repetitions", 3))
+        base_params.setdefault("max_hazard", global_cfg.get("hazard_max"))
+        base_params.setdefault("exit_horizon", global_cfg.get("exit_horizon"))
+        base_params.setdefault("hazard_exit_threshold", global_cfg.get("hazard_exit_threshold"))
+        base_params.setdefault("min_coherence", guards.get("min_coherence"))
+        base_params.setdefault("min_stability", guards.get("min_stability"))
+        base_params.setdefault("max_entropy", guards.get("max_entropy"))
+
+    if strategy_profile:
+        for symbol, profile in strategy_profile.instruments.items():
+            key = symbol.upper()
+            overrides = overrides_by_inst.setdefault(key, {})
+            thresholds = profile.guard_thresholds()
+            if thresholds.get("min_coherence") is not None:
+                overrides.setdefault("min_coherence", thresholds.get("min_coherence"))
+            if thresholds.get("min_stability") is not None:
+                overrides.setdefault("min_stability", thresholds.get("min_stability"))
+            if thresholds.get("max_entropy") is not None:
+                overrides.setdefault("max_entropy", thresholds.get("max_entropy"))
+            if profile.hazard_max is not None:
+                overrides.setdefault("max_hazard", profile.hazard_max)
+            if profile.min_repetitions is not None:
+                overrides.setdefault("min_repetitions", profile.min_repetitions)
+            if profile.session:
+                overrides.setdefault("session", profile.session.to_range_spec())
+            if profile.exit:
+                for ekey, value in profile.exit.items():
+                    if value is not None:
+                        overrides.setdefault(ekey, value)
     base_config = StrategyConfig(**{**StrategyConfig().as_dict(), **base_params})
 
     bootstrap_cfg = cfg.get("bootstrap", {})
