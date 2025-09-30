@@ -307,7 +307,10 @@ def _write_dashboard(output_root: Path, timeline_payload: Dict[str, object]) -> 
       --accent: #38bdf8;
       --path: #c084fc;
       --alert: #f97316;
+      --event: rgba(56, 189, 248, 0.65);
       --failure: #ef4444;
+      --failure-band: rgba(239, 68, 68, 0.12);
+      --event-band: rgba(56, 189, 248, 0.08);
       --success: #22c55e;
       --text: #e2e8f0;
       --muted: #94a3b8;
@@ -489,6 +492,14 @@ def _write_dashboard(output_root: Path, timeline_payload: Dict[str, object]) -> 
     .legend-item.hazard {{ color: var(--accent); }}
     .legend-item.path {{ color: var(--path); }}
     .legend-item.threshold {{ color: rgba(148,163,184,0.82); }}
+    .legend-item.event {{ color: var(--event); }}
+    .legend-item.failure {{ color: var(--failure); }}
+    .classic-note {{
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }}
     .twin-card {{
       margin-top: 18px;
       padding: 18px;
@@ -560,6 +571,7 @@ def _write_dashboard(output_root: Path, timeline_payload: Dict[str, object]) -> 
         </div>
       </div>
       <div class=\"timeline\" id=\"classic-timeline\"></div>
+      <div class=\"classic-note\" id=\"classic-note\"></div>
     </section>
     <section class=\"panel\" id=\"stm-panel\">
       <h2>STM Guardrail</h2>
@@ -583,6 +595,8 @@ def _write_dashboard(output_root: Path, timeline_payload: Dict[str, object]) -> 
           <span class=\"legend-item hazard\">λ hazard</span>
           <span class=\"legend-item path\">Path dilution</span>
           <span class=\"legend-item threshold\">λ threshold</span>
+          <span class=\"legend-item event\">Disruption</span>
+          <span class=\"legend-item failure\">Failure check</span>
         </div>
       </div>
       <div class=\"timeline\" id=\"stm-timeline\"></div>
@@ -609,6 +623,7 @@ def _write_dashboard(output_root: Path, timeline_payload: Dict[str, object]) -> 
     const firstFailure = signalSummary.first_failure;
     const lead = signalSummary.lead_time;
     const hazardThreshold = (signalSummary.thresholds || {{}}).lambda_hazard;
+    const classicNote = document.getElementById('classic-note');
 
     const classicTimeline = document.getElementById('classic-timeline');
     classical.forEach((entry) => {{
@@ -643,6 +658,19 @@ def _write_dashboard(output_root: Path, timeline_payload: Dict[str, object]) -> 
     const classicFailure = document.getElementById('classic-failure');
     const last = classical[classical.length - 1];
     classicFailure.textContent = last ? ('#' + last.step) : '–';
+    if (classicNote) {{
+      if (!classical.length) {{
+        classicNote.textContent = 'No classical validation data was available for this trace.';
+      }} else if (firstFailure === null || firstFailure === undefined) {{
+        classicNote.textContent = 'Classical validator did not report a terminal failure within the current horizon.';
+      }} else if (firstAlert === null || firstAlert === undefined) {{
+        classicNote.textContent = 'Validator reports the first failure at step ' + firstFailure + ' with no prior hazard telemetry.';
+      }} else {{
+        const lag = Math.max(0, firstFailure - firstAlert);
+        const leadDescriptor = lag === 0 ? 'simultaneously with STM alerting.' : (lag + ' step lag behind STM.');
+        classicNote.textContent = 'Validator flags the run at step ' + firstFailure + ', ' + leadDescriptor;
+      }}
+    }}
 
     const stmTimeline = document.getElementById('stm-timeline');
     rows.forEach((row) => {{
@@ -701,6 +729,8 @@ def _write_dashboard(output_root: Path, timeline_payload: Dict[str, object]) -> 
       const pathColor = rootStyles.getPropertyValue('--path').trim() || '#c084fc';
       const guideColor = 'rgba(148,163,184,0.18)';
       const textColor = rootStyles.getPropertyValue('--muted').trim() || '#94a3b8';
+      const eventBand = rootStyles.getPropertyValue('--event-band').trim() || 'rgba(56,189,248,0.08)';
+      const failureBand = rootStyles.getPropertyValue('--failure-band').trim() || 'rgba(239,68,68,0.12)';
       const dpr = window.devicePixelRatio || 1;
       const rect = chartCanvas.getBoundingClientRect();
       const width = (rect.width || chartCanvas.clientWidth || 640);
@@ -767,13 +797,13 @@ def _write_dashboard(output_root: Path, timeline_payload: Dict[str, object]) -> 
 
       if (typeof eventStep === 'number' && eventStep >= 0 && eventStep < rows.length) {{
         const x = xFor(eventStep);
-        ctx.fillStyle = 'rgba(56,189,248,0.08)';
+        ctx.fillStyle = eventBand;
         ctx.fillRect(x - Math.max(2, xStep * 0.25), padding.top, Math.max(4, xStep * 0.5), chartHeight);
       }}
 
       if (typeof firstFailure === 'number' && firstFailure >= 0 && firstFailure < rows.length) {{
         const x = xFor(firstFailure);
-        ctx.fillStyle = 'rgba(239,68,68,0.12)';
+        ctx.fillStyle = failureBand;
         ctx.fillRect(x - Math.max(2, xStep * 0.25), padding.top, Math.max(4, xStep * 0.5), chartHeight);
       }}
 

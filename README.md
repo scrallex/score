@@ -91,19 +91,28 @@ make planbench-all
 ```
 ### Logistics guardrail demo
 
-Generate the logistics disruption artefacts, run the twin lookup, and build documentation figures with the following commands:
+Generate the logistics disruption artefacts, optional twin recommendations, and documentation figures with the following commands:
 
 ```bash
+# Base trace + metrics (writes analysis/, tokens/, timeline.json, dashboard.html)
 PYTHONPATH=score/src python score/scripts/logistics_guardrail_demo.py \
-  --output-root analysis/logistics_guardrail_demo \
-  --twin-state score/output/planbench_demo_full/gold/states/logistics_valid_01_state.json
+  --output-root analysis/logistics_guardrail_demo
 
+# Re-run with cached twins using the freshly written STM state
+PYTHONPATH=score/src python score/scripts/logistics_guardrail_demo.py \
+  --output-root analysis/logistics_guardrail_demo_with_twins \
+  --twin-state analysis/logistics_guardrail_demo/analysis_state.json \
+  --twin-top-k 2 --twin-max-distance 0.4
+
+# Export the whitepaper figures used in docs/whitepaper/logistics_guardrail.md
 PYTHONPATH=score/src python score/scripts/plot_logistics_guardrail_figures.py \
-  --timeline analysis/logistics_guardrail_demo/timeline.json \
-  --output-dir score/docs/whitepaper/img
+  --timeline analysis/logistics_guardrail_demo_with_twins/timeline.json \
+  --output-dir docs/whitepaper/img
 ```
 
-The demo writes `timeline.json`, `analysis_state.json`, and `dashboard.html` under the chosen output root, applying calibrated lambda/path thresholds and computing the guardrail lead time. When `--twin-state` is supplied the script retrieves the nearest structural twin, surfaces recovery keywords, and persists them to the timeline JSON for rendering in the dashboard and figures.
+The demo applies calibrated λ/path thresholds (from `score/analysis/router_config_logistics_enriched_native.coverage.json`) and reports the first alert/failure pair—currently λ crosses 0.538 at step 5 while the post-hoc validator fails at step 8 (3-step lead). When `--twin-state` is present the script uses `sep_text_manifold.suggest_twin_action` to surface recovery precedents and embeds them in the dashboard under **Recovery Recommendation**. The calibration workflow maintains ≈2 % foreground coverage with permutation p-values ≥ 0.29 and precision 1.0 on the reference corpus.
+
+See `docs/whitepaper/logistics_guardrail.md` for the full narrative, figures, and methodology notes that accompany the demo.
 
 
 This target regenerates the synthetic PlanBench dataset (default 300 instances
