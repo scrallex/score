@@ -7,10 +7,9 @@ import argparse
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from statistics import mean
-from typing import Dict, Iterable, List, Sequence
+from typing import Any, Dict, Iterable, List, Sequence
 
-from sep_text_manifold.pipeline import analyse_directory
+from sep_text_manifold import analyse_directory, summarise_guardrail, suggest_twin_action, TwinSuggestion
 from stm_adapters.pddl_trace import PDDLTraceAdapter
 
 
@@ -184,91 +183,96 @@ def _build_trace_payload(transitions: Sequence[Dict[str, object]]) -> Dict[str, 
     return payload
 
 
-def _max_threshold(values: Sequence[float], *, padding: float, ceiling: float | None = None) -> float:
-    if not values:
-        base = 0.0
-    else:
-        base = max(values)
-    threshold = base + padding
-    if ceiling is not None:
-        threshold = min(threshold, ceiling)
-    return threshold
+
+def _normalise_signature(value: Any) -> str | None:
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return None
 
 
-def _build_signal_rows(
-    *,
-    signals: Sequence[Dict[str, object]],
-    transitions: Sequence[Dict[str, object]],
-    event_index: int,
-) -> Dict[str, object]:
-    limit = min(len(signals), len(transitions))
-    rows: List[Dict[str, object]] = []
-    for idx in range(limit):
-        signal = signals[idx]
-        transition = transitions[idx]
-        metrics = signal.get("metrics", {}) if isinstance(signal, dict) else {}
-        dilution = signal.get("dilution", {}) if isinstance(signal, dict) else {}
-        row = {
-            "step": idx,
-            "action": transition.get("action"),
-            "status": transition.get("status", "valid"),
-            "lambda_hazard": float(signal.get("lambda_hazard", metrics.get("lambda_hazard", 0.0))),
-            "coherence": float(metrics.get("coherence", 0.0)),
-            "stability": float(metrics.get("stability", 0.0)),
-            "entropy": float(metrics.get("entropy", 0.0)),
-            "path_dilution": float(dilution.get("path", 0.0)) if isinstance(dilution, dict) else 0.0,
-            "signal_dilution": float(dilution.get("signal", 0.0)) if isinstance(dilution, dict) else 0.0,
-            "errors": transition.get("errors", []),
-            "note": transition.get("note"),
-        }
-        rows.append(row)
+def _filtered_keywords(tokens: Sequence[str], limit: int) -> List[str]:
+    words: List[str] = []
+    for token in tokens:
+        if not token:
+            continue
+        if "__" in token or token.startswith("action"):
+            continue
+        cleaned = token.replace("_", " ").strip()
+        if not cleaned:
+            continue
+        if cleaned in words:
+            continue
+        words.append(cleaned)
+        if len(words) >= max(20, limit * 4):
+            break
+    if not words:
+        return []
+    words.sort(key=lambda item: (-len(item), item.lower()))
+    return words[:limit]
 
-    baseline = [row for row in rows if row["step"] <= event_index]
-    hazard_values = [row["lambda_hazard"] for row in baseline]
-    path_values = [row["path_dilution"] for row in baseline]
-    signal_values = [row["signal_dilution"] for row in baseline]
 
-    hazard_threshold = _max_threshold(hazard_values, padding=0.0015, ceiling=0.95)
-    path_threshold = _max_threshold(path_values, padding=0.05, ceiling=1.2)
-    signal_threshold = _max_threshold(signal_values, padding=0.01)
+def _headline_from_keywords(keywords: Sequence[str]) -> str:
+    if not keywords:
+        return "Nearest precedent available for review."
+    if len(keywords) == 1:
+        return f"Stabilise around {keywords[0]}."
+    if len(keywords) == 2:
+        return f"Bridge {keywords[0]} via {keywords[1]}."
+    joined = " -> ".join(keywords[:3])
+    return f"Precedent emphasises {joined}."
 
-    alert_steps: List[int] = []
-    for row in rows:
-        hazard_alert = row["lambda_hazard"] >= hazard_threshold
-        path_alert = row["path_dilution"] >= path_threshold
-        signal_alert = row["signal_dilution"] >= signal_threshold
-        row["hazard_alert"] = hazard_alert
-        row["dilution_alert"] = path_alert or signal_alert
-        row["alert"] = hazard_alert or row["dilution_alert"]
-        if row["alert"]:
-            alert_steps.append(row["step"])
 
-    failure_steps = [row["step"] for row in rows if row["status"] != "valid"]
-    first_alert = alert_steps[0] if alert_steps else None
-    first_failure = failure_steps[0] if failure_steps else None
-    lead_time = None
-    if first_alert is not None and first_failure is not None:
-        lead_time = max(0, first_failure - first_alert)
-
-    summary = {
-        "rows": rows,
-        "thresholds": {
-            "lambda_hazard": hazard_threshold,
-            "path_dilution": path_threshold,
-            "signal_dilution": signal_threshold,
-        },
-        "alert_steps": alert_steps,
-        "failure_steps": failure_steps,
-        "first_alert": first_alert,
-        "first_failure": first_failure,
-        "lead_time": lead_time,
-        "baseline": {
-            "hazard_mean": mean(hazard_values) if hazard_values else 0.0,
-            "path_mean": mean(path_values) if path_values else 0.0,
-            "signal_mean": mean(signal_values) if signal_values else 0.0,
-        },
+def _serialise_twin(suggestion: TwinSuggestion, *, keyword_limit: int) -> Dict[str, Any]:
+    keywords = _filtered_keywords(suggestion.tokens, keyword_limit)
+    metrics = {key: float(value) for key, value in suggestion.metrics.items()}
+    payload = {
+        "window_id": suggestion.window_id,
+        "signature": _normalise_signature(suggestion.signature),
+        "distance": float(suggestion.distance),
+        "metrics": metrics,
+        "keywords": keywords,
+        "headline": _headline_from_keywords(keywords),
     }
-    return summary
+    return payload
+
+
+def _recommend_twins(
+    *,
+    alert_row: Dict[str, Any],
+    twin_state: Dict[str, Any],
+    top_k: int,
+    max_distance: float,
+    match_signature: bool,
+    keyword_limit: int,
+) -> List[Dict[str, Any]]:
+    invalid_action: Dict[str, Any] = {
+        "metrics": {
+            "coherence": float(alert_row.get("coherence", 0.0)),
+            "stability": float(alert_row.get("stability", 0.0)),
+            "entropy": float(alert_row.get("entropy", 0.0)),
+            "rupture": float(alert_row.get("lambda_hazard", 0.0)),
+            "lambda_hazard": float(alert_row.get("lambda_hazard", 0.0)),
+        }
+    }
+    window_id = alert_row.get("window_id")
+    if window_id is not None:
+        invalid_action["window_id"] = window_id
+    signature = _normalise_signature(alert_row.get("signature"))
+    if signature is not None:
+        invalid_action["signature"] = signature
+
+    suggestions = suggest_twin_action(
+        invalid_action,
+        twin_state,
+        top_k=top_k,
+        max_distance=max_distance,
+        match_signature=match_signature,
+        top_tokens=max(12, keyword_limit * 4),
+    )
+    return [
+        _serialise_twin(suggestion, keyword_limit=keyword_limit)
+        for suggestion in suggestions
+    ]
 
 
 def _build_classical_timeline(transitions: Sequence[Dict[str, object]]) -> List[Dict[str, object]]:
@@ -301,6 +305,7 @@ def _write_dashboard(output_root: Path, timeline_payload: Dict[str, object]) -> 
       --panel: rgba(15, 23, 42, 0.72);
       --border: #1f2937;
       --accent: #38bdf8;
+      --path: #c084fc;
       --alert: #f97316;
       --failure: #ef4444;
       --success: #22c55e;
@@ -439,6 +444,98 @@ def _write_dashboard(output_root: Path, timeline_payload: Dict[str, object]) -> 
       color: #bfdbfe;
       line-height: 1.5;
     }}
+    .panel h3 {{
+      margin: 24px 0 12px;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(226,232,240,0.82);
+    }}
+    .chart-card {{
+      margin-top: 18px;
+      background: rgba(15,23,42,0.55);
+      border: 1px solid rgba(148,163,184,0.12);
+      border-radius: 12px;
+      padding: 16px 18px;
+    }}
+    .chart-card canvas {{
+      width: 100%;
+      height: 220px;
+      display: block;
+    }}
+    .legend {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }}
+    .legend-item {{
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }}
+    .legend-item::before {{
+      content: '';
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.88;
+    }}
+    .legend-item.hazard {{ color: var(--accent); }}
+    .legend-item.path {{ color: var(--path); }}
+    .legend-item.threshold {{ color: rgba(148,163,184,0.82); }}
+    .twin-card {{
+      margin-top: 18px;
+      padding: 18px;
+      background: rgba(20,31,53,0.62);
+      border: 1px solid rgba(56,189,248,0.18);
+      border-radius: 12px;
+    }}
+    .twin-card p {{
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }}
+    .twin-entry {{
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(148,163,184,0.12);
+    }}
+    .twin-entry:last-child {{
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }}
+    .twin-entry .headline {{
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: 0.04em;
+    }}
+    .twin-entry .meta {{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: 0.06em;
+    }}
+    .twin-entry .keywords {{
+      margin-top: 6px;
+      font-size: 12px;
+      color: rgba(148,163,184,0.85);
+      letter-spacing: 0.04em;
+    }}
+    .twin-empty {{
+      color: rgba(148,163,184,0.75);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }}
     @media (max-width: 820px) {{
       body {{ padding: 24px; }}
       .columns {{ flex-direction: column; }}
@@ -480,11 +577,24 @@ def _write_dashboard(output_root: Path, timeline_payload: Dict[str, object]) -> 
           <div class=\"value\" id=\"stm-threshold\">–</div>
         </div>
       </div>
+      <div class=\"chart-card\">
+        <canvas id=\"metric-chart\"></canvas>
+        <div class=\"legend\">
+          <span class=\"legend-item hazard\">λ hazard</span>
+          <span class=\"legend-item path\">Path dilution</span>
+          <span class=\"legend-item threshold\">λ threshold</span>
+        </div>
+      </div>
       <div class=\"timeline\" id=\"stm-timeline\"></div>
       <div class=\"note\" id=\"stm-note\"></div>
+      <div class=\"twin-card\">
+        <h3>Recovery Recommendation</h3>
+        <p id=\"twin-summary\"></p>
+        <div id=\"twin-recovery\"></div>
+      </div>
     </section>
   </div>
-  <script id=\"timeline-data\" type=\"application/json\">{timeline_json}</script>
+  <script id="timeline-data" type="application/json">{timeline_json}</script>
   <script>
     const data = JSON.parse(document.getElementById('timeline-data').textContent);
     const classical = data.classical_validator || [];
@@ -492,6 +602,13 @@ def _write_dashboard(output_root: Path, timeline_payload: Dict[str, object]) -> 
     const rows = signalSummary.rows || [];
     const alertSteps = new Set(signalSummary.alert_steps || []);
     const failureSteps = new Set(signalSummary.failure_steps || []);
+    const eventStep = data.event_step;
+    const twin = data.twin || {{}};
+    const twinSuggestions = twin.suggestions || [];
+    const firstAlert = signalSummary.first_alert;
+    const firstFailure = signalSummary.first_failure;
+    const lead = signalSummary.lead_time;
+    const hazardThreshold = (signalSummary.thresholds || {{}}).lambda_hazard;
 
     const classicTimeline = document.getElementById('classic-timeline');
     classical.forEach((entry) => {{
@@ -560,21 +677,193 @@ def _write_dashboard(output_root: Path, timeline_payload: Dict[str, object]) -> 
       stmTimeline.appendChild(wrapper);
     }});
 
-    const lead = signalSummary.lead_time;
     document.getElementById('stm-lead').textContent = lead ? (lead + ' steps') : '0 steps';
-    const firstAlert = signalSummary.first_alert;
     document.getElementById('stm-first-alert').textContent = firstAlert === null || firstAlert === undefined ? '–' : ('#' + firstAlert);
-    const hazardThreshold = (signalSummary.thresholds || {{}}).lambda_hazard;
     document.getElementById('stm-threshold').textContent = hazardThreshold === undefined ? '0.000' : Number.parseFloat(hazardThreshold).toFixed(3);
 
     const note = document.getElementById('stm-note');
     if (firstAlert === null || firstAlert === undefined) {{
       note.textContent = 'No foreground alert fired within the analysed horizon.';
     }} else {{
-      const firstFailure = signalSummary.first_failure;
       const leadDelta = firstFailure === null || firstFailure === undefined ? null : firstFailure - firstAlert;
       const detail = leadDelta === null ? 'Alert raised before failure check.' : (leadDelta + ' step lead-time before failure.');
       note.textContent = 'STM flagged a structural deviation at step ' + firstAlert + ', ' + detail;
+    }}
+
+    const chartCanvas = document.getElementById('metric-chart');
+    function renderChart() {{
+      if (!chartCanvas || !rows.length) {{
+        return;
+      }}
+      const rootStyles = getComputedStyle(document.documentElement);
+      const accent = rootStyles.getPropertyValue('--accent').trim() || '#38bdf8';
+      const alertColor = rootStyles.getPropertyValue('--alert').trim() || '#f97316';
+      const pathColor = rootStyles.getPropertyValue('--path').trim() || '#c084fc';
+      const guideColor = 'rgba(148,163,184,0.18)';
+      const textColor = rootStyles.getPropertyValue('--muted').trim() || '#94a3b8';
+      const dpr = window.devicePixelRatio || 1;
+      const rect = chartCanvas.getBoundingClientRect();
+      const width = (rect.width || chartCanvas.clientWidth || 640);
+      const height = 220;
+      chartCanvas.width = width * dpr;
+      chartCanvas.height = height * dpr;
+      const ctx = chartCanvas.getContext('2d');
+      if (!ctx) {{
+        return;
+      }}
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, width * dpr, height * dpr);
+      ctx.scale(dpr, dpr);
+
+      const padding = {{ left: 48, right: 20, top: 16, bottom: 28 }};
+      const chartWidth = width - padding.left - padding.right;
+      const chartHeight = height - padding.top - padding.bottom;
+      if (chartWidth <= 0 || chartHeight <= 0) {{
+        return;
+      }}
+
+      const lambdaValues = rows.map((row) => Number(row.lambda_hazard || 0));
+      const pathValues = rows.map((row) => Number(row.path_dilution || 0));
+      const seriesValues = lambdaValues.concat(pathValues);
+      if (typeof hazardThreshold === 'number') {{
+        seriesValues.push(Number(hazardThreshold));
+      }}
+      seriesValues.push(0);
+      const maxVal = Math.max(...seriesValues);
+      const minVal = Math.min(...seriesValues);
+      const span = maxVal - minVal || 1;
+      const xStep = rows.length <= 1 ? 0 : chartWidth / (rows.length - 1);
+      const xFor = (idx) => padding.left + idx * xStep;
+      const yFor = (value) => padding.top + chartHeight - ((value - minVal) / span) * chartHeight;
+
+      // grid lines
+      ctx.strokeStyle = guideColor;
+      ctx.lineWidth = 1;
+      ctx.font = '12px "Inter", "Segoe UI", sans-serif';
+      ctx.fillStyle = textColor;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      const gridLevels = 4;
+      for (let i = 0; i <= gridLevels; i += 1) {{
+        const value = minVal + (span / gridLevels) * i;
+        const y = yFor(value);
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+        ctx.stroke();
+        ctx.fillText(value.toFixed(2), padding.left - 8, y);
+      }}
+
+      if (typeof hazardThreshold === 'number' && !Number.isNaN(hazardThreshold)) {{
+        const yHaz = yFor(hazardThreshold);
+        ctx.setLineDash([6, 6]);
+        ctx.strokeStyle = 'rgba(148,163,184,0.55)';
+        ctx.beginPath();
+        ctx.moveTo(padding.left, yHaz);
+        ctx.lineTo(width - padding.right, yHaz);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }}
+
+      if (typeof eventStep === 'number' && eventStep >= 0 && eventStep < rows.length) {{
+        const x = xFor(eventStep);
+        ctx.fillStyle = 'rgba(56,189,248,0.08)';
+        ctx.fillRect(x - Math.max(2, xStep * 0.25), padding.top, Math.max(4, xStep * 0.5), chartHeight);
+      }}
+
+      if (typeof firstFailure === 'number' && firstFailure >= 0 && firstFailure < rows.length) {{
+        const x = xFor(firstFailure);
+        ctx.fillStyle = 'rgba(239,68,68,0.12)';
+        ctx.fillRect(x - Math.max(2, xStep * 0.25), padding.top, Math.max(4, xStep * 0.5), chartHeight);
+      }}
+
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      lambdaValues.forEach((value, idx) => {{
+        const x = xFor(idx);
+        const y = yFor(value);
+        if (idx === 0) {{
+          ctx.moveTo(x, y);
+        }} else {{
+          ctx.lineTo(x, y);
+        }}
+      }});
+      ctx.stroke();
+
+      ctx.strokeStyle = pathColor;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      pathValues.forEach((value, idx) => {{
+        const x = xFor(idx);
+        const y = yFor(value);
+        if (idx === 0) {{
+          ctx.moveTo(x, y);
+        }} else {{
+          ctx.lineTo(x, y);
+        }}
+      }});
+      ctx.stroke();
+
+      lambdaValues.forEach((value, idx) => {{
+        if (!alertSteps.has(rows[idx].step)) {{
+          return;
+        }}
+        const x = xFor(idx);
+        const y = yFor(value);
+        ctx.fillStyle = alertColor;
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }});
+    }}
+
+    renderChart();
+    window.addEventListener('resize', renderChart);
+
+    const twinSummary = document.getElementById('twin-summary');
+    const twinContainer = document.getElementById('twin-recovery');
+    if (twinContainer) {{
+      twinContainer.innerHTML = '';
+      if (!twinSuggestions.length) {{
+        if (twinSummary) {{
+          twinSummary.textContent = 'No cached twin corpus supplied for this run.';
+        }}
+        const empty = document.createElement('div');
+        empty.className = 'twin-empty';
+        empty.textContent = firstAlert === null || firstAlert === undefined ? 'Awaiting hazard before twin lookup.' : 'No twin suggestions available for the alert window.';
+        twinContainer.appendChild(empty);
+      }} else {{
+        if (twinSummary) {{
+          const source = twin.source || 'cached corpus';
+          const distance = twinSuggestions[0].distance;
+          const message = typeof distance === 'number' ? `Nearest precedent from ${{source}} (distance ${{distance.toFixed(3)}}).` : `Nearest precedent from ${{source}}.`;
+          twinSummary.textContent = message;
+        }}
+        twinSuggestions.forEach((entry) => {{
+          const wrapper = document.createElement('div');
+          wrapper.className = 'twin-entry';
+          const headline = document.createElement('div');
+          headline.className = 'headline';
+          headline.textContent = entry.headline || 'Twin suggestion';
+          wrapper.appendChild(headline);
+          const meta = document.createElement('div');
+          meta.className = 'meta';
+          const metrics = entry.metrics || {{}};
+          const lambdaValue = metrics.lambda_hazard === undefined ? '0.000' : Number(metrics.lambda_hazard).toFixed(3);
+          const distance = entry.distance === undefined ? 'N/A' : Number(entry.distance).toFixed(3);
+          const signatureText = entry.signature ? ' · ' + entry.signature : '';
+          meta.textContent = 'lambda=' + lambdaValue + ' · dist=' + distance + signatureText;
+          wrapper.appendChild(meta);
+          if (Array.isArray(entry.keywords) && entry.keywords.length) {{
+            const keywords = document.createElement('div');
+            keywords.className = 'keywords';
+            keywords.textContent = 'Keywords: ' + entry.keywords.join(' · ');
+            wrapper.appendChild(keywords);
+          }}
+          twinContainer.appendChild(wrapper);
+        }});
+      }}
     }}
   </script>
 </body>
@@ -613,16 +902,59 @@ def generate_demo(args: argparse.Namespace) -> Dict[str, object]:
     state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
 
     event_index = next((idx for idx, step in enumerate(STEP_DEFINITIONS) if "event" in step.action), 3)
-    signal_summary = _build_signal_rows(
+    signal_summary = summarise_guardrail(
         signals=analysis.signals,
         transitions=transitions,
         event_index=event_index,
     )
+
+    twin_payload: Dict[str, Any] = {"suggestions": []}
+    twin_state_path = getattr(args, "twin_state", None)
+    if twin_state_path:
+        twin_path = Path(twin_state_path)
+        if twin_path.exists():
+            twin_state_data = json.loads(twin_path.read_text(encoding="utf-8"))
+            first_alert = signal_summary.get("first_alert")
+            rows = signal_summary.get("rows", [])
+            if isinstance(first_alert, int) and 0 <= first_alert < len(rows):
+                alert_row = rows[first_alert]
+                suggestions = _recommend_twins(
+                    alert_row=alert_row,
+                    twin_state=twin_state_data,
+                    top_k=max(1, int(getattr(args, "twin_top_k", 3))),
+                    max_distance=float(getattr(args, "twin_max_distance", 0.2)),
+                    match_signature=bool(getattr(args, "twin_match_signature", False)),
+                    keyword_limit=max(2, int(getattr(args, "twin_keyword_limit", 4))),
+                )
+                twin_payload = {
+                    "suggestions": suggestions,
+                    "source": twin_path.name,
+                    "source_path": str(twin_path),
+                }
+            else:
+                twin_payload = {
+                    "suggestions": [],
+                    "source": twin_path.name,
+                    "source_path": str(twin_path),
+                    "message": "No alert fired within the analysed horizon.",
+                }
+                if getattr(args, "verbose", False):
+                    print("[twin] alert window not reached; skipping twin lookup", flush=True)
+        else:
+            twin_payload = {
+                "suggestions": [],
+                "source": str(twin_path),
+                "missing": True,
+            }
+            if getattr(args, "verbose", False):
+                print(f"[twin] twin state not found: {twin_path}", flush=True)
     timeline_path = output_root / "timeline.json"
     timeline_payload = {
         "transitions": transitions,
         "signal_summary": signal_summary,
         "classical_validator": _build_classical_timeline(transitions),
+        "event_step": event_index,
+        "twin": twin_payload,
     }
     timeline_path.write_text(json.dumps(timeline_payload, indent=2), encoding="utf-8")
 
@@ -637,6 +969,8 @@ def generate_demo(args: argparse.Namespace) -> Dict[str, object]:
         "lead_time": signal_summary.get("lead_time"),
         "first_alert": signal_summary.get("first_alert"),
         "first_failure": signal_summary.get("first_failure"),
+        "twin_suggestions": twin_payload.get("suggestions", []),
+        "twin_source": twin_payload.get("source_path", twin_payload.get("source")),
     }
     return summary
 
@@ -660,6 +994,35 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=128,
         help="Stride for STM analysis",
+    )
+    parser.add_argument(
+        "--twin-state",
+        type=Path,
+        default=None,
+        help="Optional STM state JSON to query for recovery twins",
+    )
+    parser.add_argument(
+        "--twin-top-k",
+        type=int,
+        default=3,
+        help="Maximum number of twin suggestions to surface",
+    )
+    parser.add_argument(
+        "--twin-max-distance",
+        type=float,
+        default=0.2,
+        help="Euclidean distance ceiling applied when matching twins",
+    )
+    parser.add_argument(
+        "--twin-match-signature",
+        action="store_true",
+        help="Require matching STM signatures for twin candidates",
+    )
+    parser.add_argument(
+        "--twin-keyword-limit",
+        type=int,
+        default=4,
+        help="Number of keywords to display per twin suggestion",
     )
     parser.add_argument("--verbose", action="store_true", help="Enable verbose manifold logging")
     return parser.parse_args()

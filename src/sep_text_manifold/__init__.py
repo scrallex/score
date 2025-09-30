@@ -13,6 +13,7 @@ how to integrate with the existing C++ codebase.
 
 from .ingest import ingest_directory
 from .encode import encode_window
+from .guardrail import calibrate_threshold, summarise_guardrail
 from .manifold import build_manifold
 from .pipeline import AnalysisResult, analyse_directory
 from .strings import extract_strings, aggregate_string_metrics
@@ -49,4 +50,6 @@ __all__ = [
     "LeadTimeResult",
     "suggest_twin_action",
     "TwinSuggestion",
+    "calibrate_threshold",
+    "summarise_guardrail",
 ]

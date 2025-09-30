@@ -89,6 +89,22 @@ benchmarks discussed in the STM whitepaper.
 ```
 make planbench-all
 ```
+### Logistics guardrail demo
+
+Generate the logistics disruption artefacts, run the twin lookup, and build documentation figures with the following commands:
+
+```bash
+PYTHONPATH=score/src python score/scripts/logistics_guardrail_demo.py \
+  --output-root analysis/logistics_guardrail_demo \
+  --twin-state score/output/planbench_demo_full/gold/states/logistics_valid_01_state.json
+
+PYTHONPATH=score/src python score/scripts/plot_logistics_guardrail_figures.py \
+  --timeline analysis/logistics_guardrail_demo/timeline.json \
+  --output-dir score/docs/whitepaper/img
+```
+
+The demo writes `timeline.json`, `analysis_state.json`, and `dashboard.html` under the chosen output root, applying calibrated lambda/path thresholds and computing the guardrail lead time. When `--twin-state` is supplied the script retrieves the nearest structural twin, surfaces recovery keywords, and persists them to the timeline JSON for rendering in the dashboard and figures.
+
 
 This target regenerates the synthetic PlanBench dataset (default 300 instances
 per domain), converts traces into STM manifolds, calibrates the 5% guardrail for
