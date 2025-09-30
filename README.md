@@ -91,7 +91,7 @@ make planbench-all
 ```
 ### Logistics guardrail demo
 
-Generate the logistics disruption artefacts, optional twin recommendations, and documentation figures with the following commands:
+Run the logistics disruption scenario, optional twin lookup, and figure generation with the commands below.
 
 ```bash
 # Base trace + metrics (writes analysis/, tokens/, timeline.json, dashboard.html)
@@ -104,15 +104,16 @@ PYTHONPATH=score/src python score/scripts/logistics_guardrail_demo.py \
   --twin-state analysis/logistics_guardrail_demo/analysis_state.json \
   --twin-top-k 2 --twin-max-distance 0.4
 
-# Export the whitepaper figures used in docs/whitepaper/logistics_guardrail.md
+# Export the whitepaper figures referenced in docs/whitepaper/logistics_guardrail.md
 PYTHONPATH=score/src python score/scripts/plot_logistics_guardrail_figures.py \
   --timeline analysis/logistics_guardrail_demo_with_twins/timeline.json \
   --output-dir docs/whitepaper/img
 ```
 
-The demo applies calibrated λ/path thresholds (from `score/analysis/router_config_logistics_enriched_native.coverage.json`) and reports the first alert/failure pair—currently λ crosses 0.538 at step 5 while the post-hoc validator fails at step 8 (3-step lead). When `--twin-state` is present the script uses `sep_text_manifold.suggest_twin_action` to surface recovery precedents and embeds them in the dashboard under **Recovery Recommendation**. The calibration workflow maintains ≈2 % foreground coverage with permutation p-values ≥ 0.29 and precision 1.0 on the reference corpus.
+The guardrail applies calibrated lambda and dilution thresholds (see `analysis/router_config_logistics_invalid_native.json`). In the reference run the first alert fires at step 5 with lambda 0.538 and the classical validator fails at step 8, yielding a three-step lead. Passing `--twin-state` enables `sep_text_manifold.suggest_twin_action`, which surfaces recovery precedents in the dashboard's **Recovery Recommendation** panel. Permutation evidence in `docs/tests/permutation_logistics_native.json` shows precision 1.0 with foreground coverage close to two percent.
 
-See `docs/whitepaper/logistics_guardrail.md` for the full narrative, figures, and methodology notes that accompany the demo.
+Validate the pipeline at any time with `pytest score/tests/test_logistics_guardrail_demo.py -q`, and consult `docs/whitepaper/logistics_guardrail.md` for narrative context and figure references.
+
 
 
 This target regenerates the synthetic PlanBench dataset (default 300 instances
