@@ -1,0 +1,24 @@
+{
+  "total_events": 16,
+  "naive_semantic_alerts": 7,
+  "naive_structural_alerts": 7,
+  "hybrid_guardrail_alerts": 1,
+  "false_positive_reduction_rate": 0.9285714285714286,
+  "hybrid_event": {
+    "step": 12,
+    "source": "synthetic",
+    "event": "database_connection_timeout",
+    "cluster": "hybrid_alert",
+    "patternability": 0.478,
+    "semantic_similarity": 0.32,
+    "coherence": 0.07,
+    "stability": 0.6,
+    "entropy": 0.93,
+    "rupture": 0.4,
+    "occurrences": 4,
+    "naive_semantic_alert": true,
+    "naive_structural_alert": true,
+    "hybrid_guardrail_alert": true,
+    "annotation": "synthetic incident"
+  }
+}

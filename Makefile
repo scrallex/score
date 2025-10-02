@@ -1,7 +1,7 @@
 .PHONY: scorecard plots lead twins onset all
 .PHONY: demo-payload demo-up demo-down
 .PHONY: planbench-all planbench-scale codetrace-report
-.PHONY: semantic-guardrail-demo
+.PHONY: semantic-guardrail-demo final-report
 
 PLANBENCH_COUNT ?= 300
 PLANBENCH_TARGETS ?= logistics blocksworld mystery_bw
@@ -210,3 +210,11 @@ semantic-guardrail-demo:
 
 codetrace-report:
 	PYTHONPATH=src .venv/bin/python demo/coding/run_comparison.py
+
+final-report:
+	@PYTHONPATH=src .venv/bin/python scripts/analysis/summarize_semantic_guardrail.py
+	@if [ -f results/semantic_bridge_combined.png ]; then \
+	  mkdir -p docs/whitepaper/figures; \
+	  cp results/semantic_bridge_combined.png docs/whitepaper/figures/semantic_bridge_combined.png; \
+	fi
+	@latexmk -pdf -quiet -f -g -output-directory=docs/whitepaper docs/whitepaper/Semantic_Guardrail_Whitepaper.tex

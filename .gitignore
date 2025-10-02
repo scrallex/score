@@ -8,6 +8,8 @@ cpr/
 data_snapshot/
 tools/
 analysis/
+!scripts/analysis/
+!scripts/analysis/*.py
 
 # Compiled binaries
 *.exe
