@@ -190,20 +190,10 @@ semantic-guardrail-demo:
 	    --embedding-method transformer \
 	    --output results/semantic_bridge_mms_scatter.png; \
 	fi
-	@python - <<-'PY'
-	from pathlib import Path
-	from PIL import Image
-	left = Path('results/semantic_bridge_scatter.png')
-	right = Path('results/semantic_bridge_mms_scatter.png')
-	if left.exists() and right.exists():
-	    canvas_path = Path('results/semantic_bridge_combined.png')
-	    left_img = Image.open(left)
-	    right_img = Image.open(right)
-	    canvas = Image.new('RGB', (left_img.width + right_img.width, max(left_img.height, right_img.height)), 'white')
-	    canvas.paste(left_img, (0, 0))
-	    canvas.paste(right_img, (left_img.width, 0))
-	    canvas.save(canvas_path)
-	PY
+	@.venv/bin/python scripts/util/combine_scatter.py \
+	  results/semantic_bridge_scatter.png \
+	  results/semantic_bridge_mms_scatter.png \
+	  results/semantic_bridge_combined.png
 	@mkdir -p docs/whitepaper/figures
 	@if [ -f results/semantic_bridge_combined.png ]; then \
 	  cp results/semantic_bridge_combined.png docs/whitepaper/figures/semantic_bridge_combined.png; \
