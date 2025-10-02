@@ -27,6 +27,7 @@ from .dilution import (
 )
 from .comparison import stm_val_alignment, detection_lead_time, AlignmentResult, LeadTimeResult
 from .feedback import suggest_twin_action, TwinSuggestion
+from .semantic import SemanticEmbedder, EmbeddingConfig, seed_similarity
 
 __all__ = [
     "ingest_directory",
@@ -44,6 +45,9 @@ __all__ = [
     "signal_dilution",
     "semantic_dilution",
     "compute_dilution_metrics",
+    "SemanticEmbedder",
+    "EmbeddingConfig",
+    "seed_similarity",
     "stm_val_alignment",
     "detection_lead_time",
     "AlignmentResult",
