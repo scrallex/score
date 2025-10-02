@@ -1,6 +1,7 @@
 .PHONY: scorecard plots lead twins onset all
 .PHONY: demo-payload demo-up demo-down
 .PHONY: planbench-all planbench-scale codetrace-report
+.PHONY: semantic-guardrail-demo
 
 PLANBENCH_COUNT ?= 300
 PLANBENCH_TARGETS ?= logistics blocksworld mystery_bw
@@ -156,6 +157,66 @@ planbench-scale:
 	    --window $(PLANBENCH_SCALE_WINDOW) \
 	    --summary-json analysis/guardrail_sweep_$${dom}_scale$(PLANBENCH_SCALE_COUNT)_invalid.summary.json; \
 	done
+
+semantic-guardrail-demo:
+	@echo "[semantic-guardrail] Preparing documentation manifold"
+	@if [ ! -f analysis/semantic_demo_state.json ]; then \
+	  PYTHONPATH=/score .venv/bin/stm ingest docs --extensions md txt json yaml \
+	    --output analysis/semantic_demo_state.json --store-signals --min-token-len 3 --drop-numeric; \
+	fi
+	@if [ -d data/mms ] && [ ! -f analysis/mms_state.json ]; then \
+	  PYTHONPATH=/score .venv/bin/stm ingest data/mms --output analysis/mms_state.json --store-signals; \
+	fi
+	@echo "[semantic-guardrail] Building semantic projections"
+	@PYTHONPATH=src .venv/bin/python scripts/semantic_bridge_demo.py \
+	  analysis/semantic_demo_state.json \
+	  --seeds risk resilience volatility anomaly "predictive maintenance" \
+	  --top-k 15 --min-occurrences 3 --embedding-method transformer \
+	  --output results/semantic_bridge_docs.json
+	@PYTHONPATH=src .venv/bin/python scripts/semantic_bridge_plot.py \
+	  analysis/semantic_demo_state.json \
+	  --seeds risk resilience volatility anomaly "predictive maintenance" \
+	  --embedding-method transformer \
+	  --output results/semantic_bridge_scatter.png
+	@if [ -f analysis/mms_state.json ]; then \
+	  PYTHONPATH=src .venv/bin/python scripts/semantic_bridge_demo.py \
+	    analysis/mms_state.json \
+	    --seeds risk resilience volatility anomaly "predictive maintenance" \
+	    --top-k 15 --min-occurrences 1 --embedding-method transformer \
+	    --output results/semantic_bridge_mms.json; \
+	  PYTHONPATH=src .venv/bin/python scripts/semantic_bridge_plot.py \
+	    analysis/mms_state.json \
+	    --seeds risk resilience volatility anomaly "predictive maintenance" \
+	    --embedding-method transformer \
+	    --output results/semantic_bridge_mms_scatter.png; \
+	fi
+	@python - <<-'PY'
+	from pathlib import Path
+	from PIL import Image
+	left = Path('results/semantic_bridge_scatter.png')
+	right = Path('results/semantic_bridge_mms_scatter.png')
+	if left.exists() and right.exists():
+	    canvas_path = Path('results/semantic_bridge_combined.png')
+	    left_img = Image.open(left)
+	    right_img = Image.open(right)
+	    canvas = Image.new('RGB', (left_img.width + right_img.width, max(left_img.height, right_img.height)), 'white')
+	    canvas.paste(left_img, (0, 0))
+	    canvas.paste(right_img, (left_img.width, 0))
+	    canvas.save(canvas_path)
+	PY
+	@mkdir -p docs/whitepaper/figures
+	@if [ -f results/semantic_bridge_combined.png ]; then \
+	  cp results/semantic_bridge_combined.png docs/whitepaper/figures/semantic_bridge_combined.png; \
+	fi
+	@echo "[semantic-guardrail] Generating stream"
+	@PYTHONPATH=src .venv/bin/python scripts/semantic_guardrail_stream.py \
+	  --seeds risk resilience volatility anomaly "predictive maintenance" \
+	  --samples 6
+	@echo "[semantic-guardrail] Launching dashboard"
+	@PYTHONPATH=src .venv/bin/python scripts/demos/semantic_guardrail_dashboard.py \
+	  --stream results/semantic_guardrail_stream.jsonl \
+	  --background results/semantic_bridge_combined.png \
+	  --states analysis/semantic_demo_state.json analysis/mms_state.json
 
 codetrace-report:
 	PYTHONPATH=src .venv/bin/python demo/coding/run_comparison.py
