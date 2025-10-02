@@ -31,6 +31,8 @@ pattern appears and *what it means*.
   - Scatter plot fusing patternability and semantic similarity:
     `results/semantic_bridge_scatter.png`.
   - Markdown digest: `results/semantic_bridge_report.md`.
+  - Stream simulator output: `results/semantic_guardrail_stream.jsonl` (see
+    `scripts/semantic_guardrail_stream.py`).
 
 ## Key Findings
 
@@ -56,7 +58,8 @@ pattern appears and *what it means*.
 ## Next Experiments
 
 1. **Industry overlays** – Run the bridge against logistics traces, software
-   repos, and financial market snapshots to publish side-by-side scatter plots.
+   repos, and financial market snapshots to publish side-by-side scatter plots
+   (stacked via `results/semantic_bridge_combined.png`).
 2. **Temporal semantics** – Stream new manifolds through
    `scripts/semantic_bridge_demo.py` in “follow-the-log” mode to monitor when
    semantic risk terms flare up despite stable structural metrics.
@@ -66,5 +69,7 @@ pattern appears and *what it means*.
 
 The artefacts above show that the manifold already captures the *rhythm* of the
 data; sentence-level embeddings layer in meaning so AI systems can respond with
-context-aware recommendations across industries.
-
+context-aware recommendations across industries. The stream simulator ties the
+static plot to operator experience by contrasting naïve semantic alerts,
+structure-only alerts, and the hybrid guardrail that fires only on the
+upper-right quadrant.
