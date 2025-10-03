@@ -171,25 +171,15 @@ semantic-guardrail-demo:
 	    --semantic-min-occ 2 \
 	    --seeds risk resilience volatility anomaly "predictive maintenance"; \
 	fi
-	@echo "[semantic-guardrail] Generating reality-filter stream"
-	@PYTHONPATH=src .venv/bin/python scripts/reality_filter_stream.py \
+	@echo "[semantic-guardrail] Running evaluation set"
+	@PYTHONPATH=src .venv/bin/python scripts/reality_filter_eval.py \
 	  --manifest analysis/truth_packs/docs_demo/manifest.json \
-	  --spans demo/truth_pack/sample_spans.json \
-	  --seeds risk resilience volatility anomaly "predictive maintenance" \
-	  --semantic-threshold 0.25 \
-	  --structural-threshold 0.46 \
-	  --r-min 2 \
-	  --hazard-max 0.55 \
-	  --sigma-min 0.28 \
-	  --repair \
-	  --output results/semantic_guardrail_stream.jsonl \
-	  --metrics-output results/semantic_guardrail_metrics.json
-	@echo "[semantic-guardrail] Launching dashboard"
-	@PYTHONPATH=src .venv/bin/python scripts/demos/semantic_guardrail_dashboard.py \
-	  --stream results/semantic_guardrail_stream.jsonl \
-	  --background analysis/truth_packs/docs_demo/semantic_scatter.png \
-	  --states analysis/truth_packs/docs_demo/manifold_state.json \
-	  --seeds risk resilience volatility anomaly "predictive maintenance"
+	  --claims data/eval/docs_demo/claims.jsonl \
+	  --output-dir results/eval --pack-id docs_demo
+	@echo "[semantic-guardrail] Launching caseboard"
+	@PYTHONPATH=src .venv/bin/python scripts/demos/reality_filter_caseboard.py \
+	  --detail results/eval/docs_demo/eval_detail.jsonl \
+	  --summary results/eval/docs_demo/eval_summary.json
 
 PACK ?= docs_demo
 PACK_PATH ?= analysis/truth_packs/$(PACK)

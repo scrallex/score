@@ -17,19 +17,34 @@ Workslop and hallucinated spans erode trust in AI copilots. We introduce a reali
 - ANN + q-gram search for twin retrieval.
 - Acceptance curves collected via sweep target (`make sweep`).
 
-## 4. Reality Filter Demo
+## 4. Caseboard Demo
 
-- Span sources: simulated JSON (`SimSpanSource`) and live LLM (`LLMSpanSource`).
-- Streaming pipeline (`scripts/reality_filter_stream.py`): evaluation, twin repair loop, telemetry.
-- Dashboard panels + KPIs.
+- Span sources: simulated JSON (`SimSpanSource`), evaluation claims (`data/eval/<pack>/claims.jsonl`), and LLM streaming (`LLMSpanSource`).
+- Evaluation runner (`scripts/reality_filter_eval.py`) executes baseline vs filter, logging per-sentence decisions, repairs, and latency.
+- Caseboard (`scripts/demos/reality_filter_caseboard.py`) shows raw answer, decision log (repeat/hazard/semantic badges with twin citations), and repaired answer with numbered receipts.
 
-## 5. Results (to populate)
+## 5. Results Snapshot
 
-- KPIs for docs_demo + second pack.
-- Threshold sweeps (coverage vs r_min/λ/σ).
-- Permutation p-values.
-- Repair yield and citation coverage.
-- Latency distribution vs budget.
+| Pack | Hallucination ↓ | Repair Yield ↑ | Citation Coverage ↑ | Latency p50 (ms) | Latency p90 (ms) |
+| --- | --- | --- | --- | --- | --- |
+| docs_demo | 1.00 | 1.00 | 0.00 | 85 | 85 |
+| whitepaper_demo | 0.40 | 0.50 | 1.00 | 85 | 89 |
+
+Commands:
+
+```bash
+make pack PACK=docs_demo
+PYTHONPATH=src .venv/bin/python scripts/make_eval_from_pack.py \
+  --manifest analysis/truth_packs/docs_demo/manifest.json \
+  --output data/eval/docs_demo/claims.jsonl
+PYTHONPATH=src .venv/bin/python scripts/reality_filter_eval.py \
+  --manifest analysis/truth_packs/docs_demo/manifest.json \
+  --claims data/eval/docs_demo/claims.jsonl \
+  --pack-id docs_demo
+PYTHONPATH=src .venv/bin/python scripts/reality_filter_report.py --packs docs_demo
+```
+
+Equivalent commands apply to `whitepaper_demo`.
 
 ## 6. Risks & Limits
 
@@ -39,10 +54,16 @@ Workslop and hallucinated spans erode trust in AI copilots. We introduce a reali
 
 ## 7. Reproducibility
 
-- `make pack PACK=<name>`
-- `make stream PACK=<name> SPANS=...`
-- `make sweep`, `make permutation`, `make report`
-- `/seen` service: `uvicorn scripts.reality_filter_service:app --reload`
-- Benchmark: `PYTHONPATH=src .venv/bin/python scripts/benchmark_seen.py --manifest ...`
+```bash
+make pack PACK=<pack>
+PYTHONPATH=src .venv/bin/python scripts/make_eval_from_pack.py --manifest analysis/truth_packs/<pack>/manifest.json --output data/eval/<pack>/claims.jsonl
+make eval PACK=analysis/truth_packs/<pack> CLAIMS=data/eval/<pack>/claims.jsonl
+make eval-report PACK=<pack>
+make sweep PACK=<pack>
+make permutation PACK=<pack>
+make report PACK=<pack>
+uvicorn scripts.reality_filter_service:app --reload
+make bench-seen PACK_PATH=analysis/truth_packs/<pack>
+```
 
-Future revisions will pull figures from `results/report/<pack>.md` and embed structured tables.
+Reports: `results/report/<pack>.md`, evaluation detail: `results/eval/<pack>/eval_detail.jsonl`.

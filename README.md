@@ -8,17 +8,14 @@ returns citations for what survives.
 
 **Quick win:** `make semantic-guardrail-demo`
 
-This command regenerates the documentation + telemetry manifolds (if missing),
-projects them into the semantic/structural plane, streams a scripted incident,
-and launches the three-panel dashboard:
+This command rebuilds the documentation truth-pack, runs the evaluation set, and
+opens the **Caseboard**: raw LLM answer on the left, per-sentence decision log in
+the middle (repeat/hazard/semantic badges with twin citations), and the repaired
+answer on the right with numbered receipts. The top rail shows hallucination
+rate, repair yield, citation coverage, and latency percentiles for the run.
 
-- Naïve semantic guardrail (LLM-style embeddings) – noisy and over-confident.
-- Naïve structural guardrail – sensitive to rhythm but oblivious to meaning.
-- Hybrid reality filter – only fires when both axes agree, shows citations,
-  and reports hallucination rate, repair yield, citation coverage, and latency.
-
-Head to `docs/INDEX.md` for a guided tour of whitepapers, runbooks, and design
-notes.
+Head to `docs/INDEX.md` for a guided tour of whitepapers, runbooks, design
+notes, and evaluation assets.
 
 ### Reality Filter Toolkit
 

@@ -71,25 +71,33 @@ def main() -> None:
 
     server = None
     base_url: str
-    if args.url:
-        base_url = args.url.rstrip("/")
-    else:
-        env = os.environ.copy()
-        cmd = [
-            "python",
-            "-m",
-            "uvicorn",
-            APP_PATH,
-            "--host",
-            "127.0.0.1",
-            "--port",
-            str(args.port),
-            "--log-level",
-            "error",
-        ]
-        server = subprocess.Popen(cmd, env=env)
-        base_url = f"http://127.0.0.1:{args.port}"
-        try:
+    try:
+        if args.url:
+            base_url = args.url.rstrip("/")
+        else:
+            env = os.environ.copy()
+            env.setdefault("OMP_NUM_THREADS", "1")
+            env.setdefault("MKL_NUM_THREADS", "1")
+            cmd = [
+                "python",
+                "-m",
+                "uvicorn",
+                APP_PATH,
+                "--host",
+                "127.0.0.1",
+                "--port",
+                str(args.port),
+                "--log-level",
+                "error",
+                "--loop",
+                "uvloop",
+                "--http",
+                "httptools",
+                "--workers",
+                str(max(2, args.concurrency // 200)),
+            ]
+            server = subprocess.Popen(cmd, env=env)
+            base_url = f"http://127.0.0.1:{args.port}"
             deadline = time.time() + 10
             ready = False
             while time.time() < deadline:
@@ -102,10 +110,6 @@ def main() -> None:
                     time.sleep(0.1)
             if not ready:
                 raise RuntimeError("Service did not start in time")
-        except Exception:
-            if server is not None:
-                server.terminate()
-            raise
 
         payload = {
             "text": "guardrail",
@@ -115,7 +119,6 @@ def main() -> None:
         if args.hash_embeddings:
             payload.update({"embedding_method": "hash", "hash_dims": args.hash_dims})
 
-        # Warmup to load embeddings/caches.
         for _ in range(5):
             httpx.post(f"{base_url}/seen", json=payload, timeout=args.timeout)
 

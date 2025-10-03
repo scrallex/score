@@ -131,6 +131,12 @@ class TruthPackEngine:
         self._build_string_embeddings(min_occ=embedding_min_occ)
         self.hazard_cache: Dict[str, float] = {}
         self._metrics_cache = lru_cache(maxsize=lru_size)(self._compute_span_metrics)
+        self._sorted_tokens = [
+            name
+            for name, _ in sorted(
+                self.strings.items(), key=lambda kv: int(kv[1].get("occurrences", 0)), reverse=True
+            )
+        ]
 
     @classmethod
     def from_manifest(
@@ -231,13 +237,7 @@ class TruthPackEngine:
             )
             seen.add(exclude)
 
-        if self.embedding_matrix is None:
-            return results
-
-        scores = self.embedding_matrix @ vector
-        order = np.argsort(scores)[::-1]
-        for idx in order:
-            name = self.embedding_strings[idx]
+        for name in self._sorted_tokens:
             if exclude and name == exclude:
                 continue
             if name in seen:
@@ -250,7 +250,7 @@ class TruthPackEngine:
                     string=name,
                     occurrences=int(data.get("occurrences", 0)),
                     patternability=float(data.get("patternability", 0.0)),
-                    semantic_similarity=float(np.clip(scores[idx], -1.0, 1.0)),
+                    semantic_similarity=1.0 if name == exclude else 0.0,
                     hazard=self.compute_hazard(name, data),
                 )
             )
