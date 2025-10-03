@@ -69,6 +69,8 @@ virtual environment and install the package in editable mode:
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
+# Build the optional native QFH/QBSA bindings (requires a C++20 toolchain and TBB)
+pip install -e .[native]
 ```
 
 Once installed you can ingest a corpus and perform an initial analysis
@@ -118,6 +120,32 @@ benchmarks discussed in the STM whitepaper.
 ```
 make planbench-all
 ```
+### Logistics guardrail demo
+
+Run the logistics disruption scenario, optional twin lookup, and figure generation with the commands below.
+
+```bash
+# Base trace + metrics (writes analysis/, tokens/, timeline.json, dashboard.html)
+PYTHONPATH=score/src python score/scripts/logistics_guardrail_demo.py \
+  --output-root analysis/logistics_guardrail_demo
+
+# Re-run with cached twins using the freshly written STM state
+PYTHONPATH=score/src python score/scripts/logistics_guardrail_demo.py \
+  --output-root analysis/logistics_guardrail_demo_with_twins \
+  --twin-state analysis/logistics_guardrail_demo/analysis_state.json \
+  --twin-top-k 2 --twin-max-distance 0.4
+
+# Export the whitepaper figures referenced in docs/whitepaper/logistics_guardrail.md
+PYTHONPATH=score/src python score/scripts/plot_logistics_guardrail_figures.py \
+  --timeline analysis/logistics_guardrail_demo_with_twins/timeline.json \
+  --output-dir docs/whitepaper/img
+```
+
+The guardrail applies calibrated lambda and dilution thresholds (see `analysis/router_config_logistics_invalid_native.json`). In the reference run the first alert fires at step 5 with lambda 0.538 and the classical validator fails at step 8, yielding a three-step lead. Passing `--twin-state` enables `sep_text_manifold.suggest_twin_action`, which surfaces recovery precedents in the dashboard's **Recovery Recommendation** panel. Permutation evidence in `docs/tests/permutation_logistics_native.json` shows precision 1.0 with foreground coverage close to two percent.
+
+Validate the pipeline at any time with `pytest score/tests/test_logistics_guardrail_demo.py -q`, and consult `docs/whitepaper/logistics_guardrail.md` for narrative context and figure references.
+
+
 
 This target regenerates the synthetic PlanBench dataset (default 300 instances
 per domain), converts traces into STM manifolds, calibrates the 5% guardrail for
@@ -146,7 +174,13 @@ python scripts/calibrate_router.py \
   --domain-root output/planbench_by_domain/logistics \
   --dynamic-target 0.025 --dynamic-window 0.005 \
   --pvalue-threshold 0.05 --pvalue-metric min \
+  --use-native-quantum \
   --output analysis/router_config_logistics_invalid_5pct.json
+
+When the native bindings are installed, add `--use-native-quantum` to
+`scripts/planbench_to_stm.py`, `scripts/enrich_features.py`, and
+`scripts/experiments/build_causal_domain.py` to ensure the manifolds are built
+with the QFH/QBSA kernel rather than the simplified fallback.
 
 If VAL traces are not available you can synthesise them directly from the
 generated plans:
