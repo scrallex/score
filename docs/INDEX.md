@@ -3,6 +3,7 @@
 ## Guardrail Demo
 - `docs/note/semantic_guardrail_storyboard.md` – narrative arc and demo flow, including core discovery and operational checklist.
 - `docs/note/semantic_guardrail_runbook.md` – commands for ingesting manifolds and replaying the stream.
+- `docs/note/reality_filter_demo.md` – step-by-step operator runbook for the reality filter demo.
 - `results/semantic_guardrail_metrics.json` – generated telemetry (hallucination rate, repair yield, citations, latency).
 - `scripts/reality_filter_pack.py` – turn any truth-pack into manifold/index/semantic artefacts.
 - `scripts/reality_filter_stream.py` – produce span-level stream with twin repairs and KPIs from the pack manifest.
@@ -11,6 +12,7 @@
 ## Hallucination Control
 - `docs/note/semantic_coherence_hallucination_framework.md` – technical blueprint for using STM coherence as a hallucination gate.
 - `docs/task.md` – top-level plan for positioning and presenting the semantic guardrail.
+- `docs/whitepaper/reality_filter_methods.md` – methods note draft.
 
 ## Trading Heritage
 - `docs/whitepaper/reliability_gated_recurrence_polished.pdf` – live trading gate built on recurrence + hazard.

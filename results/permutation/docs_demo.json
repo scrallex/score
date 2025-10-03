@@ -1,0 +1,9 @@
+{
+  "manifest": "analysis/truth_packs/docs_demo/manifest.json",
+  "spans": "demo/truth_pack/sample_spans.json",
+  "iterations": 20000,
+  "observed_admitted": 0,
+  "observed_total": 8,
+  "observed_coverage": 0.0,
+  "p_value": 1.0
+}

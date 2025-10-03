@@ -1,4 +1,4 @@
-.PHONY: scorecard plots lead twins onset all clean
+.PHONY: scorecard plots lead twins onset all clean clean-demo pack stream sweep permutation report
 .PHONY: demo-payload demo-up demo-down
 .PHONY: planbench-all planbench-scale codetrace-report
 .PHONY: semantic-guardrail-demo final-report
@@ -180,7 +180,7 @@ semantic-guardrail-demo:
 	  --r-min 2 \
 	  --hazard-max 0.55 \
 	  --sigma-min 0.28 \
- 	  --repair \
+	  --repair \
 	  --output results/semantic_guardrail_stream.jsonl \
 	  --metrics-output results/semantic_guardrail_metrics.json
 	@echo "[semantic-guardrail] Launching dashboard"
@@ -189,6 +189,48 @@ semantic-guardrail-demo:
 	  --background analysis/truth_packs/docs_demo/semantic_scatter.png \
 	  --states analysis/truth_packs/docs_demo/manifold_state.json \
 	  --seeds risk resilience volatility anomaly "predictive maintenance"
+
+PACK ?= docs_demo
+PACK_PATH ?= analysis/truth_packs/$(PACK)
+SPANS ?= demo/truth_pack/sample_spans.json
+SEEDS ?= risk resilience volatility anomaly "predictive maintenance"
+
+pack:
+	PYTHONPATH=src .venv/bin/python scripts/reality_filter_pack.py docs \
+	  --output-root $(PACK_PATH) \
+	  --extensions md txt json yaml \
+	  --drop-numeric --min-token-len 3 --min-occurrences 1 --semantic-min-occ 2 \
+	  --seeds $(SEEDS)
+
+stream:
+	PYTHONPATH=src .venv/bin/python scripts/reality_filter_stream.py \
+	  --manifest $(PACK_PATH)/manifest.json \
+	  --spans $(SPANS) \
+	  --seeds $(SEEDS) \
+	  --semantic-threshold 0.25 \
+	  --structural-threshold 0.46 \
+	  --r-min 2 \
+	  --hazard-max 0.25 \
+	  --sigma-min 0.28 \
+	  --repair \
+	  --output results/$(PACK)_stream.jsonl \
+	  --metrics-output results/$(PACK)_metrics.json
+
+sweep:
+	PYTHONPATH=src .venv/bin/python scripts/reality_filter_sweep.py \
+	  --manifest $(PACK_PATH)/manifest.json \
+	  --spans $(SPANS) \
+	  --output results/sweeps/$(PACK).csv
+
+permutation:
+	PYTHONPATH=src .venv/bin/python scripts/reality_filter_permutation.py \
+	  --manifest $(PACK_PATH)/manifest.json \
+	  --spans $(SPANS) \
+	  --output results/permutation/$(PACK).json
+
+report:
+	PYTHONPATH=src .venv/bin/python scripts/reality_filter_report.py \
+	  --packs $(PACK)
 
 codetrace-report:
 	PYTHONPATH=src .venv/bin/python demo/coding/run_comparison.py
@@ -208,3 +250,7 @@ clean:
 	rm -f results/semantic_bridge_combined.png results/semantic_guardrail_stream.jsonl results/semantic_guardrail_metrics.json
 	rm -f docs/whitepaper/figures/semantic_bridge_combined.png
 	rm -rf analysis/truth_packs/docs_demo
+	 rm -f results/*_metrics.json results/*_stream.jsonl
+	 rm -rf results/sweeps results/permutation results/report
+
+clean-demo: clean

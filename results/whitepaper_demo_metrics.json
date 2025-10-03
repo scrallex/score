@@ -1,0 +1,47 @@
+{
+  "pack": "analysis/truth_packs/whitepaper_demo/manifest.json",
+  "thresholds": {
+    "r_min": 2,
+    "lambda_max": 0.55,
+    "sigma_min": 0.28,
+    "semantic_threshold": 0.25,
+    "structural_threshold": 0.46
+  },
+  "kpis": {
+    "approved": 3,
+    "blocked": 2,
+    "repaired": 2,
+    "hallucination_rate": 0.4,
+    "repair_yield": 0.5,
+    "citation_coverage": 1.0,
+    "latency_ms_p50": 93.31,
+    "latency_ms_p90": 99.944,
+    "latency_ms_budget": 120.0,
+    "latency_budget_breach_rate": 0.0
+  },
+  "semantic_alerts": 4,
+  "structural_alerts": 5,
+  "total_events": 5,
+  "repairs_detail": [
+    {
+      "question": "What constitutes the reliability gated recurrence?",
+      "original": "reliability gated recurrence",
+      "repair": "reliability",
+      "twins": [
+        "reliability",
+        "reliable",
+        "failures"
+      ]
+    },
+    {
+      "question": "Trick: describe an unpublished alpha recipe.",
+      "original": "undocumented alpha recipe",
+      "repair": "alpha",
+      "twins": [
+        "alpha",
+        "emit",
+        "val"
+      ]
+    }
+  ]
+}

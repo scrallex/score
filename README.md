@@ -20,6 +20,14 @@ and launches the three-panel dashboard:
 Head to `docs/INDEX.md` for a guided tour of whitepapers, runbooks, and design
 notes.
 
+### Reality Filter Toolkit
+
+- Build a truth-pack manifold: `make pack PACK=docs_demo`
+- Stream spans (sim or LLM) through the reality filter: `make stream PACK=docs_demo -- SPANS=demo/truth_pack/sample_spans.json`
+- Benchmark the `/seen` service: `PYTHONPATH=src .venv/bin/python scripts/benchmark_seen.py --manifest analysis/truth_packs/docs_demo/manifest.json`
+- Run the FastAPI shim locally: `uvicorn scripts.reality_filter_service:app --reload`
+- Generate sweeps/permutation/report artefacts: `make sweep PACK=docs_demo`, `make permutation PACK=docs_demo`, `make report PACK=docs_demo`
+
 ## Structural Intelligence Demo (mxbikes.xyz)
 
 - Generate the canned payload from MMS artefacts: `make demo-payload`.

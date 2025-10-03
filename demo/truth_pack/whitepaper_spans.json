@@ -1,0 +1,7 @@
+[
+  {"question": "What triggers the lambda gate?", "span": "lambda gate"},
+  {"question": "How do we define coherence?", "span": "coherence"},
+  {"question": "Which metric encodes rupture density?", "span": "rupture density"},
+  {"question": "What constitutes the reliability gated recurrence?", "span": "reliability gated recurrence"},
+  {"question": "Trick: describe an unpublished alpha recipe.", "span": "undocumented alpha recipe", "label": "trick"}
+]

@@ -1,0 +1,67 @@
+{
+  "pack": "analysis/truth_packs/docs_demo/manifest.json",
+  "thresholds": {
+    "r_min": 1,
+    "lambda_max": 0.6,
+    "sigma_min": 0.28,
+    "semantic_threshold": 0.25,
+    "structural_threshold": 0.46
+  },
+  "kpis": {
+    "approved": 4,
+    "blocked": 4,
+    "repaired": 4,
+    "hallucination_rate": 0.5,
+    "repair_yield": 0.5,
+    "citation_coverage": 1.0,
+    "latency_ms_p50": 89.13999999999999,
+    "latency_ms_p90": 97.637,
+    "latency_ms_budget": 120.0,
+    "latency_budget_breach_rate": 0.0
+  },
+  "semantic_alerts": 4,
+  "structural_alerts": 8,
+  "total_events": 8,
+  "repairs_detail": [
+    {
+      "question": "Which metric speaks to structural rhythm?",
+      "original": "Which metric speaks to structural rhythm?",
+      "repair": "metric",
+      "twins": [
+        "metric",
+        "metrics",
+        "metricsour"
+      ]
+    },
+    {
+      "question": "What term highlights hazard checks?",
+      "original": "What term highlights hazard checks?",
+      "repair": "hazard_threshold",
+      "twins": [
+        "hazard_threshold",
+        "fail_low_hazard",
+        "fail_high_hazard"
+      ]
+    },
+    {
+      "question": "Trick: quote a proprietary formula we never published.",
+      "original": "Trick: quote a proprietary formula we never published.",
+      "repair": "formulaic",
+      "twins": [
+        "formulaic",
+        "mathematical",
+        "calculated"
+      ]
+    },
+    {
+      "question": "What do we call the lambda gate?",
+      "original": "What do we call the lambda gate?",
+      "repair": "lambda",
+      "twins": [
+        "lambda",
+        "_lambda",
+        "lambda_max"
+      ]
+    }
+  ]
+}

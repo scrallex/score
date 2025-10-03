@@ -20,6 +20,8 @@ except ImportError:  # pragma: no cover - optional
 from reality_filter import LLMSpanSource, SimSpanSource, SpanRecord, TruthPackEngine
 from reality_filter.engine import SpanEvaluation
 
+LATENCY_BUDGET_MS = 120.0
+
 
 class TwinRepairer:
     """Generate constrained repairs using twin hints (LLM optional)."""
@@ -57,17 +59,24 @@ class TwinRepairer:
         # Offline fallback: return top twin string directly.
         if self.client is None:  # pragma: no cover - deterministic path
             return twins[0]
-        prompt_lines = [
-            "Question:" if question else "Context:",
-            question or "(no question provided)",
-            "Original span:",
-            span,
-            "Trusted twin snippets:",
-        ]
+        prompt_lines = []
+        if question:
+            prompt_lines.append("Question:")
+            prompt_lines.append(question)
+        prompt_lines.extend(
+            [
+                "Original span:",
+                span,
+                "Trusted snippets (verbatim quotes you may use):",
+            ]
+        )
         for idx, twin in enumerate(twins[:3], start=1):
             prompt_lines.append(f"{idx}. {twin}")
         prompt_lines.append(
-            "Rewrite the answer in one sentence using only information present in the twins."
+            "Rewrite a single-sentence answer using only the trusted snippets above."
+        )
+        prompt_lines.append(
+            "Do not invent new facts. Quote or paraphrase only what is present."
         )
         response = self.client.chat.completions.create(
             model=self.model,
@@ -190,6 +199,7 @@ def main() -> None:
     semantic_alerts = 0
     structural_alerts = 0
     latencies: List[float] = []
+    repair_records: List[Dict[str, object]] = []
 
     with args.output.open("w", encoding="utf-8") as fh:
         for idx, record in enumerate(span_source):
@@ -209,6 +219,7 @@ def main() -> None:
 
             latency = round(rng.uniform(55.0, 105.0), 2)
             latencies.append(latency)
+            over_budget = latency > LATENCY_BUDGET_MS
 
             action = "emit" if evaluation.admitted else "decline"
             repaired_span: Optional[str] = None
@@ -233,6 +244,14 @@ def main() -> None:
                     if repair_eval.admitted:
                         action = "repair"
                         evaluation = repair_eval
+                        repair_records.append(
+                            {
+                                "question": question,
+                                "original": span,
+                                "repair": repaired_span,
+                                "twins": evaluation.twins,
+                            }
+                        )
 
             decisions = evaluation.decisions()
             metrics = evaluation.metrics()
@@ -267,6 +286,7 @@ def main() -> None:
                 "semantic_ok": evaluation.semantic_ok,
                 "naive_semantic_alert": evaluation.semantic_similarity >= args.semantic_threshold,
                 "naive_structural_alert": evaluation.patternability >= args.structural_threshold,
+                "latency_over_budget": over_budget,
             }
             if repaired_span is not None:
                 event["repair_span"] = repaired_span
@@ -298,6 +318,7 @@ def main() -> None:
     citation_coverage = (
         sum(1 for e in events if e["decisions"]["admit"] and e.get("twins")) / approved if approved else 0.0
     )
+    over_budget_count = sum(1 for e in events if e.get("latency_over_budget"))
     metrics_payload = {
         "pack": args.manifest.as_posix(),
         "thresholds": thresholds,
@@ -310,13 +331,29 @@ def main() -> None:
             "citation_coverage": citation_coverage,
             "latency_ms_p50": float(np.percentile(latencies, 50)) if latencies else 0.0,
             "latency_ms_p90": float(np.percentile(latencies, 90)) if latencies else 0.0,
+            "latency_ms_budget": LATENCY_BUDGET_MS,
+            "latency_budget_breach_rate": over_budget_count / total if total else 0.0,
         },
         "semantic_alerts": semantic_alerts,
         "structural_alerts": structural_alerts,
         "total_events": total,
+        "repairs_detail": [
+            {
+                "question": entry["question"],
+                "original": entry["original"],
+                "repair": entry["repair"],
+                "twins": [twin.string for twin in entry["twins"]],
+            }
+            for entry in repair_records
+        ],
     }
     args.metrics_output.parent.mkdir(parents=True, exist_ok=True)
     args.metrics_output.write_text(json.dumps(metrics_payload, indent=2))
+    if metrics_payload["kpis"]["latency_ms_p90"] > LATENCY_BUDGET_MS:
+        print(
+            f"WARNING: latency p90 {metrics_payload['kpis']['latency_ms_p90']:.2f}ms exceeds budget {LATENCY_BUDGET_MS:.1f}ms",
+            flush=True,
+        )
     print(json.dumps(metrics_payload, indent=2))
 
 
