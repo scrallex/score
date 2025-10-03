@@ -180,6 +180,7 @@ semantic-guardrail-demo:
 	  --r-min 2 \
 	  --hazard-max 0.55 \
 	  --sigma-min 0.28 \
+ 	  --repair \
 	  --output results/semantic_guardrail_stream.jsonl \
 	  --metrics-output results/semantic_guardrail_metrics.json
 	@echo "[semantic-guardrail] Launching dashboard"

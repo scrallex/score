@@ -1,395 +1,322 @@
 #!/usr/bin/env python3
-"""Generate a span-level reality-filter stream from a truth-pack manifest.
-
-For each candidate span we compute semantic similarity, structural repetition,
-hazard, and twin suggestions using the prepared manifold.
-The output JSONL matches the schema consumed by the demo dashboard
-(naïve semantic & structural alerts plus hybrid admission decisions).
-"""
+"""Stream spans through the reality filter and emit JSONL for the dashboard."""
 
 from __future__ import annotations
 
 import argparse
 import json
 import random
-from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence
 
 import numpy as np
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-import sys
+try:  # Optional dependency for repair/LLM flow
+    from openai import OpenAI
+except ImportError:  # pragma: no cover - optional
+    OpenAI = None  # type: ignore
 
-if str(REPO_ROOT) not in sys.path:
-    sys.path.append(str(REPO_ROOT))
-
-from sep_text_manifold.semantic import EmbeddingConfig, SemanticEmbedder
-
-
-@dataclass
-class Twin:
-    string: str
-    occurrences: int
-    patternability: float
-    semantic_similarity: float
-    hazard: float
+from reality_filter import LLMSpanSource, SimSpanSource, SpanRecord, TruthPackEngine
+from reality_filter.engine import SpanEvaluation
 
 
-class TruthPackEngine:
+class TwinRepairer:
+    """Generate constrained repairs using twin hints (LLM optional)."""
+
     def __init__(
         self,
-        manifest_path: Path,
         *,
-        seeds: Sequence[str],
-        embedding_method: str,
-        model_name: str,
-        hash_dims: int,
-        embedding_min_occ: int,
+        model: str = "gpt-4o-mini",
+        temperature: float = 0.0,
+        max_tokens: int = 120,
+        api_key: Optional[str] = None,
     ) -> None:
-        manifest = json.loads(manifest_path.read_text())
-        self.manifest = manifest
-        state_path = Path(manifest["state_path"])
-        if not state_path.exists():
-            raise FileNotFoundError(f"State file not found: {state_path}")
-        self.pack_name = manifest.get("name", state_path.stem)
-        self.state = json.loads(state_path.read_text())
-        self.strings: Dict[str, Dict[str, object]] = self.state.get("string_scores", {})  # type: ignore[assignment]
-        self.signals: Dict[int, Dict[str, object]] = {
-            int(sig["id"]): sig for sig in self.state.get("signals", [])  # type: ignore[list-item]
-        }
-
-        self.embedder = SemanticEmbedder(
-            EmbeddingConfig(method=embedding_method, model_name=model_name, dims=hash_dims)
+        key = api_key
+        if key is None:
+            default_path = Path.home().joinpath(".openai_api_key")
+            if default_path.exists():
+                try:  # pragma: no cover - optional
+                    key = default_path.read_text().strip() or None
+                except OSError:
+                    key = None
+        if OpenAI and key:
+            self.client = OpenAI(api_key=key)
+        else:  # pragma: no cover - offline fallback
+            self.client = None
+        self.model = model
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+        self._system_prompt = (
+            "You help rewrite answers so they match trusted precedent. Use the provided twin snippets verbatim when possible."
         )
-        self.seeds = list(seeds)
-        self.seed_vector = self._build_seed_vector()
-        self.embedding_strings: List[str] = []
-        self.embedding_matrix: Optional[np.ndarray] = None
-        self._build_string_embeddings(min_occ=embedding_min_occ)
-        self.hazard_cache: Dict[str, float] = {}
 
-    def _build_seed_vector(self) -> Optional[np.ndarray]:
-        if not self.seeds:
+    def propose(self, question: Optional[str], span: str, twins: Sequence[str]) -> Optional[str]:
+        if not twins:
             return None
-        seed_vecs = self.embedder.encode(self.seeds)
-        centroid = seed_vecs.mean(axis=0)
-        norm = np.linalg.norm(centroid)
-        if norm == 0.0:
-            return np.zeros_like(centroid)
-        return centroid / norm
-
-    def _build_string_embeddings(self, min_occ: int) -> None:
-        candidates = [s for s, data in self.strings.items() if data.get("occurrences", 0) >= min_occ]
-        if not candidates:
-            self.embedding_strings = []
-            self.embedding_matrix = None
-            return
-        self.embedding_strings = candidates
-        self.embedding_matrix = self.embedder.encode(candidates)
-
-    def semantic_similarity(self, vector: np.ndarray) -> float:
-        if self.seed_vector is None:
-            return 0.0
-        return float(np.clip(np.dot(vector, self.seed_vector), -1.0, 1.0))
-
-    def compute_hazard(self, string: str, data: Optional[Dict[str, object]] = None) -> float:
-        if string in self.hazard_cache:
-            return self.hazard_cache[string]
-        entry = data or self.strings.get(string)
-        hazards: List[float] = []
-        if entry:
-            for wid in entry.get("window_ids", []):  # type: ignore[list-item]
-                sig = self.signals.get(int(wid))
-                if sig:
-                    metrics = sig.get("metrics", {})
-                    hazard = float(
-                        sig.get(
-                            "lambda_hazard",
-                            metrics.get("lambda_hazard", metrics.get("rupture", 1.0)),
-                        )
-                    )
-                    hazards.append(hazard)
-        if not hazards and entry:
-            metrics = entry.get("metrics", {})
-            hazards.append(float(metrics.get("lambda_hazard", metrics.get("rupture", 1.0))))
-        hazard_value = float(np.mean(hazards)) if hazards else 1.0
-        self.hazard_cache[string] = hazard_value
-        return hazard_value
-
-    def top_twins(self, vector: np.ndarray, *, exclude: Optional[str] = None, limit: int = 3) -> List[Twin]:
-        results: List[Twin] = []
-        seen: set[str] = set()
-
-        if exclude and exclude in self.strings:
-            data = self.strings[exclude]
-            results.append(
-                Twin(
-                    string=exclude,
-                    occurrences=int(data.get("occurrences", 0)),
-                    patternability=float(data.get("patternability", 0.0)),
-                    semantic_similarity=1.0,
-                    hazard=self.compute_hazard(exclude, data),
-                )
-            )
-            seen.add(exclude)
-
-        if self.embedding_matrix is None:
-            return results
-
-        scores = self.embedding_matrix @ vector
-        order = np.argsort(scores)[::-1]
-        for idx in order:
-            name = self.embedding_strings[idx]
-            if exclude and name == exclude:
-                continue
-            if name in seen:
-                continue
-            data = self.strings.get(name)
-            if not data:
-                continue
-            results.append(
-                Twin(
-                    string=name,
-                    occurrences=int(data.get("occurrences", 0)),
-                    patternability=float(data.get("patternability", 0.0)),
-                    semantic_similarity=float(np.clip(scores[idx], -1.0, 1.0)),
-                    hazard=self.compute_hazard(name, data),
-                )
-            )
-            seen.add(name)
-            if len(results) >= limit:
-                break
-        return results
-
-    def metrics_for_string(self, string: str, data: Optional[Dict[str, object]] = None) -> Tuple[float, float, float, float, float]:
-        entry = data or self.strings.get(string)
-        if entry:
-            metrics = entry.get("metrics", {})
-            return (
-                float(entry.get("patternability", 0.0)),
-                float(metrics.get("coherence", 0.0)),
-                float(metrics.get("stability", 0.0)),
-                float(metrics.get("entropy", 1.0)),
-                float(metrics.get("rupture", metrics.get("rupture", 0.0))),
-            )
-        return 0.0, 0.0, 0.0, 1.0, 0.0
-
-    def evaluate_span(
-        self,
-        span: str,
-        *,
-        context: Optional[str],
-        semantic_threshold: float,
-        structural_threshold: float,
-        r_min: int,
-        hazard_max: float,
-        sigma_min: float,
-        rng: random.Random,
-    ) -> Dict[str, object]:
-        vector = self.embedder.encode([span])[0]
-        sem_score = self.semantic_similarity(vector)
-        data = self.strings.get(span)
-        occurrences = int(data.get("occurrences", 0)) if data else 0
-        hazard = self.compute_hazard(span, data)
-        pattern, coherence, stability, entropy, rupture = self.metrics_for_string(span, data)
-
-        twins = self.top_twins(vector, exclude=span, limit=3)
-        fallback = twins[0] if twins else None
-        if occurrences == 0 and fallback is not None:
-            pattern = fallback.patternability
-            hazard = fallback.hazard
-            base_metrics = self.strings.get(fallback.string, {})
-            metrics = base_metrics.get("metrics", {}) if isinstance(base_metrics, dict) else {}
-            coherence = float(metrics.get("coherence", coherence))
-            stability = float(metrics.get("stability", stability))
-            entropy = float(metrics.get("entropy", entropy))
-            rupture = float(metrics.get("rupture", rupture))
-
-        naive_semantic = sem_score >= semantic_threshold
-        naive_structural = pattern >= structural_threshold
-        repeat_ok = occurrences >= r_min
-        hazard_ok = hazard <= hazard_max
-        semantic_ok = sem_score >= sigma_min
-        hybrid = repeat_ok and hazard_ok and semantic_ok
-
-        if hybrid:
-            cluster = "hybrid_alert"
-        elif naive_semantic and not naive_structural:
-            cluster = "semantic_only"
-        elif naive_structural and not naive_semantic:
-            cluster = "structural_only"
-        elif naive_semantic and naive_structural:
-            cluster = "both_disagree"
-        else:
-            cluster = "neutral"
-
-        repair_suggestion = None
-        repair_applied = False
-        if not hybrid and fallback is not None:
-            repair_suggestion = {
-                "string": fallback.string,
-                "occurrences": fallback.occurrences,
-                "patternability": round(fallback.patternability, 6),
-                "semantic_similarity": round(fallback.semantic_similarity, 6),
-                "hazard": round(fallback.hazard, 6),
-            }
-            repair_applied = True
-
-        latency_ms = round(rng.uniform(45.0, 95.0), 2)
-
-        return {
-            "span": span,
-            "event": span,
-            "context": context,
-            "occurrences": occurrences,
-            "patternability": round(pattern, 6),
-            "semantic_similarity": round(sem_score, 6),
-            "coherence": round(coherence, 6),
-            "stability": round(stability, 6),
-            "entropy": round(entropy, 6),
-            "rupture": round(rupture, 6),
-            "hazard": round(hazard, 6),
-            "naive_semantic_alert": naive_semantic,
-            "naive_structural_alert": naive_structural,
-            "hybrid_guardrail_alert": hybrid,
-            "repeat_ok": repeat_ok,
-            "hazard_ok": hazard_ok,
-            "semantic_ok": semantic_ok,
-            "cluster": cluster,
-            "twins": [
-                {
-                    "string": twin.string,
-                    "occurrences": twin.occurrences,
-                    "patternability": round(twin.patternability, 6),
-                    "semantic_similarity": round(twin.semantic_similarity, 6),
-                    "hazard": round(twin.hazard, 6),
-                }
-                for twin in twins
+        # Offline fallback: return top twin string directly.
+        if self.client is None:  # pragma: no cover - deterministic path
+            return twins[0]
+        prompt_lines = [
+            "Question:" if question else "Context:",
+            question or "(no question provided)",
+            "Original span:",
+            span,
+            "Trusted twin snippets:",
+        ]
+        for idx, twin in enumerate(twins[:3], start=1):
+            prompt_lines.append(f"{idx}. {twin}")
+        prompt_lines.append(
+            "Rewrite the answer in one sentence using only information present in the twins."
+        )
+        response = self.client.chat.completions.create(
+            model=self.model,
+            temperature=self.temperature,
+            max_tokens=self.max_tokens,
+            messages=[
+                {"role": "system", "content": self._system_prompt},
+                {"role": "user", "content": "\n".join(prompt_lines)},
             ],
-            "repair_suggestion": repair_suggestion,
-            "repair_applied": repair_applied,
-            "source": self.pack_name,
-            "latency_ms": latency_ms,
-        }
+        )
+        content = response.choices[0].message.content or ""
+        return content.strip() or None
 
 
-def load_spans(path: Path) -> List[Dict[str, object]]:
-    data = json.loads(path.read_text())
-    if isinstance(data, dict) and "spans" in data:
-        items = data["spans"]
-    else:
-        items = data
-    if not isinstance(items, list):
-        raise ValueError("Spans file must be a list or contain a 'spans' list")
-    results: List[Dict[str, object]] = []
-    for idx, item in enumerate(items):
-        if isinstance(item, str):
-            results.append({"span": item})
-        elif isinstance(item, dict) and "span" in item:
-            results.append(item)
-        else:
-            raise ValueError(f"Invalid span entry at index {idx}: {item}")
-    return results
+def build_span_source(source: str, spans_path: Path, llm_kwargs: Dict[str, object]) -> Iterable[SpanRecord]:
+    if source == "sim":
+        return SimSpanSource(spans_path)
+    if source == "llm":
+        seed_records = list(SimSpanSource(spans_path))
+        questions = [rec.question or rec.span for rec in seed_records]
+        return LLMSpanSource(questions, **llm_kwargs)
+    raise ValueError(f"Unknown source: {source}")
 
 
-def write_json(path: Path, payload: object) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2))
+def span_record_to_dict(record: SpanRecord) -> Dict[str, object]:
+    data = {
+        "span": record.span,
+    }
+    if record.question is not None:
+        data["question"] = record.question
+    if record.label is not None:
+        data["label"] = record.label
+    if record.metadata:
+        data["metadata"] = record.metadata
+    return data
+
+
+def evaluation_to_dict(evaluation: SpanEvaluation) -> Dict[str, object]:
+    return {
+        "span": evaluation.span,
+        "question": evaluation.question,
+        "occurrences": evaluation.occurrences,
+        "decisions": evaluation.decisions(),
+        "metrics": {
+            **evaluation.metrics(),
+            "repetitions": evaluation.occurrences,
+        },
+        "twins": [
+            {
+                "string": twin.string,
+                "occurrences": twin.occurrences,
+                "patternability": round(twin.patternability, 6),
+                "semantic_similarity": round(twin.semantic_similarity, 6),
+                "hazard": round(twin.hazard, 6),
+                "source": twin.source,
+            }
+            for twin in evaluation.twins
+        ],
+    }
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--manifest", required=True, type=Path, help="Manifest JSON from reality_filter_pack.py")
-    parser.add_argument("--spans", required=True, type=Path, help="JSON file listing candidate spans")
+    parser.add_argument("--manifest", required=True, type=Path)
+    parser.add_argument("--spans", required=True, type=Path, help="JSON file describing questions/spans")
     parser.add_argument("--output", type=Path, default=Path("results/semantic_guardrail_stream.jsonl"))
     parser.add_argument("--metrics-output", type=Path, default=Path("results/semantic_guardrail_metrics.json"))
-    parser.add_argument("--seeds", nargs="*", help="Optional override for semantic seeds")
+    parser.add_argument("--source", choices=["sim", "llm"], default="sim")
+    parser.add_argument("--seeds", nargs="*", help="Override semantic seeds (defaults to pack manifest seeds)")
     parser.add_argument("--embedding-method", choices=["auto", "transformer", "hash"], default="transformer")
     parser.add_argument("--model", default="all-MiniLM-L6-v2")
     parser.add_argument("--hash-dims", type=int, default=256)
     parser.add_argument("--embedding-min-occ", type=int, default=1)
     parser.add_argument("--semantic-threshold", type=float, default=0.25)
-    parser.add_argument("--structural-threshold", type=float, default=0.47)
+    parser.add_argument("--structural-threshold", type=float, default=0.46)
     parser.add_argument("--r-min", type=int, default=2)
-    parser.add_argument("--hazard-max", type=float, default=0.25)
+    parser.add_argument("--hazard-max", type=float, default=0.55)
     parser.add_argument("--sigma-min", type=float, default=0.28)
-    parser.add_argument("--seed", type=int, default=17, help="RNG seed for latency simulation")
+    parser.add_argument("--seed", type=int, default=17)
+    parser.add_argument("--repair", action="store_true", help="Enable twin-based repair loop")
+    parser.add_argument("--repair-model", default="gpt-4o-mini")
+    parser.add_argument("--repair-temperature", type=float, default=0.0)
+    parser.add_argument("--repair-max-tokens", type=int, default=120)
     args = parser.parse_args()
 
-    manifest_path = args.manifest
-    spans = load_spans(args.spans)
-    manifest = json.loads(manifest_path.read_text())
-    seeds = args.seeds or manifest.get("seeds", [])
-
-    engine = TruthPackEngine(
-        manifest_path,
-        seeds=seeds,
+    engine = TruthPackEngine.from_manifest(
+        args.manifest,
+        seeds=args.seeds or json.loads(args.manifest.read_text()).get("seeds", []),
         embedding_method=args.embedding_method,
         model_name=args.model,
         hash_dims=args.hash_dims,
         embedding_min_occ=args.embedding_min_occ,
     )
 
+    llm_kwargs = {}
+    if args.source == "llm":
+        llm_kwargs = {
+            "model": "gpt-4o-mini",
+            "temperature": 0.2,
+            "max_tokens": 160,
+        }
+
+    span_source = list(build_span_source(args.source, args.spans, llm_kwargs))
+
+    repairer: Optional[TwinRepairer] = None
+    if args.repair:
+        repairer = TwinRepairer(
+            model=args.repair_model,
+            temperature=args.repair_temperature,
+            max_tokens=args.repair_max_tokens,
+        )
+
     rng = random.Random(args.seed)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
 
     events: List[Dict[str, object]] = []
+    approved = 0
+    repaired = 0
+    declined = 0
+    semantic_alerts = 0
+    structural_alerts = 0
+    latencies: List[float] = []
+
     with args.output.open("w", encoding="utf-8") as fh:
-        for idx, item in enumerate(spans):
-            span = str(item["span"]).strip()
-            if not span:
-                continue
-            context = item.get("question") or item.get("context")
-            record = engine.evaluate_span(
+        for idx, record in enumerate(span_source):
+            span_data = span_record_to_dict(record)
+            span = span_data["span"]
+            question = span_data.get("question")
+
+            evaluation = engine.evaluate_span(
                 span,
-                context=context if isinstance(context, str) else None,
+                question=question,
                 semantic_threshold=args.semantic_threshold,
                 structural_threshold=args.structural_threshold,
                 r_min=args.r_min,
                 hazard_max=args.hazard_max,
                 sigma_min=args.sigma_min,
-                rng=rng,
             )
-            record.update(
-                {
-                    "step": idx,
-                    "label": item.get("label"),
-                    "question": context,
-                }
-            )
-            fh.write(json.dumps(record) + "\n")
-            events.append(record)
+
+            latency = round(rng.uniform(55.0, 105.0), 2)
+            latencies.append(latency)
+
+            action = "emit" if evaluation.admitted else "decline"
+            repaired_span: Optional[str] = None
+            repair_eval: Optional[SpanEvaluation] = None
+
+            if not evaluation.admitted and repairer and evaluation.repair_candidate:
+                twin_strings = [twin.string for twin in evaluation.twins]
+                proposal = repairer.propose(question, span, twin_strings)
+                if proposal and proposal.strip() and proposal.strip() != span.strip():
+                    repaired_span = proposal.strip()
+                    vector = engine.embedder.encode([repaired_span])[0]
+                    repair_eval = engine.evaluate_span(
+                        repaired_span,
+                        question=question,
+                        semantic_threshold=args.semantic_threshold,
+                        structural_threshold=args.structural_threshold,
+                        r_min=args.r_min,
+                        hazard_max=args.hazard_max,
+                        sigma_min=args.sigma_min,
+                        vector=vector,
+                    )
+                    if repair_eval.admitted:
+                        action = "repair"
+                        evaluation = repair_eval
+
+            decisions = evaluation.decisions()
+            metrics = evaluation.metrics()
+            metrics["repetitions"] = evaluation.occurrences
+            metrics["margin"] = metrics.get("semantic", 0.0)  # placeholder until novelty seeds arrive
+
+            event = {
+                "ts": datetime.now(timezone.utc).isoformat(),
+                "qid": f"Q{idx+1:03d}",
+                "question": question,
+                "original_span": span,
+                "span": evaluation.span,
+                "signature": evaluation.signature,
+                "label": span_data.get("label"),
+                "decisions": decisions,
+                "metrics": {k: round(float(v), 6) for k, v in metrics.items()},
+                "twins": [
+                    {
+                        "string": twin.string,
+                        "occurrences": twin.occurrences,
+                        "patternability": round(twin.patternability, 6),
+                        "semantic_similarity": round(twin.semantic_similarity, 6),
+                        "hazard": round(twin.hazard, 6),
+                        "source": twin.source,
+                    }
+                    for twin in evaluation.twins
+                ],
+                "action": action,
+                "latency_ms": latency,
+                "repeat_ok": evaluation.repeat_ok,
+                "hazard_ok": evaluation.hazard_ok,
+                "semantic_ok": evaluation.semantic_ok,
+                "naive_semantic_alert": evaluation.semantic_similarity >= args.semantic_threshold,
+                "naive_structural_alert": evaluation.patternability >= args.structural_threshold,
+            }
+            if repaired_span is not None:
+                event["repair_span"] = repaired_span
+            fh.write(json.dumps(event) + "\n")
+            events.append(event)
+
+            if action == "repair":
+                approved += 1
+                repaired += 1
+            elif decisions["admit"]:
+                approved += 1
+            else:
+                declined += 1
+            if event["naive_semantic_alert"]:
+                semantic_alerts += 1
+            if event["naive_structural_alert"]:
+                structural_alerts += 1
 
     total = len(events)
-    semantic_alerts = sum(1 for e in events if e["naive_semantic_alert"])
-    structural_alerts = sum(1 for e in events if e["naive_structural_alert"])
-    hybrid_alerts = sum(1 for e in events if e["hybrid_guardrail_alert"])
-    blocked = total - hybrid_alerts
-    repairs = sum(1 for e in events if not e["hybrid_guardrail_alert"] and e["repair_applied"])
-    citations = sum(1 for e in events if e["hybrid_guardrail_alert"] and e.get("twins"))
-    hall_rate = blocked / total if total else 0.0
-    repair_yield = repairs / blocked if blocked else 0.0
-    citation_coverage = citations / hybrid_alerts if hybrid_alerts else 0.0
-    latency_mean = float(np.mean([e["latency_ms"] for e in events])) if events else 0.0
-    latency_p95 = float(np.percentile([e["latency_ms"] for e in events], 95)) if events else 0.0
-
+    thresholds = {
+        "r_min": args.r_min,
+        "lambda_max": args.hazard_max,
+        "sigma_min": args.sigma_min,
+        "semantic_threshold": args.semantic_threshold,
+        "structural_threshold": args.structural_threshold,
+    }
+    hall_rate = declined / total if total else 0.0
+    repair_yield = repaired / (declined + repaired) if (declined + repaired) else 0.0
+    citation_coverage = (
+        sum(1 for e in events if e["decisions"]["admit"] and e.get("twins")) / approved if approved else 0.0
+    )
     metrics_payload = {
-        "total_events": total,
+        "pack": args.manifest.as_posix(),
+        "thresholds": thresholds,
+        "kpis": {
+            "approved": approved,
+            "blocked": declined,
+            "repaired": repaired,
+            "hallucination_rate": hall_rate,
+            "repair_yield": repair_yield,
+            "citation_coverage": citation_coverage,
+            "latency_ms_p50": float(np.percentile(latencies, 50)) if latencies else 0.0,
+            "latency_ms_p90": float(np.percentile(latencies, 90)) if latencies else 0.0,
+        },
         "semantic_alerts": semantic_alerts,
         "structural_alerts": structural_alerts,
-        "hybrid_alerts": hybrid_alerts,
-        "blocked": blocked,
-        "repairs": repairs,
-        "citations": citations,
-        "hallucination_rate": hall_rate,
-        "repair_yield": repair_yield,
-        "citation_coverage": citation_coverage,
-        "latency_ms_mean": latency_mean,
-        "latency_ms_p95": latency_p95,
+        "total_events": total,
     }
-    write_json(args.metrics_output, metrics_payload)
-
-    print(f"Wrote {total} events to {args.output}")
+    args.metrics_output.parent.mkdir(parents=True, exist_ok=True)
+    args.metrics_output.write_text(json.dumps(metrics_payload, indent=2))
     print(json.dumps(metrics_payload, indent=2))
 
 

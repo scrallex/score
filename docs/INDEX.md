@@ -6,6 +6,7 @@
 - `results/semantic_guardrail_metrics.json` – generated telemetry (hallucination rate, repair yield, citations, latency).
 - `scripts/reality_filter_pack.py` – turn any truth-pack into manifold/index/semantic artefacts.
 - `scripts/reality_filter_stream.py` – produce span-level stream with twin repairs and KPIs from the pack manifest.
+- `scripts/reality_filter_service.py` – FastAPI `/seen` shim for runtime span checks.
 
 ## Hallucination Control
 - `docs/note/semantic_coherence_hallucination_framework.md` – technical blueprint for using STM coherence as a hallucination gate.

@@ -218,9 +218,14 @@ def main(argv: List[str]) -> int:
         if frame >= len(events):
             return scatter,
         event = events[frame]
-        offsets.append([event["patternability"], event["semantic_similarity"]])
-        colors.append(float(event.get("coherence", 0.0)))
-        size = 80 if event.get("hybrid_guardrail_alert") else 40
+        metrics = event.get("metrics", {})
+        pattern = float(metrics.get("patternability", event.get("patternability", 0.0)))
+        semantic = float(metrics.get("semantic", event.get("semantic_similarity", 0.0)))
+        coherence = float(metrics.get("coherence", event.get("coherence", 0.0)))
+
+        offsets.append([pattern, semantic])
+        colors.append(coherence)
+        size = 80 if event.get("decisions", {}).get("admit") or event.get("hybrid_guardrail_alert") else 40
         sizes.append(size)
         scatter.set_offsets(np.asarray(offsets))
         scatter.set_array(np.asarray(colors))
@@ -237,19 +242,22 @@ def main(argv: List[str]) -> int:
         if event.get("naive_semantic_alert"):
             sem_alerts += 1
             log_sem.appendleft(annotation)
-        if event.get("naive_structural_alert"):
+        structural_trigger = event.get("naive_structural_alert")
+        if structural_trigger:
             struct_alerts += 1
             log_struct.appendleft(annotation)
         sem_text.set_text(format_log(log_sem, "Semantic alerts", sem_alerts))
         struct_text.set_text(format_log(log_struct, "Structural alerts", struct_alerts))
 
-        if event.get("hybrid_guardrail_alert"):
+        admitted = event.get("decisions", {}).get("admit") if event.get("decisions") else event.get("hybrid_guardrail_alert")
+
+        if admitted:
             hybrid_alerts += 1
             citations += 1 if event.get("twins") else 0
             message = (
                 f"High-confidence alert #{hybrid_alerts}: {name}\n"
-                f"pattern={event['patternability']:.3f} | semantic={event['semantic_similarity']:.3f}"
-                f" | hazard={event.get('hazard', 0.0):.3f}"
+                f"pattern={pattern:.3f} | semantic={semantic:.3f}"
+                f" | hazard={metrics.get('lambda', event.get('hazard', 0.0)):.3f}"
             )
             twins = event.get("twins") or []
             if twins:
@@ -259,7 +267,14 @@ def main(argv: List[str]) -> int:
             alert_text.set_text(message)
         else:
             blocked += 1
-            if event.get("repair_applied") and event.get("repair_suggestion"):
+            if event.get("repair_span"):
+                repairs += 1
+                suggestion = event.get("repair_span")
+                message = (
+                    f"Blocked line: {name}\n"
+                    f"Auto-repaired with span '{suggestion}'"
+                )
+            elif event.get("repair_applied") and event.get("repair_suggestion"):
                 repairs += 1
                 suggestion = event["repair_suggestion"]
                 message = (
@@ -268,8 +283,8 @@ def main(argv: List[str]) -> int:
                 )
             else:
                 message = f"Blocked line: {name}"
-            message += f"\npattern={event['patternability']:.3f} | semantic={event['semantic_similarity']:.3f}"
-            message += f" | hazard={event.get('hazard', 0.0):.3f}"
+            message += f"\npattern={pattern:.3f} | semantic={semantic:.3f}"
+            message += f" | hazard={metrics.get('lambda', event.get('hazard', 0.0)):.3f}"
             reasons = []
             if not event.get("repeat_ok", True):
                 reasons.append("repeat<r_min")
