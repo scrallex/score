@@ -91,3 +91,34 @@ regions:
 Each pitch references the hybrid quadrant as the differentiator over
 traditional anomaly detectors or keyword scanners.
 
+## Core Discovery Highlights
+
+- **Reality filter** – The hybrid manifold can refuse hallucinated spans by
+  demanding repetition and low hazard against a trusted corpus (“every line
+  carries its receipts”).
+- **Dual cognition** – Structural rhythm (patternability/coherence/hazard) +
+  semantic intent gives a sparse, actionable quadrant that neither naive
+  embeddings nor structure-only detectors expose.
+- **Target manifolds** – Spin a dedicated manifold per question or session to
+  require clause-level citations across documentation, telemetry, or market
+  data. The medium is data-agnostic.
+- **Workslop antidote** – Position the demo as the cure for AI-generated
+  drivel: the guardrail blocks content that lacks precedent, repairs it from
+  nearest twins, and attaches evidence.
+- **Stakeholder framing** – Emphasize outcomes, not math: fewer bad alerts for
+  ops, self-citing copilots for product, echo-gated capital for finance.
+
+## Operational Checklist
+
+1. **Demo polish** – Keep `make semantic-guardrail-demo` reproducible;
+   instrument stream telemetry (`results/semantic_guardrail_metrics.json`), and
+   surface KPIs in the dashboard.
+2. **Documentation front door** – Update `README.md` and `docs/INDEX.md` to
+   introduce the manifold as a coherence engine; archive raw artefacts under
+   `results/`.
+3. **Terminology hygiene** – Standardize usage of structural metric names
+   (patternability = derived rhythm, coherence = base STM metric, hazard =
+   lambda) across notes and slides.
+4. **Collateral** – Build a short deck: problem (workslop), architecture
+   (manifold medium), demo (hybrid scatter), roadmap (guarded generation for
+   docs/telemetry/finance).

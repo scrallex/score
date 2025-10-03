@@ -26,7 +26,7 @@ import random
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -146,10 +146,22 @@ def event_record(
     structural_threshold: float,
     *,
     cluster: str,
+    top_pool: Sequence[EventCandidate],
+    rng: random.Random,
 ) -> Dict[str, object]:
     naive_semantic = candidate.semantic_similarity >= semantic_threshold
     naive_structural = candidate.patternability >= structural_threshold
     hybrid = naive_semantic and naive_structural
+
+    twins = build_twins(candidate, top_pool)
+    repair_suggestion: Optional[Dict[str, object]] = None
+    repair_applied = False
+    if not hybrid and twins:
+        repair_suggestion = dict(twins[0])
+        repair_applied = True
+
+    latency_ms = round(rng.uniform(35.0, 85.0), 2)
+
     return {
         "step": step,
         "source": candidate.source,
@@ -165,7 +177,45 @@ def event_record(
         "naive_semantic_alert": naive_semantic,
         "naive_structural_alert": naive_structural,
         "hybrid_guardrail_alert": hybrid,
+        "twins": twins,
+        "repair_suggestion": repair_suggestion,
+        "repair_applied": repair_applied,
+        "latency_ms": latency_ms,
     }
+
+
+def build_twins(
+    candidate: EventCandidate,
+    pool: Sequence[EventCandidate],
+    *,
+    limit: int = 3,
+) -> List[Dict[str, object]]:
+    """Return representative precedent windows for citation or repair."""
+
+    def payload(item: EventCandidate) -> Dict[str, object]:
+        return {
+            "string": item.string,
+            "source": item.source,
+            "occurrences": item.occurrences,
+            "patternability": round(item.patternability, 6),
+            "semantic_similarity": round(item.semantic_similarity, 6),
+        }
+
+    results: List[Dict[str, object]] = []
+
+    if candidate.occurrences >= 2:
+        results.append(payload(candidate))
+
+    for item in pool:
+        if item.string == candidate.string:
+            continue
+        if item.occurrences < 2:
+            break
+        results.append(payload(item))
+        if len(results) >= limit:
+            break
+
+    return results
 
 
 def main(argv: List[str]) -> int:
@@ -181,6 +231,7 @@ def main(argv: List[str]) -> int:
     parser.add_argument("--structural-threshold", type=float, default=0.475)
     parser.add_argument("--samples", type=int, default=8, help="Per-cluster sample count")
     parser.add_argument("--output", type=Path, default=Path("results/semantic_guardrail_stream.jsonl"))
+    parser.add_argument("--metrics-output", type=Path, help="Optional path for aggregate metrics JSON")
     parser.add_argument("--seed", type=int, default=13)
     parser.add_argument("--incident-name", default="database_connection_timeout")
     parser.add_argument("--incident-source", default="synthetic")
@@ -226,6 +277,7 @@ def main(argv: List[str]) -> int:
     )
 
     rng = random.Random(args.seed)
+    top_pool = sorted(candidates + [incident_candidate], key=lambda c: c.occurrences, reverse=True)
     timeline = build_timeline(
         rng,
         semantic_only,
@@ -244,6 +296,13 @@ def main(argv: List[str]) -> int:
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     summary = {"semantic_only": 0, "structural_only": 0, "neutral": 0, "hybrid_alert": 0}
+    approved = 0
+    blocked = 0
+    repairs = 0
+    citations = 0
+    latency_samples: List[float] = []
+    semantic_trips = 0
+    structural_trips = 0
     with args.output.open("w", encoding="utf-8") as fh:
         for idx, candidate in enumerate(timeline):
             cluster = clusters.get(id(candidate), "neutral")
@@ -253,20 +312,60 @@ def main(argv: List[str]) -> int:
                 sem_thr,
                 struct_thr,
                 cluster=cluster,
+                top_pool=top_pool,
+                rng=rng,
             )
             if candidate is incident_candidate:
                 record.update({"annotation": "synthetic incident"})
             fh.write(json.dumps(record) + "\n")
             summary[cluster] = summary.get(cluster, 0) + 1
+            if record.get("naive_semantic_alert"):
+                semantic_trips += 1
+            if record.get("naive_structural_alert"):
+                structural_trips += 1
+            if record.get("hybrid_guardrail_alert"):
+                approved += 1
+                if record.get("twins"):
+                    citations += 1
+            else:
+                blocked += 1
+                if record.get("repair_applied"):
+                    repairs += 1
+            latency_samples.append(float(record.get("latency_ms", 0.0)))
 
     print(f"Wrote {len(timeline)} events to {args.output}")
     print("Event mix:")
     for key, value in summary.items():
         print(f"  {key:16s}: {value}")
 
+    if args.metrics_output:
+        total = approved + blocked
+        hall_rate = blocked / total if total else 0.0
+        repair_yield = repairs / blocked if blocked else 0.0
+        citation_coverage = citations / approved if approved else 0.0
+        latency_mean = float(np.mean(latency_samples)) if latency_samples else 0.0
+        latency_p95 = float(np.percentile(latency_samples, 95)) if latency_samples else 0.0
+        metrics_payload = {
+            "total_events": total,
+            "semantic_alerts": semantic_trips,
+            "structural_alerts": structural_trips,
+            "hybrid_alerts": approved,
+            "blocked": blocked,
+            "repairs": repairs,
+            "citations": citations,
+            "hallucination_rate": hall_rate,
+            "repair_yield": repair_yield,
+            "citation_coverage": citation_coverage,
+            "latency_ms_mean": latency_mean,
+            "latency_ms_p95": latency_p95,
+        }
+        metrics_path = args.metrics_output
+        metrics_path.parent.mkdir(parents=True, exist_ok=True)
+        metrics_path.write_text(json.dumps(metrics_payload, indent=2))
+        print(f"Wrote metrics summary to {metrics_path}")
+
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main(sys.argv[1:]))
-

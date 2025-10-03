@@ -5,6 +5,7 @@ Large language models fabricate citations, misstate figures, or synthesize polic
 
 ## Terminology Refresh
 - **Structural manifold (STM/QFH)**: the five-metric space (coherence `c`, stability `s`, entropy `H`, rupture `rho`, hazard `lambda`) derived from byte windows. Each window is assigned a discrete signature, and repetition counts determine whether the state has a reliable precedent.
+- **Patternability**: the derived structural rhythm we plot on the X-axis of the demo scatter; it blends coherence, stability, and hazard to measure how repeatable a window is.
 - **Semantic bridge**: transformer embeddings that project each window into cosine similarity against task-specific seeds. The bridge links structural rhythm to intent.
 - **Manifold medium**: a materialized store of structural signatures, semantic fingerprints, and repetition statistics for a bounded corpus or online stream.
 - **Coherence (co-here-ence)**: a targeted query for previously observed structural signatures. A candidate output is coherent when its signature has occurred enough times within the target manifold and the associated hazard is below threshold.

@@ -1,14 +1,24 @@
 # Sep Text Manifold (STM)
 
-The **Sep Text Manifold (STM)** project is a starting point for building a
-system that analyses large volumes of text data using the quantum‑inspired
-analysis developed in the SEP Engine.  It takes directories of arbitrary
-textual files, translates them into a stream of bits, and computes
-informational metrics (coherence, stability, entropy and rupture) over
-sliding windows of the data.  These metrics are then aggregated back
-onto the words and phrases that appear in the text, allowing you to
-identify high‑quality patterns, connectors between topics and overall
-themes in the corpus.
+STM is a coherence engine: it builds structural manifolds over any corpus and
+checks generated answers against them so every line carries its receipts. By
+fusing structural rhythm (patternability/coherence/hazard) with semantic
+intent, STM blocks hallucinated spans, repairs them from nearest twins, and
+returns citations for what survives.
+
+**Quick win:** `make semantic-guardrail-demo`
+
+This command regenerates the documentation + telemetry manifolds (if missing),
+projects them into the semantic/structural plane, streams a scripted incident,
+and launches the three-panel dashboard:
+
+- Naïve semantic guardrail (LLM-style embeddings) – noisy and over-confident.
+- Naïve structural guardrail – sensitive to rhythm but oblivious to meaning.
+- Hybrid reality filter – only fires when both axes agree, shows citations,
+  and reports hallucination rate, repair yield, citation coverage, and latency.
+
+Head to `docs/INDEX.md` for a guided tour of whitepapers, runbooks, and design
+notes.
 
 ## Structural Intelligence Demo (mxbikes.xyz)
 

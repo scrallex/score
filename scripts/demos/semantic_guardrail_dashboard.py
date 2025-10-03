@@ -155,7 +155,7 @@ def main(argv: List[str]) -> int:
     )
     plt.colorbar(base, ax=ax_scatter, label="Mean coherence", fraction=0.046, pad=0.04)
 
-    scatter = ax_scatter.scatter([], [], s=[], c=[], cmap="coolwarm", vmin=0.0, vmax=0.1, edgecolors="k", linewidths=0.5, zorder=3)
+    scatter = ax_scatter.scatter([], [], s=[], c=[], cmap="coolwarm", vmin=0.0, vmax=1.0, edgecolors="k", linewidths=0.5, zorder=3)
 
     log_sem = deque(maxlen=PANEL_MAX_LOG)
     log_struct = deque(maxlen=PANEL_MAX_LOG)
@@ -181,6 +181,24 @@ def main(argv: List[str]) -> int:
     sem_alerts = 0
     struct_alerts = 0
     hybrid_alerts = 0
+    blocked = 0
+    repairs = 0
+    citations = 0
+    total_latency = 0.0
+
+    processed_events: List[Dict[str, object]] = []
+
+    metrics_text = fig.text(
+        0.01,
+        0.02,
+        "",
+        transform=fig.transFigure,
+        ha="left",
+        va="bottom",
+        fontsize=10,
+        family="monospace",
+        color="black",
+    )
 
     cluster_labels = {
         "semantic_only": "Semantic only",
@@ -195,6 +213,7 @@ def main(argv: List[str]) -> int:
 
     def update(frame: int):
         nonlocal sem_alerts, struct_alerts, hybrid_alerts
+        nonlocal sem_alerts, struct_alerts, hybrid_alerts, blocked, repairs, citations, total_latency
         if frame >= len(events):
             return scatter,
         event = events[frame]
@@ -209,6 +228,8 @@ def main(argv: List[str]) -> int:
         label = cluster_labels.get(event.get("cluster"), "")
         annotation = f"step {event['step']:02d} | {event['event']} ({label})"
 
+        processed_events.append(event)
+
         if event.get("naive_semantic_alert"):
             sem_alerts += 1
             log_sem.appendleft(annotation)
@@ -220,15 +241,54 @@ def main(argv: List[str]) -> int:
 
         if event.get("hybrid_guardrail_alert"):
             hybrid_alerts += 1
+            citations += 1 if event.get("twins") else 0
             message = (
                 f"High-confidence alert #{hybrid_alerts}: {event['event']}\n"
                 f"pattern={event['patternability']:.3f} | semantic={event['semantic_similarity']:.3f}"
             )
+            twins = event.get("twins") or []
+            if twins:
+                primary = twins[0]
+                message += f"\nCitation: {primary['string']} (occ={primary['occurrences']})"
+            alert_text.set_color("darkgreen")
             alert_text.set_text(message)
         else:
-            alert_text.set_text("")
+            blocked += 1
+            if event.get("repair_applied") and event.get("repair_suggestion"):
+                repairs += 1
+                suggestion = event["repair_suggestion"]
+                message = (
+                    f"Blocked line: {event['event']}\n"
+                    f"Auto-repaired with twin '{suggestion['string']}' (occ={suggestion['occurrences']})"
+                )
+            else:
+                message = f"Blocked line: {event['event']}"
+            alert_text.set_color("firebrick")
+            alert_text.set_text(message)
 
-        return scatter, sem_text, struct_text, alert_text
+        total_latency += float(event.get("latency_ms", 0.0))
+
+        total = len(processed_events)
+        approved = hybrid_alerts
+        blocked_total = blocked
+        hall_rate = blocked_total / total if total else 0.0
+        repair_yield = repairs / blocked_total if blocked_total else 0.0
+        citation_coverage = citations / approved if approved else 0.0
+        latency_mean = total_latency / total if total else 0.0
+
+        metrics_text.set_text(
+            "Hallucination rate: {hall:.1%}\n"
+            "Repair yield: {repair:.1%}\n"
+            "Citation coverage: {cite:.1%}\n"
+            "Latency overhead: {latency:.1f} ms".format(
+                hall=hall_rate,
+                repair=repair_yield,
+                cite=citation_coverage,
+                latency=latency_mean,
+            )
+        )
+
+        return scatter, sem_text, struct_text, alert_text, metrics_text
 
     ani = FuncAnimation(fig, update, frames=len(events) + 10, interval=args.interval, blit=False, repeat=False)
     plt.show()

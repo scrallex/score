@@ -1,4 +1,4 @@
-.PHONY: scorecard plots lead twins onset all
+.PHONY: scorecard plots lead twins onset all clean
 .PHONY: demo-payload demo-up demo-down
 .PHONY: planbench-all planbench-scale codetrace-report
 .PHONY: semantic-guardrail-demo final-report
@@ -201,7 +201,8 @@ semantic-guardrail-demo:
 	@echo "[semantic-guardrail] Generating stream"
 	@PYTHONPATH=src .venv/bin/python scripts/semantic_guardrail_stream.py \
 	  --seeds risk resilience volatility anomaly "predictive maintenance" \
-	  --samples 6
+	  --samples 6 \
+	  --metrics-output results/semantic_guardrail_metrics.json
 	@echo "[semantic-guardrail] Launching dashboard"
 	@PYTHONPATH=src .venv/bin/python scripts/demos/semantic_guardrail_dashboard.py \
 	  --stream results/semantic_guardrail_stream.jsonl \
@@ -218,3 +219,10 @@ final-report:
 	  cp results/semantic_bridge_combined.png docs/whitepaper/figures/semantic_bridge_combined.png; \
 	fi
 	@latexmk -pdf -quiet -f -g -output-directory=docs/whitepaper docs/whitepaper/Semantic_Guardrail_Whitepaper.tex
+
+clean:
+	rm -f analysis/semantic_demo_state.json analysis/mms_state.json
+	rm -f results/semantic_bridge_docs.json results/semantic_bridge_mms.json
+	rm -f results/semantic_bridge_scatter.png results/semantic_bridge_mms_scatter.png
+	rm -f results/semantic_bridge_combined.png results/semantic_guardrail_stream.jsonl results/semantic_guardrail_metrics.json
+	rm -f docs/whitepaper/figures/semantic_bridge_combined.png
