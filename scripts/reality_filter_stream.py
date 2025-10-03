@@ -219,6 +219,7 @@ def main() -> None:
                 r_min=args.r_min,
                 hazard_max=args.hazard_max,
                 sigma_min=args.sigma_min,
+                fetch_twins=True,
             )
 
             latency = round(rng.uniform(55.0, 105.0), 2)
@@ -244,6 +245,7 @@ def main() -> None:
                         hazard_max=args.hazard_max,
                         sigma_min=args.sigma_min,
                         vector=vector,
+                        fetch_twins=True,
                     )
                     if repair_eval.admitted:
                         action = "repair"

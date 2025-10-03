@@ -237,7 +237,13 @@ class TruthPackEngine:
             )
             seen.add(exclude)
 
-        for name in self._sorted_tokens:
+        if self.embedding_matrix is None:
+            return results
+
+        scores = self.embedding_matrix @ vector
+        order = np.argsort(scores)[::-1]
+        for idx in order:
+            name = self.embedding_strings[idx]
             if exclude and name == exclude:
                 continue
             if name in seen:
@@ -250,7 +256,7 @@ class TruthPackEngine:
                     string=name,
                     occurrences=int(data.get("occurrences", 0)),
                     patternability=float(data.get("patternability", 0.0)),
-                    semantic_similarity=1.0 if name == exclude else 0.0,
+                    semantic_similarity=float(np.clip(scores[idx], -1.0, 1.0)),
                     hazard=self.compute_hazard(name, data),
                 )
             )
@@ -296,10 +302,13 @@ class TruthPackEngine:
 
         hazard = self.compute_hazard(span, entry)
         semantic_similarity = self.semantic_similarity(vector)
-        twins = self.top_twins(vector, exclude=span if entry else None)
+        twins: List[TwinResult] = []
 
-        if not entry and twins:
-            fallback = twins[0]
+        if not entry:
+            fallback = None
+        else:
+            fallback = None
+        if not entry and fallback:
             pattern = fallback.patternability
             hazard = fallback.hazard
             fallback_entry = self.strings.get(fallback.string)
@@ -357,6 +366,7 @@ class TruthPackEngine:
         hazard_max: float,
         sigma_min: float,
         vector: Optional[np.ndarray] = None,
+        fetch_twins: bool = False,
     ) -> SpanEvaluation:
         metrics = self._span_metrics(span)
         if vector is None:
@@ -371,7 +381,11 @@ class TruthPackEngine:
         rupture = metrics.rupture
         signature = metrics.signature
 
-        twins = metrics.twins
+        twins: List[TwinResult]
+        if fetch_twins:
+            twins = metrics.twins or self.top_twins(vector, exclude=span if occurrences else None)
+        else:
+            twins = []
         fallback = twins[0] if twins else None
 
         if occurrences == 0 and fallback is not None:
@@ -391,6 +405,8 @@ class TruthPackEngine:
                         if sig and sig.get("signature"):
                             signature = sig.get("signature")
                             break
+        if not fetch_twins:
+            fallback = None
 
         repeat_ok = occurrences >= r_min
         hazard_ok = hazard <= hazard_max

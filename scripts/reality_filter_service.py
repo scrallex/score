@@ -116,6 +116,7 @@ def seen(request: SeenRequest) -> SeenResponse:
         r_min=request.r_min,
         hazard_max=request.hazard_max,
         sigma_min=request.sigma_min,
+        fetch_twins=False,
     )
 
     action = "emit" if eval_result.admitted else "decline"

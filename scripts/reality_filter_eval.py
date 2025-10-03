@@ -68,6 +68,7 @@ def evaluate_sentence(
         r_min=r_min,
         hazard_max=hazard_max,
         sigma_min=sigma_min,
+        fetch_twins=True,
     )
     result = {
         "sentence": sentence,
