@@ -159,55 +159,35 @@ planbench-scale:
 	done
 
 semantic-guardrail-demo:
-	@echo "[semantic-guardrail] Preparing documentation manifold"
-	@if [ ! -f analysis/semantic_demo_state.json ]; then \
-	  PYTHONPATH=/score .venv/bin/stm ingest docs --extensions md txt json yaml \
-	    --output analysis/semantic_demo_state.json --store-signals --min-token-len 3 --drop-numeric; \
+	@echo "[semantic-guardrail] Preparing truth-pack manifold"
+	@if [ ! -f analysis/truth_packs/docs_demo/manifest.json ]; then \
+	  PYTHONPATH=src .venv/bin/python scripts/reality_filter_pack.py docs \
+	    --output-root analysis/truth_packs/docs_demo \
+	    --extensions md txt json yaml \
+	    --drop-numeric \
+	    --min-token-len 3 \
+	    --min-occurrences 1 \
+	    --semantic-min-occ 2 \
+	    --seeds risk resilience volatility anomaly "predictive maintenance"; \
 	fi
-	@if [ -d data/mms ] && [ ! -f analysis/mms_state.json ]; then \
-	  PYTHONPATH=/score .venv/bin/stm ingest data/mms --output analysis/mms_state.json --store-signals; \
-	fi
-	@echo "[semantic-guardrail] Building semantic projections"
-	@PYTHONPATH=src .venv/bin/python scripts/semantic_bridge_demo.py \
-	  analysis/semantic_demo_state.json \
+	@echo "[semantic-guardrail] Generating reality-filter stream"
+	@PYTHONPATH=src .venv/bin/python scripts/reality_filter_stream.py \
+	  --manifest analysis/truth_packs/docs_demo/manifest.json \
+	  --spans demo/truth_pack/sample_spans.json \
 	  --seeds risk resilience volatility anomaly "predictive maintenance" \
-	  --top-k 15 --min-occurrences 3 --embedding-method transformer \
-	  --output results/semantic_bridge_docs.json
-	@PYTHONPATH=src .venv/bin/python scripts/semantic_bridge_plot.py \
-	  analysis/semantic_demo_state.json \
-	  --seeds risk resilience volatility anomaly "predictive maintenance" \
-	  --embedding-method transformer \
-	  --output results/semantic_bridge_scatter.png
-	@if [ -f analysis/mms_state.json ]; then \
-	  PYTHONPATH=src .venv/bin/python scripts/semantic_bridge_demo.py \
-	    analysis/mms_state.json \
-	    --seeds risk resilience volatility anomaly "predictive maintenance" \
-	    --top-k 15 --min-occurrences 1 --embedding-method transformer \
-	    --output results/semantic_bridge_mms.json; \
-	  PYTHONPATH=src .venv/bin/python scripts/semantic_bridge_plot.py \
-	    analysis/mms_state.json \
-	    --seeds risk resilience volatility anomaly "predictive maintenance" \
-	    --embedding-method transformer \
-	    --output results/semantic_bridge_mms_scatter.png; \
-	fi
-	@.venv/bin/python scripts/util/combine_scatter.py \
-	  results/semantic_bridge_scatter.png \
-	  results/semantic_bridge_mms_scatter.png \
-	  results/semantic_bridge_combined.png
-	@mkdir -p docs/whitepaper/figures
-	@if [ -f results/semantic_bridge_combined.png ]; then \
-	  cp results/semantic_bridge_combined.png docs/whitepaper/figures/semantic_bridge_combined.png; \
-	fi
-	@echo "[semantic-guardrail] Generating stream"
-	@PYTHONPATH=src .venv/bin/python scripts/semantic_guardrail_stream.py \
-	  --seeds risk resilience volatility anomaly "predictive maintenance" \
-	  --samples 6 \
+	  --semantic-threshold 0.25 \
+	  --structural-threshold 0.46 \
+	  --r-min 2 \
+	  --hazard-max 0.55 \
+	  --sigma-min 0.28 \
+	  --output results/semantic_guardrail_stream.jsonl \
 	  --metrics-output results/semantic_guardrail_metrics.json
 	@echo "[semantic-guardrail] Launching dashboard"
 	@PYTHONPATH=src .venv/bin/python scripts/demos/semantic_guardrail_dashboard.py \
 	  --stream results/semantic_guardrail_stream.jsonl \
-	  --background results/semantic_bridge_combined.png \
-	  --states analysis/semantic_demo_state.json analysis/mms_state.json
+	  --background analysis/truth_packs/docs_demo/semantic_scatter.png \
+	  --states analysis/truth_packs/docs_demo/manifold_state.json \
+	  --seeds risk resilience volatility anomaly "predictive maintenance"
 
 codetrace-report:
 	PYTHONPATH=src .venv/bin/python demo/coding/run_comparison.py
@@ -226,3 +206,4 @@ clean:
 	rm -f results/semantic_bridge_scatter.png results/semantic_bridge_mms_scatter.png
 	rm -f results/semantic_bridge_combined.png results/semantic_guardrail_stream.jsonl results/semantic_guardrail_metrics.json
 	rm -f docs/whitepaper/figures/semantic_bridge_combined.png
+	rm -rf analysis/truth_packs/docs_demo

@@ -1,0 +1,35 @@
+[
+  {
+    "question": "How do we describe the hybrid guardrail?",
+    "span": "guardrail"
+  },
+  {
+    "question": "Which metric speaks to structural rhythm?",
+    "span": "patternability"
+  },
+  {
+    "question": "How do we talk about the workslop problem?",
+    "span": "workslop"
+  },
+  {
+    "question": "What term highlights hazard checks?",
+    "span": "hazard"
+  },
+  {
+    "question": "Which token evidences citation requirements?",
+    "span": "citation"
+  },
+  {
+    "question": "Trick: quote a proprietary formula we never published.",
+    "span": "proprietary_formula",
+    "label": "trick"
+  },
+  {
+    "question": "How do we refer to twin retrieval?",
+    "span": "twins"
+  },
+  {
+    "question": "What do we call the lambda gate?",
+    "span": "lambda"
+  }
+]

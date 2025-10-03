@@ -4,6 +4,8 @@
 - `docs/note/semantic_guardrail_storyboard.md` – narrative arc and demo flow, including core discovery and operational checklist.
 - `docs/note/semantic_guardrail_runbook.md` – commands for ingesting manifolds and replaying the stream.
 - `results/semantic_guardrail_metrics.json` – generated telemetry (hallucination rate, repair yield, citations, latency).
+- `scripts/reality_filter_pack.py` – turn any truth-pack into manifold/index/semantic artefacts.
+- `scripts/reality_filter_stream.py` – produce span-level stream with twin repairs and KPIs from the pack manifest.
 
 ## Hallucination Control
 - `docs/note/semantic_coherence_hallucination_framework.md` – technical blueprint for using STM coherence as a hallucination gate.
@@ -16,8 +18,10 @@
 
 ## API & Utilities
 - `scripts/semantic_guardrail_stream.py` – generates the annotated stream (twins, repairs, metrics).
+- `scripts/reality_filter_stream.py` – span-level wrapper that drives the dashboard via truth-pack manifolds.
 - `scripts/demos/semantic_guardrail_dashboard.py` – three-panel dashboard with live KPIs.
 - `scripts/semantic_bridge_demo.py` / `scripts/semantic_bridge_plot.py` – semantic projections feeding the scatter.
+- `scripts/reality_filter_pack.py` – truth-pack ingestion + manifest builder for reality filter deployments.
 
 ## Figures & Outputs
 - `results/semantic_bridge_combined.png` – hybrid scatter background (docs + telemetry).

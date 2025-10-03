@@ -205,6 +205,7 @@ def main(argv: List[str]) -> int:
         "structural_only": "Structural only",
         "neutral": "Neutral",
         "hybrid_alert": "Hybrid alert",
+        "both_disagree": "Semantic + structural",
     }
 
     def format_log(lines: Iterable[str], header: str, count: int) -> str:
@@ -225,8 +226,11 @@ def main(argv: List[str]) -> int:
         scatter.set_array(np.asarray(colors))
         scatter.set_sizes(np.asarray(sizes))
 
-        label = cluster_labels.get(event.get("cluster"), "")
-        annotation = f"step {event['step']:02d} | {event['event']} ({label})"
+        label = cluster_labels.get(event.get("cluster"), event.get("cluster", ""))
+        name = event.get("event") or event.get("span") or "<span>"
+        annotation = f"step {event['step']:02d} | {name} ({label})"
+        if event.get("question"):
+            annotation += f"\nQ: {event['question']}"
 
         processed_events.append(event)
 
@@ -243,8 +247,9 @@ def main(argv: List[str]) -> int:
             hybrid_alerts += 1
             citations += 1 if event.get("twins") else 0
             message = (
-                f"High-confidence alert #{hybrid_alerts}: {event['event']}\n"
+                f"High-confidence alert #{hybrid_alerts}: {name}\n"
                 f"pattern={event['patternability']:.3f} | semantic={event['semantic_similarity']:.3f}"
+                f" | hazard={event.get('hazard', 0.0):.3f}"
             )
             twins = event.get("twins") or []
             if twins:
@@ -258,11 +263,22 @@ def main(argv: List[str]) -> int:
                 repairs += 1
                 suggestion = event["repair_suggestion"]
                 message = (
-                    f"Blocked line: {event['event']}\n"
+                    f"Blocked line: {name}\n"
                     f"Auto-repaired with twin '{suggestion['string']}' (occ={suggestion['occurrences']})"
                 )
             else:
-                message = f"Blocked line: {event['event']}"
+                message = f"Blocked line: {name}"
+            message += f"\npattern={event['patternability']:.3f} | semantic={event['semantic_similarity']:.3f}"
+            message += f" | hazard={event.get('hazard', 0.0):.3f}"
+            reasons = []
+            if not event.get("repeat_ok", True):
+                reasons.append("repeat<r_min")
+            if not event.get("hazard_ok", True):
+                reasons.append("hazard>lambda_max")
+            if not event.get("semantic_ok", True):
+                reasons.append("semantic")
+            if reasons:
+                message += "\nReasons: " + ", ".join(reasons)
             alert_text.set_color("firebrick")
             alert_text.set_text(message)
 
