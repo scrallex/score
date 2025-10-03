@@ -9,12 +9,16 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import ORJSONResponse
 from pydantic import BaseModel, Field
 
 from reality_filter import TruthPackEngine
 
-app = FastAPI(title="Reality Filter /seen API", version="0.1.0")
+app = FastAPI(
+    title="Reality Filter /seen API",
+    version="0.1.0",
+    default_response_class=ORJSONResponse,
+)
 
 
 class SeenRequest(BaseModel):
@@ -27,7 +31,7 @@ class SeenRequest(BaseModel):
     r_min: int = Field(2, ge=0)
     hazard_max: float = Field(0.55, ge=0.0, le=1.0)
     sigma_min: float = Field(0.28, ge=0.0, le=1.0)
-    embedding_method: str = Field("transformer")
+    embedding_method: str = Field("hash")
     model: str = Field("all-MiniLM-L6-v2")
     hash_dims: int = Field(256, ge=1)
     embedding_min_occ: int = Field(1, ge=1)
@@ -71,15 +75,19 @@ def _load_engine(
         if not manifest.exists():
             raise FileNotFoundError(f"Manifest not found: {manifest}")
         data = json.loads(manifest.read_text())
-        seeds_to_use = data.get("seeds", [])
-    return TruthPackEngine.from_manifest(
+        seed_families = data.get("seed_families", {})
+        seeds_to_use = data.get("seeds") or seed_families.get("factual", [])
+    engine = TruthPackEngine.from_manifest(
         manifest_path,
         seeds=seeds_to_use,
         embedding_method=embedding_method,
         model_name=model,
         hash_dims=hash_dims,
         embedding_min_occ=embedding_min_occ,
+        lru_size=200_000,
     )
+    engine.prewarm(max_items=20_000)
+    return engine
 
 
 @app.post("/seen", response_model=SeenResponse)

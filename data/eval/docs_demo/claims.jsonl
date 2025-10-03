@@ -1,0 +1,120 @@
+{"id": "DOCSR001", "question": "Is it correct that 'model' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#model"], "notes": "Auto-generated refuted claim built from token 'model'"}
+{"id": "DOCSR002", "question": "Is it correct that 'schema' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#schema"], "notes": "Auto-generated refuted claim built from token 'schema'"}
+{"id": "DOCSR003", "question": "Is it correct that 'time' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#time"], "notes": "Auto-generated refuted claim built from token 'time'"}
+{"id": "DOCSR004", "question": "Is it correct that 'api' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#api"], "notes": "Auto-generated refuted claim built from token 'api'"}
+{"id": "DOCSR005", "question": "Is it correct that 'twins' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#twins"], "notes": "Auto-generated refuted claim built from token 'twins'"}
+{"id": "DOCSR006", "question": "Is it correct that 'title' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#title"], "notes": "Auto-generated refuted claim built from token 'title'"}
+{"id": "DOCSR007", "question": "Is it correct that 'twin' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#twin"], "notes": "Auto-generated refuted claim built from token 'twin'"}
+{"id": "DOCSR008", "question": "Is it correct that 'application' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#application"], "notes": "Auto-generated refuted claim built from token 'application'"}
+{"id": "DOCSR009", "question": "Is it correct that 'into' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#into"], "notes": "Auto-generated refuted claim built from token 'into'"}
+{"id": "DOCSR010", "question": "Is it correct that 'output' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#output"], "notes": "Auto-generated refuted claim built from token 'output'"}
+{"id": "DOCSR011", "question": "Is it correct that 'planbench' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#planbench"], "notes": "Auto-generated refuted claim built from token 'planbench'"}
+{"id": "DOCSR012", "question": "Is it correct that 'blocksworld' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#blocksworld"], "notes": "Auto-generated refuted claim built from token 'blocksworld'"}
+{"id": "DOCSR013", "question": "Is it correct that 'description' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#description"], "notes": "Auto-generated refuted claim built from token 'description'"}
+{"id": "DOCSR014", "question": "Is it correct that 'content' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#content"], "notes": "Auto-generated refuted claim built from token 'content'"}
+{"id": "DOCSR015", "question": "Is it correct that 'true' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#true"], "notes": "Auto-generated refuted claim built from token 'true'"}
+{"id": "DOCSR016", "question": "Is it correct that 'language' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#language"], "notes": "Auto-generated refuted claim built from token 'language'"}
+{"id": "DOCSR017", "question": "Is it correct that 'tuning' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#tuning"], "notes": "Auto-generated refuted claim built from token 'tuning'"}
+{"id": "DOCSR018", "question": "Is it correct that 'summary' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#summary"], "notes": "Auto-generated refuted claim built from token 'summary'"}
+{"id": "DOCSR019", "question": "Is it correct that 'ann' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#ann"], "notes": "Auto-generated refuted claim built from token 'ann'"}
+{"id": "DOCSR020", "question": "Is it correct that 'windows' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#windows"], "notes": "Auto-generated refuted claim built from token 'windows'"}
+{"id": "DOCSR021", "question": "Is it correct that 'can' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#can"], "notes": "Auto-generated refuted claim built from token 'can'"}
+{"id": "DOCSR022", "question": "Is it correct that 'logical' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#logical"], "notes": "Auto-generated refuted claim built from token 'logical'"}
+{"id": "DOCSR023", "question": "Is it correct that 'coherence' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#coherence"], "notes": "Auto-generated refuted claim built from token 'coherence'"}
+{"id": "DOCSR024", "question": "Is it correct that 'only' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://docs#only"], "notes": "Auto-generated refuted claim built from token 'only'"}
+{"id": "DOCSS001", "question": "What does the documentation state about 'trace'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#trace"], "notes": "Auto-generated supported claim for token 'trace'"}
+{"id": "DOCSS002", "question": "What does the documentation state about 'null'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#null"], "notes": "Auto-generated supported claim for token 'null'"}
+{"id": "DOCSS003", "question": "What does the documentation state about 'coverage'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#coverage"], "notes": "Auto-generated supported claim for token 'coverage'"}
+{"id": "DOCSS004", "question": "What does the documentation state about 'lead'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#lead"], "notes": "Auto-generated supported claim for token 'lead'"}
+{"id": "DOCSS005", "question": "What does the documentation state about 'alerts'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#alerts"], "notes": "Auto-generated supported claim for token 'alerts'"}
+{"id": "DOCSS006", "question": "What does the documentation state about 'precision'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#precision"], "notes": "Auto-generated supported claim for token 'precision'"}
+{"id": "DOCSS007", "question": "What does the documentation state about 'alerts_pre_failure'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#alerts_pre_failure"], "notes": "Auto-generated supported claim for token 'alerts_pre_failure'"}
+{"id": "DOCSS008", "question": "What does the documentation state about 'p_value'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#p_value"], "notes": "Auto-generated supported claim for token 'p_value'"}
+{"id": "DOCSS009", "question": "What does the documentation state about 'window_count'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#window_count"], "notes": "Auto-generated supported claim for token 'window_count'"}
+{"id": "DOCSS010", "question": "What does the documentation state about 'the'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#the"], "notes": "Auto-generated supported claim for token 'the'"}
+{"id": "DOCSS011", "question": "What does the documentation state about 'and'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#and"], "notes": "Auto-generated supported claim for token 'and'"}
+{"id": "DOCSS012", "question": "What does the documentation state about 'json'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#json"], "notes": "Auto-generated supported claim for token 'json'"}
+{"id": "DOCSS013", "question": "What does the documentation state about 'for'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#for"], "notes": "Auto-generated supported claim for token 'for'"}
+{"id": "DOCSS014", "question": "What does the documentation state about 'with'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#with"], "notes": "Auto-generated supported claim for token 'with'"}
+{"id": "DOCSS015", "question": "What does the documentation state about 'analysis'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#analysis"], "notes": "Auto-generated supported claim for token 'analysis'"}
+{"id": "DOCSS016", "question": "What does the documentation state about 'clear'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#clear"], "notes": "Auto-generated supported claim for token 'clear'"}
+{"id": "DOCSS017", "question": "What does the documentation state about 'planning'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#planning"], "notes": "Auto-generated supported claim for token 'planning'"}
+{"id": "DOCSS018", "question": "What does the documentation state about 'demo'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#demo"], "notes": "Auto-generated supported claim for token 'demo'"}
+{"id": "DOCSS019", "question": "What does the documentation state about 'that'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#that"], "notes": "Auto-generated supported claim for token 'that'"}
+{"id": "DOCSS020", "question": "What does the documentation state about 'reasoning'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#reasoning"], "notes": "Auto-generated supported claim for token 'reasoning'"}
+{"id": "DOCSS021", "question": "What does the documentation state about 'structural'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#structural"], "notes": "Auto-generated supported claim for token 'structural'"}
+{"id": "DOCSS022", "question": "What does the documentation state about 'this'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#this"], "notes": "Auto-generated supported claim for token 'this'"}
+{"id": "DOCSS023", "question": "What does the documentation state about 'plan'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#plan"], "notes": "Auto-generated supported claim for token 'plan'"}
+{"id": "DOCSS024", "question": "What does the documentation state about 'stm'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#stm"], "notes": "Auto-generated supported claim for token 'stm'"}
+{"id": "DOCSS025", "question": "What does the documentation state about 'guardrail'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#guardrail"], "notes": "Auto-generated supported claim for token 'guardrail'"}
+{"id": "DOCSS026", "question": "What does the documentation state about 'docs'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#docs"], "notes": "Auto-generated supported claim for token 'docs'"}
+{"id": "DOCSS027", "question": "What does the documentation state about 'domain'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#domain"], "notes": "Auto-generated supported claim for token 'domain'"}
+{"id": "DOCSS028", "question": "What does the documentation state about 'state'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#state"], "notes": "Auto-generated supported claim for token 'state'"}
+{"id": "DOCSS029", "question": "What does the documentation state about 'get'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#get"], "notes": "Auto-generated supported claim for token 'get'"}
+{"id": "DOCSS030", "question": "What does the documentation state about 'action'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#action"], "notes": "Auto-generated supported claim for token 'action'"}
+{"id": "DOCSS031", "question": "What does the documentation state about 'not'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#not"], "notes": "Auto-generated supported claim for token 'not'"}
+{"id": "DOCSS032", "question": "What does the documentation state about 'feedback'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#feedback"], "notes": "Auto-generated supported claim for token 'feedback'"}
+{"id": "DOCSS033", "question": "What does the documentation state about 'response'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#response"], "notes": "Auto-generated supported claim for token 'response'"}
+{"id": "DOCSS034", "question": "What does the documentation state about 'step'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#step"], "notes": "Auto-generated supported claim for token 'step'"}
+{"id": "DOCSS035", "question": "What does the documentation state about 'from'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#from"], "notes": "Auto-generated supported claim for token 'from'"}
+{"id": "DOCSS036", "question": "What does the documentation state about 'ontable'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#ontable"], "notes": "Auto-generated supported claim for token 'ontable'"}
+{"id": "DOCSS037", "question": "What does the documentation state about 'phase'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#phase"], "notes": "Auto-generated supported claim for token 'phase'"}
+{"id": "DOCSS038", "question": "What does the documentation state about 'semantic'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#semantic"], "notes": "Auto-generated supported claim for token 'semantic'"}
+{"id": "DOCSS039", "question": "What does the documentation state about 'handempty'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#handempty"], "notes": "Auto-generated supported claim for token 'handempty'"}
+{"id": "DOCSS040", "question": "What does the documentation state about 'holding'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#holding"], "notes": "Auto-generated supported claim for token 'holding'"}
+{"id": "DOCSS041", "question": "What does the documentation state about 'manifold'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#manifold"], "notes": "Auto-generated supported claim for token 'manifold'"}
+{"id": "DOCSS042", "question": "What does the documentation state about 'type'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#type"], "notes": "Auto-generated supported claim for token 'type'"}
+{"id": "DOCSS043", "question": "What does the documentation state about 'scripts'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#scripts"], "notes": "Auto-generated supported claim for token 'scripts'"}
+{"id": "DOCSS044", "question": "What does the documentation state about 'instruction'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#instruction"], "notes": "Auto-generated supported claim for token 'instruction'"}
+{"id": "DOCSS045", "question": "What does the documentation state about 'are'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#are"], "notes": "Auto-generated supported claim for token 'are'"}
+{"id": "DOCSS046", "question": "What does the documentation state about 'results'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#results"], "notes": "Auto-generated supported claim for token 'results'"}
+{"id": "DOCSS047", "question": "What does the documentation state about 'models'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#models"], "notes": "Auto-generated supported claim for token 'models'"}
+{"id": "DOCSS048", "question": "What does the documentation state about 'each'?", "expected": "SUPPORTED", "gold_uris": ["doc://docs#each"], "notes": "Auto-generated supported claim for token 'each'"}
+{"id": "DOCSU001", "question": "What policy covers 'unverified_claim_001'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU002", "question": "What policy covers 'unverified_claim_002'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU003", "question": "What policy covers 'unverified_claim_003'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU004", "question": "What policy covers 'unverified_claim_004'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU005", "question": "What policy covers 'unverified_claim_005'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU006", "question": "What policy covers 'unverified_claim_006'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU007", "question": "What policy covers 'unverified_claim_007'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU008", "question": "What policy covers 'unverified_claim_008'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU009", "question": "What policy covers 'unverified_claim_009'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU010", "question": "What policy covers 'unverified_claim_010'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU011", "question": "What policy covers 'unverified_claim_011'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU012", "question": "What policy covers 'unverified_claim_012'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU013", "question": "What policy covers 'unverified_claim_013'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU014", "question": "What policy covers 'unverified_claim_014'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU015", "question": "What policy covers 'unverified_claim_015'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU016", "question": "What policy covers 'unverified_claim_016'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU017", "question": "What policy covers 'unverified_claim_017'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU018", "question": "What policy covers 'unverified_claim_018'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU019", "question": "What policy covers 'unverified_claim_019'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU020", "question": "What policy covers 'unverified_claim_020'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU021", "question": "What policy covers 'unverified_claim_021'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU022", "question": "What policy covers 'unverified_claim_022'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU023", "question": "What policy covers 'unverified_claim_023'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU024", "question": "What policy covers 'unverified_claim_024'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU025", "question": "What policy covers 'unverified_claim_025'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU026", "question": "What policy covers 'unverified_claim_026'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU027", "question": "What policy covers 'unverified_claim_027'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU028", "question": "What policy covers 'unverified_claim_028'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU029", "question": "What policy covers 'unverified_claim_029'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU030", "question": "What policy covers 'unverified_claim_030'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU031", "question": "What policy covers 'unverified_claim_031'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU032", "question": "What policy covers 'unverified_claim_032'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU033", "question": "What policy covers 'unverified_claim_033'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU034", "question": "What policy covers 'unverified_claim_034'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU035", "question": "What policy covers 'unverified_claim_035'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU036", "question": "What policy covers 'unverified_claim_036'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU037", "question": "What policy covers 'unverified_claim_037'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU038", "question": "What policy covers 'unverified_claim_038'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU039", "question": "What policy covers 'unverified_claim_039'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU040", "question": "What policy covers 'unverified_claim_040'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU041", "question": "What policy covers 'unverified_claim_041'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU042", "question": "What policy covers 'unverified_claim_042'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU043", "question": "What policy covers 'unverified_claim_043'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU044", "question": "What policy covers 'unverified_claim_044'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU045", "question": "What policy covers 'unverified_claim_045'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU046", "question": "What policy covers 'unverified_claim_046'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU047", "question": "What policy covers 'unverified_claim_047'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "DOCSU048", "question": "What policy covers 'unverified_claim_048'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}

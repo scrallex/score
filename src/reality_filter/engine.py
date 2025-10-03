@@ -1,13 +1,27 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import re
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 
 from sep_text_manifold.semantic import EmbeddingConfig, SemanticEmbedder
+
+
+_NORMALISE_RE = re.compile(r"\s+")
+
+
+def _normalise_span(span: str) -> str:
+    return _NORMALISE_RE.sub(" ", span.strip().lower())
+
+
+def _span_cache_key(span: str) -> str:
+    return hashlib.blake2b(span.encode("utf-8"), digest_size=16).hexdigest()
 
 
 @dataclass
@@ -18,6 +32,23 @@ class TwinResult:
     semantic_similarity: float
     hazard: float
     source: Optional[str] = None
+
+
+@dataclass
+class SpanMetrics:
+    span: str
+    norm_span: str
+    vector: np.ndarray
+    occurrences: int
+    patternability: float
+    coherence: float
+    stability: float
+    entropy: float
+    rupture: float
+    hazard: float
+    signature: Optional[str]
+    semantic_similarity: float
+    twins: List[TwinResult]
 
 
 @dataclass
@@ -36,6 +67,7 @@ class SpanEvaluation:
     repeat_ok: bool
     hazard_ok: bool
     semantic_ok: bool
+    structural_ok: bool
     admitted: bool
     twins: List[TwinResult]
     repair_candidate: Optional[TwinResult]
@@ -45,6 +77,7 @@ class SpanEvaluation:
             "repeat_ok": self.repeat_ok,
             "hazard_ok": self.hazard_ok,
             "semantic_ok": self.semantic_ok,
+            "structural_ok": self.structural_ok,
             "admit": self.admitted,
         }
 
@@ -72,6 +105,7 @@ class TruthPackEngine:
         model_name: str = "all-MiniLM-L6-v2",
         hash_dims: int = 256,
         embedding_min_occ: int = 1,
+        lru_size: int = 200_000,
     ) -> None:
         manifest = json.loads(manifest_path.read_text())
         self.manifest = manifest
@@ -96,6 +130,7 @@ class TruthPackEngine:
         self.embedding_matrix: Optional[np.ndarray] = None
         self._build_string_embeddings(min_occ=embedding_min_occ)
         self.hazard_cache: Dict[str, float] = {}
+        self._metrics_cache = lru_cache(maxsize=lru_size)(self._compute_span_metrics)
 
     @classmethod
     def from_manifest(
@@ -107,6 +142,7 @@ class TruthPackEngine:
         model_name: str = "all-MiniLM-L6-v2",
         hash_dims: int = 256,
         embedding_min_occ: int = 1,
+        lru_size: int = 200_000,
     ) -> "TruthPackEngine":
         return cls(
             manifest_path=Path(manifest),
@@ -115,6 +151,7 @@ class TruthPackEngine:
             model_name=model_name,
             hash_dims=hash_dims,
             embedding_min_occ=embedding_min_occ,
+            lru_size=lru_size,
         )
 
     # ------------------------------------------------------------------
@@ -144,9 +181,11 @@ class TruthPackEngine:
         return float(np.clip(np.dot(vector, self.seed_vector), -1.0, 1.0))
 
     def compute_hazard(self, string: str, data: Optional[Dict[str, object]] = None) -> float:
-        if string in self.hazard_cache:
-            return self.hazard_cache[string]
-        entry = data or self.strings.get(string)
+        norm_key = _normalise_span(string)
+        cache_key = norm_key if norm_key in self.hazard_cache else string
+        if cache_key in self.hazard_cache:
+            return self.hazard_cache[cache_key]
+        entry = data or self.strings.get(string) or self.strings.get(norm_key)
         hazards: List[float] = []
         if entry:
             for wid in entry.get("window_ids", []):  # type: ignore[list-item]
@@ -166,25 +205,8 @@ class TruthPackEngine:
             metrics = entry.get("metrics", {})
             hazards.append(float(metrics.get("lambda_hazard", metrics.get("rupture", 1.0))))
         hazard_value = float(np.mean(hazards)) if hazards else 1.0
-        self.hazard_cache[string] = hazard_value
+        self.hazard_cache[cache_key] = hazard_value
         return hazard_value
-
-    def metrics_for_string(
-        self,
-        string: str,
-        data: Optional[Dict[str, object]] = None,
-    ) -> Tuple[float, float, float, float, float]:
-        entry = data or self.strings.get(string)
-        if entry:
-            metrics = entry.get("metrics", {})
-            return (
-                float(entry.get("patternability", 0.0)),
-                float(metrics.get("coherence", 0.0)),
-                float(metrics.get("stability", 0.0)),
-                float(metrics.get("entropy", 1.0)),
-                float(metrics.get("rupture", metrics.get("rupture", 0.0))),
-            )
-        return 0.0, 0.0, 0.0, 1.0, 0.0
 
     def top_twins(
         self,
@@ -237,6 +259,92 @@ class TruthPackEngine:
                 break
         return results
 
+    def _span_metrics(self, span: str) -> SpanMetrics:
+        norm = _normalise_span(span)
+        cache_key = _span_cache_key(norm)
+        return self._metrics_cache(cache_key, span, norm)
+
+    def _compute_span_metrics(
+        self,
+        cache_key: str,
+        span: str,
+        norm_span: str,
+    ) -> SpanMetrics:
+        vector = self.embedder.encode([span])[0]
+        entry = self.strings.get(span) or self.strings.get(norm_span)
+        occurrences = 0
+        pattern = 0.0
+        coherence = 0.0
+        stability = 0.0
+        entropy = 1.0
+        rupture = 0.0
+        signature = None
+
+        if entry:
+            occurrences = int(entry.get("occurrences", 0))
+            metrics = entry.get("metrics", {})
+            pattern = float(entry.get("patternability", metrics.get("coherence", 0.0)))
+            coherence = float(metrics.get("coherence", coherence))
+            stability = float(metrics.get("stability", stability))
+            entropy = float(metrics.get("entropy", entropy))
+            rupture = float(metrics.get("rupture", rupture))
+            for wid in entry.get("window_ids", []):
+                sig = self.signals.get(int(wid))
+                if sig and sig.get("signature"):
+                    signature = sig.get("signature")
+                    break
+
+        hazard = self.compute_hazard(span, entry)
+        semantic_similarity = self.semantic_similarity(vector)
+        twins = self.top_twins(vector, exclude=span if entry else None)
+
+        if not entry and twins:
+            fallback = twins[0]
+            pattern = fallback.patternability
+            hazard = fallback.hazard
+            fallback_entry = self.strings.get(fallback.string)
+            if fallback_entry:
+                metrics = fallback_entry.get("metrics", {})
+                coherence = float(metrics.get("coherence", coherence))
+                stability = float(metrics.get("stability", stability))
+                entropy = float(metrics.get("entropy", entropy))
+                rupture = float(metrics.get("rupture", rupture))
+                for wid in fallback_entry.get("window_ids", []):
+                    sig = self.signals.get(int(wid))
+                    if sig and sig.get("signature"):
+                        signature = sig.get("signature")
+                        break
+
+        return SpanMetrics(
+            span=span,
+            norm_span=norm_span,
+            vector=vector,
+            occurrences=occurrences,
+            patternability=pattern,
+            coherence=coherence,
+            stability=stability,
+            entropy=entropy,
+            rupture=rupture,
+            hazard=hazard,
+            signature=signature,
+            semantic_similarity=semantic_similarity,
+            twins=twins,
+        )
+
+    def cache_clear(self) -> None:
+        self.hazard_cache.clear()
+        self._metrics_cache.cache_clear()
+
+    def prewarm(self, max_items: int = 20_000) -> None:
+        sorted_strings = sorted(
+            self.strings.items(), key=lambda item: int(item[1].get("occurrences", 0)), reverse=True
+        )
+        for name, _ in sorted_strings[: max_items]:
+            try:
+                self._span_metrics(name)
+            except Exception:
+                continue
+
     # ------------------------------------------------------------------
     def evaluate_span(
         self,
@@ -250,24 +358,20 @@ class TruthPackEngine:
         sigma_min: float,
         vector: Optional[np.ndarray] = None,
     ) -> SpanEvaluation:
+        metrics = self._span_metrics(span)
         if vector is None:
-            vector = self.embedder.encode([span])[0]
-        sem_score = self.semantic_similarity(vector)
-        data = self.strings.get(span)
-        occurrences = int(data.get("occurrences", 0)) if data else 0
-        hazard = self.compute_hazard(span, data)
-        pattern, coherence, stability, entropy, rupture = self.metrics_for_string(span, data)
+            vector = metrics.vector
+        sem_score = metrics.semantic_similarity
+        occurrences = metrics.occurrences
+        hazard = metrics.hazard
+        pattern = metrics.patternability
+        coherence = metrics.coherence
+        stability = metrics.stability
+        entropy = metrics.entropy
+        rupture = metrics.rupture
+        signature = metrics.signature
 
-        signature = None
-        if data:
-            window_ids = data.get("window_ids", [])
-            for wid in window_ids:
-                sig = self.signals.get(int(wid))
-                if sig and sig.get("signature"):
-                    signature = sig.get("signature")
-                    break
-
-        twins = self.top_twins(vector, exclude=span, limit=3)
+        twins = metrics.twins
         fallback = twins[0] if twins else None
 
         if occurrences == 0 and fallback is not None:
@@ -291,7 +395,8 @@ class TruthPackEngine:
         repeat_ok = occurrences >= r_min
         hazard_ok = hazard <= hazard_max
         semantic_ok = sem_score >= sigma_min
-        admitted = repeat_ok and hazard_ok and semantic_ok
+        structural_ok = pattern >= structural_threshold
+        admitted = repeat_ok and hazard_ok and semantic_ok and structural_ok
 
         return SpanEvaluation(
             span=span,
@@ -308,6 +413,7 @@ class TruthPackEngine:
             repeat_ok=repeat_ok,
             hazard_ok=hazard_ok,
             semantic_ok=semantic_ok,
+            structural_ok=structural_ok,
             admitted=admitted,
             twins=twins,
             repair_candidate=fallback if not admitted else None,

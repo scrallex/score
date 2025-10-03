@@ -24,6 +24,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--concurrency", type=int, default=200)
     parser.add_argument("--port", type=int, default=8050)
     parser.add_argument("--timeout", type=float, default=60.0)
+    parser.add_argument("--url", type=str, help="Existing /seen endpoint; skip auto server start")
+    parser.add_argument("--hash-embeddings", action="store_true", help="Use hash embeddings in payload")
+    parser.add_argument("--hash-dims", type=int, default=256)
     return parser.parse_args()
 
 
@@ -66,42 +69,51 @@ def main() -> None:
     if not manifest.exists():
         raise FileNotFoundError(f"Manifest not found: {manifest}")
 
-    env = os.environ.copy()
-    cmd = [
-        "python",
-        "-m",
-        "uvicorn",
-        APP_PATH,
-        "--host",
-        "127.0.0.1",
-        "--port",
-        str(args.port),
-        "--log-level",
-        "error",
-    ]
-    server = subprocess.Popen(cmd, env=env)
-    try:
+    server = None
+    base_url: str
+    if args.url:
+        base_url = args.url.rstrip("/")
+    else:
+        env = os.environ.copy()
+        cmd = [
+            "python",
+            "-m",
+            "uvicorn",
+            APP_PATH,
+            "--host",
+            "127.0.0.1",
+            "--port",
+            str(args.port),
+            "--log-level",
+            "error",
+        ]
+        server = subprocess.Popen(cmd, env=env)
         base_url = f"http://127.0.0.1:{args.port}"
-        deadline = time.time() + 10
-        ready = False
-        while time.time() < deadline:
-            try:
-                response = httpx.get(f"{base_url}/healthz", timeout=1.0)
-                if response.status_code == 200:
-                    ready = True
-                    break
-            except Exception:
-                time.sleep(0.1)
-        if not ready:
-            raise RuntimeError("Service did not start in time")
+        try:
+            deadline = time.time() + 10
+            ready = False
+            while time.time() < deadline:
+                try:
+                    response = httpx.get(f"{base_url}/healthz", timeout=1.0)
+                    if response.status_code == 200:
+                        ready = True
+                        break
+                except Exception:
+                    time.sleep(0.1)
+            if not ready:
+                raise RuntimeError("Service did not start in time")
+        except Exception:
+            if server is not None:
+                server.terminate()
+            raise
 
         payload = {
             "text": "guardrail",
             "question": None,
             "pack_manifest": str(manifest),
-            "embedding_method": "hash",
-            "hash_dims": 256,
         }
+        if args.hash_embeddings:
+            payload.update({"embedding_method": "hash", "hash_dims": args.hash_dims})
 
         # Warmup to load embeddings/caches.
         for _ in range(5):
@@ -131,11 +143,12 @@ def main() -> None:
             indent=2,
         ))
     finally:
-        server.terminate()
-        try:
-            server.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            server.kill()
+        if server is not None:
+            server.terminate()
+            try:
+                server.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                server.kill()
 
 
 if __name__ == "__main__":

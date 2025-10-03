@@ -17,12 +17,13 @@ Example
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -43,6 +44,7 @@ except ImportError:  # pragma: no cover - NumPy is installed in dev env
 @dataclass
 class PackManifest:
     name: str
+    pack_id: str
     pack_path: str
     output_root: str
     state_path: str
@@ -53,6 +55,9 @@ class PackManifest:
     semantic_report: Optional[str]
     scatter_plot: Optional[str]
     seeds: List[str]
+    seed_families: Dict[str, List[str]]
+    source_globs: List[str]
+    content_hash: str
     min_occurrences: int
     window_bytes: int
     stride: int
@@ -100,6 +105,27 @@ def ingest_pack(
     state["summary"] = summary
     state["generated_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     return state, summary
+
+
+def compute_content_hash(root: Path, extensions: Optional[Sequence[str]]) -> str:
+    allowed = None
+    if extensions:
+        allowed = {ext.lower().lstrip(".") for ext in extensions}
+    hasher = hashlib.blake2b(digest_size=16)
+    for path in sorted(root.rglob("*")):
+        if not path.is_file():
+            continue
+        if allowed:
+            suffix = path.suffix.lstrip(".").lower()
+            if suffix not in allowed:
+                continue
+        rel = path.relative_to(root).as_posix().encode("utf-8")
+        hasher.update(rel)
+        hasher.update(b"\0")
+        with path.open("rb") as fh:
+            for chunk in iter(lambda: fh.read(8192), b""):
+                hasher.update(chunk)
+    return f"blake2b:{hasher.hexdigest()}"
 
 
 def build_semantic_outputs(
@@ -204,8 +230,17 @@ def main() -> None:
         scatter_path = Path(scatter_output)
 
     manifest_path = args.manifest or (output_root / "manifest.json")
+    generated_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    pack_id = f"{pack_name}_{generated_at.replace('-', '').replace(':', '')}"
+    content_hash = compute_content_hash(pack_path, args.extensions)
+    source_globs = [f"**/*.{ext}" for ext in (args.extensions or [])] or ["**/*"]
+    seed_families = {
+        "factual": list(seeds),
+        "novelty": [],
+    }
     manifest = PackManifest(
         name=pack_name,
+        pack_id=pack_id,
         pack_path=str(pack_path),
         output_root=str(output_root),
         state_path=str(state_path),
@@ -216,10 +251,13 @@ def main() -> None:
         semantic_report=str(semantic_report_path) if semantic_report_path else None,
         scatter_plot=str(scatter_path) if scatter_path else None,
         seeds=list(seeds),
+        seed_families=seed_families,
+        source_globs=source_globs,
+        content_hash=content_hash,
         min_occurrences=args.min_occurrences,
         window_bytes=args.window_bytes,
         stride=args.stride,
-        generated_at=datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        generated_at=generated_at,
     )
     write_json(manifest_path, asdict(manifest))
     print(f"Truth-pack prepared under {output_root}")

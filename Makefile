@@ -1,4 +1,5 @@
 .PHONY: scorecard plots lead twins onset all clean clean-demo pack stream sweep permutation report
+.PHONY: bench-seen
 .PHONY: demo-payload demo-up demo-down
 .PHONY: planbench-all planbench-scale codetrace-report
 .PHONY: semantic-guardrail-demo final-report
@@ -192,15 +193,17 @@ semantic-guardrail-demo:
 
 PACK ?= docs_demo
 PACK_PATH ?= analysis/truth_packs/$(PACK)
+PACK_SRC ?= docs
+PACK_ARGS ?=
 SPANS ?= demo/truth_pack/sample_spans.json
 SEEDS ?= risk resilience volatility anomaly "predictive maintenance"
 
 pack:
-	PYTHONPATH=src .venv/bin/python scripts/reality_filter_pack.py docs \
+	PYTHONPATH=src .venv/bin/python scripts/reality_filter_pack.py $(PACK_SRC) \
 	  --output-root $(PACK_PATH) \
 	  --extensions md txt json yaml \
 	  --drop-numeric --min-token-len 3 --min-occurrences 1 --semantic-min-occ 2 \
-	  --seeds $(SEEDS)
+	  --seeds $(SEEDS) $(PACK_ARGS)
 
 stream:
 	PYTHONPATH=src .venv/bin/python scripts/reality_filter_stream.py \
@@ -231,6 +234,9 @@ permutation:
 report:
 	PYTHONPATH=src .venv/bin/python scripts/reality_filter_report.py \
 	  --packs $(PACK)
+
+bench-seen:
+	PYTHONPATH=src .venv/bin/python scripts/benchmark_seen.py --manifest $(PACK_PATH)/manifest.json --requests 4000 --concurrency 600 --hash-embeddings | tee results/bench_seen_latest.txt
 
 codetrace-report:
 	PYTHONPATH=src .venv/bin/python demo/coding/run_comparison.py

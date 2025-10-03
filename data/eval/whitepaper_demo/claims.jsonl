@@ -1,0 +1,120 @@
+{"id": "WHITR001", "question": "Is it correct that 'which' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#which"], "notes": "Auto-generated refuted claim built from token 'which'"}
+{"id": "WHITR002", "question": "Is it correct that 'window' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#window"], "notes": "Auto-generated refuted claim built from token 'window'"}
+{"id": "WHITR003", "question": "Is it correct that 'alerts' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#alerts"], "notes": "Auto-generated refuted claim built from token 'alerts'"}
+{"id": "WHITR004", "question": "Is it correct that 'artefacts' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#artefacts"], "notes": "Auto-generated refuted claim built from token 'artefacts'"}
+{"id": "WHITR005", "question": "Is it correct that 'before' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#before"], "notes": "Auto-generated refuted claim built from token 'before'"}
+{"id": "WHITR006", "question": "Is it correct that 'closed' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#closed"], "notes": "Auto-generated refuted claim built from token 'closed'"}
+{"id": "WHITR007", "question": "Is it correct that 'docs' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#docs"], "notes": "Auto-generated refuted claim built from token 'docs'"}
+{"id": "WHITR008", "question": "Is it correct that 'figures' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#figures"], "notes": "Auto-generated refuted claim built from token 'figures'"}
+{"id": "WHITR009", "question": "Is it correct that 'filter' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#filter"], "notes": "Auto-generated refuted claim built from token 'filter'"}
+{"id": "WHITR010", "question": "Is it correct that 'goal' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#goal"], "notes": "Auto-generated refuted claim built from token 'goal'"}
+{"id": "WHITR011", "question": "Is it correct that 'img' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#img"], "notes": "Auto-generated refuted claim built from token 'img'"}
+{"id": "WHITR012", "question": "Is it correct that 'instruct' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#instruct"], "notes": "Auto-generated refuted claim built from token 'instruct'"}
+{"id": "WHITR013", "question": "Is it correct that 'instrumentation' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#instrumentation"], "notes": "Auto-generated refuted claim built from token 'instrumentation'"}
+{"id": "WHITR014", "question": "Is it correct that 'into' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#into"], "notes": "Auto-generated refuted claim built from token 'into'"}
+{"id": "WHITR015", "question": "Is it correct that 'live' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#live"], "notes": "Auto-generated refuted claim built from token 'live'"}
+{"id": "WHITR016", "question": "Is it correct that 'pipeline' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#pipeline"], "notes": "Auto-generated refuted claim built from token 'pipeline'"}
+{"id": "WHITR017", "question": "Is it correct that 'plan' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#plan"], "notes": "Auto-generated refuted claim built from token 'plan'"}
+{"id": "WHITR018", "question": "Is it correct that 'planners' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#planners"], "notes": "Auto-generated refuted claim built from token 'planners'"}
+{"id": "WHITR019", "question": "Is it correct that 'planning' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#planning"], "notes": "Auto-generated refuted claim built from token 'planning'"}
+{"id": "WHITR020", "question": "Is it correct that 'precedent' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#precedent"], "notes": "Auto-generated refuted claim built from token 'precedent'"}
+{"id": "WHITR021", "question": "Is it correct that 'python' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#python"], "notes": "Auto-generated refuted claim built from token 'python'"}
+{"id": "WHITR022", "question": "Is it correct that 'pythonpath' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#pythonpath"], "notes": "Auto-generated refuted claim built from token 'pythonpath'"}
+{"id": "WHITR023", "question": "Is it correct that 'reality' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#reality"], "notes": "Auto-generated refuted claim built from token 'reality'"}
+{"id": "WHITR024", "question": "Is it correct that 'reproducibility' is explicitly denied in the pack?", "expected": "REFUTED", "gold_uris": ["doc://whitepaper#reproducibility"], "notes": "Auto-generated refuted claim built from token 'reproducibility'"}
+{"id": "WHITS001", "question": "What does the documentation state about 'the'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#the"], "notes": "Auto-generated supported claim for token 'the'"}
+{"id": "WHITS002", "question": "What does the documentation state about 'and'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#and"], "notes": "Auto-generated supported claim for token 'and'"}
+{"id": "WHITS003", "question": "What does the documentation state about 'guardrail'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#guardrail"], "notes": "Auto-generated supported claim for token 'guardrail'"}
+{"id": "WHITS004", "question": "What does the documentation state about 'hazard'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#hazard"], "notes": "Auto-generated supported claim for token 'hazard'"}
+{"id": "WHITS005", "question": "What does the documentation state about 'step'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#step"], "notes": "Auto-generated supported claim for token 'step'"}
+{"id": "WHITS006", "question": "What does the documentation state about 'json'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#json"], "notes": "Auto-generated supported claim for token 'json'"}
+{"id": "WHITS007", "question": "What does the documentation state about 'twin'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#twin"], "notes": "Auto-generated supported claim for token 'twin'"}
+{"id": "WHITS008", "question": "What does the documentation state about 'with'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#with"], "notes": "Auto-generated supported claim for token 'with'"}
+{"id": "WHITS009", "question": "What does the documentation state about 'for'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#for"], "notes": "Auto-generated supported claim for token 'for'"}
+{"id": "WHITS010", "question": "What does the documentation state about 'score'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#score"], "notes": "Auto-generated supported claim for token 'score'"}
+{"id": "WHITS011", "question": "What does the documentation state about 'structural'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#structural"], "notes": "Auto-generated supported claim for token 'structural'"}
+{"id": "WHITS012", "question": "What does the documentation state about 'demo'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#demo"], "notes": "Auto-generated supported claim for token 'demo'"}
+{"id": "WHITS013", "question": "What does the documentation state about 'dilution'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#dilution"], "notes": "Auto-generated supported claim for token 'dilution'"}
+{"id": "WHITS014", "question": "What does the documentation state about 'scripts'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#scripts"], "notes": "Auto-generated supported claim for token 'scripts'"}
+{"id": "WHITS015", "question": "What does the documentation state about 'stm'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#stm"], "notes": "Auto-generated supported claim for token 'stm'"}
+{"id": "WHITS016", "question": "What does the documentation state about 'alert'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#alert"], "notes": "Auto-generated supported claim for token 'alert'"}
+{"id": "WHITS017", "question": "What does the documentation state about 'calibration'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#calibration"], "notes": "Auto-generated supported claim for token 'calibration'"}
+{"id": "WHITS018", "question": "What does the documentation state about 'dashboard'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#dashboard"], "notes": "Auto-generated supported claim for token 'dashboard'"}
+{"id": "WHITS019", "question": "What does the documentation state about 'failure'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#failure"], "notes": "Auto-generated supported claim for token 'failure'"}
+{"id": "WHITS020", "question": "What does the documentation state about 'make'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#make"], "notes": "Auto-generated supported claim for token 'make'"}
+{"id": "WHITS021", "question": "What does the documentation state about 'pack'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#pack"], "notes": "Auto-generated supported claim for token 'pack'"}
+{"id": "WHITS022", "question": "What does the documentation state about 'that'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#that"], "notes": "Auto-generated supported claim for token 'that'"}
+{"id": "WHITS023", "question": "What does the documentation state about 'threshold'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#threshold"], "notes": "Auto-generated supported claim for token 'threshold'"}
+{"id": "WHITS024", "question": "What does the documentation state about 'analysis'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#analysis"], "notes": "Auto-generated supported claim for token 'analysis'"}
+{"id": "WHITS025", "question": "What does the documentation state about 'baseline'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#baseline"], "notes": "Auto-generated supported claim for token 'baseline'"}
+{"id": "WHITS026", "question": "What does the documentation state about 'bash'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#bash"], "notes": "Auto-generated supported claim for token 'bash'"}
+{"id": "WHITS027", "question": "What does the documentation state about 'calibrated'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#calibrated"], "notes": "Auto-generated supported claim for token 'calibrated'"}
+{"id": "WHITS028", "question": "What does the documentation state about 'classical'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#classical"], "notes": "Auto-generated supported claim for token 'classical'"}
+{"id": "WHITS029", "question": "What does the documentation state about 'coverage'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#coverage"], "notes": "Auto-generated supported claim for token 'coverage'"}
+{"id": "WHITS030", "question": "What does the documentation state about 'from'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#from"], "notes": "Auto-generated supported claim for token 'from'"}
+{"id": "WHITS031", "question": "What does the documentation state about 'lambda'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#lambda"], "notes": "Auto-generated supported claim for token 'lambda'"}
+{"id": "WHITS032", "question": "What does the documentation state about 'logistics'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#logistics"], "notes": "Auto-generated supported claim for token 'logistics'"}
+{"id": "WHITS033", "question": "What does the documentation state about 'output'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#output"], "notes": "Auto-generated supported claim for token 'output'"}
+{"id": "WHITS034", "question": "What does the documentation state about 'pddl'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#pddl"], "notes": "Auto-generated supported claim for token 'pddl'"}
+{"id": "WHITS035", "question": "What does the documentation state about 'permutation'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#permutation"], "notes": "Auto-generated supported claim for token 'permutation'"}
+{"id": "WHITS036", "question": "What does the documentation state about 'recovery'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#recovery"], "notes": "Auto-generated supported claim for token 'recovery'"}
+{"id": "WHITS037", "question": "What does the documentation state about 'this'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#this"], "notes": "Auto-generated supported claim for token 'this'"}
+{"id": "WHITS038", "question": "What does the documentation state about 'airport'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#airport"], "notes": "Auto-generated supported claim for token 'airport'"}
+{"id": "WHITS039", "question": "What does the documentation state about 'apt2'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#apt2"], "notes": "Auto-generated supported claim for token 'apt2'"}
+{"id": "WHITS040", "question": "What does the documentation state about 'below'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#below"], "notes": "Auto-generated supported claim for token 'below'"}
+{"id": "WHITS041", "question": "What does the documentation state about 'budget'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#budget"], "notes": "Auto-generated supported claim for token 'budget'"}
+{"id": "WHITS042", "question": "What does the documentation state about 'logistics_guardrail_demo'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#logistics_guardrail_demo"], "notes": "Auto-generated supported claim for token 'logistics_guardrail_demo'"}
+{"id": "WHITS043", "question": "What does the documentation state about 'path'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#path"], "notes": "Auto-generated supported claim for token 'path'"}
+{"id": "WHITS044", "question": "What does the documentation state about 'planbench'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#planbench"], "notes": "Auto-generated supported claim for token 'planbench'"}
+{"id": "WHITS045", "question": "What does the documentation state about 'state'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#state"], "notes": "Auto-generated supported claim for token 'state'"}
+{"id": "WHITS046", "question": "What does the documentation state about 'sweep'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#sweep"], "notes": "Auto-generated supported claim for token 'sweep'"}
+{"id": "WHITS047", "question": "What does the documentation state about 'telemetry'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#telemetry"], "notes": "Auto-generated supported claim for token 'telemetry'"}
+{"id": "WHITS048", "question": "What does the documentation state about 'thresholds'?", "expected": "SUPPORTED", "gold_uris": ["doc://whitepaper#thresholds"], "notes": "Auto-generated supported claim for token 'thresholds'"}
+{"id": "WHITU001", "question": "What policy covers 'unverified_claim_001'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU002", "question": "What policy covers 'unverified_claim_002'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU003", "question": "What policy covers 'unverified_claim_003'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU004", "question": "What policy covers 'unverified_claim_004'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU005", "question": "What policy covers 'unverified_claim_005'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU006", "question": "What policy covers 'unverified_claim_006'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU007", "question": "What policy covers 'unverified_claim_007'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU008", "question": "What policy covers 'unverified_claim_008'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU009", "question": "What policy covers 'unverified_claim_009'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU010", "question": "What policy covers 'unverified_claim_010'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU011", "question": "What policy covers 'unverified_claim_011'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU012", "question": "What policy covers 'unverified_claim_012'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU013", "question": "What policy covers 'unverified_claim_013'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU014", "question": "What policy covers 'unverified_claim_014'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU015", "question": "What policy covers 'unverified_claim_015'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU016", "question": "What policy covers 'unverified_claim_016'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU017", "question": "What policy covers 'unverified_claim_017'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU018", "question": "What policy covers 'unverified_claim_018'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU019", "question": "What policy covers 'unverified_claim_019'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU020", "question": "What policy covers 'unverified_claim_020'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU021", "question": "What policy covers 'unverified_claim_021'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU022", "question": "What policy covers 'unverified_claim_022'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU023", "question": "What policy covers 'unverified_claim_023'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU024", "question": "What policy covers 'unverified_claim_024'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU025", "question": "What policy covers 'unverified_claim_025'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU026", "question": "What policy covers 'unverified_claim_026'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU027", "question": "What policy covers 'unverified_claim_027'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU028", "question": "What policy covers 'unverified_claim_028'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU029", "question": "What policy covers 'unverified_claim_029'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU030", "question": "What policy covers 'unverified_claim_030'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU031", "question": "What policy covers 'unverified_claim_031'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU032", "question": "What policy covers 'unverified_claim_032'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU033", "question": "What policy covers 'unverified_claim_033'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU034", "question": "What policy covers 'unverified_claim_034'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU035", "question": "What policy covers 'unverified_claim_035'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU036", "question": "What policy covers 'unverified_claim_036'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU037", "question": "What policy covers 'unverified_claim_037'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU038", "question": "What policy covers 'unverified_claim_038'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU039", "question": "What policy covers 'unverified_claim_039'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU040", "question": "What policy covers 'unverified_claim_040'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU041", "question": "What policy covers 'unverified_claim_041'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU042", "question": "What policy covers 'unverified_claim_042'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU043", "question": "What policy covers 'unverified_claim_043'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU044", "question": "What policy covers 'unverified_claim_044'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU045", "question": "What policy covers 'unverified_claim_045'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU046", "question": "What policy covers 'unverified_claim_046'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU047", "question": "What policy covers 'unverified_claim_047'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}
+{"id": "WHITU048", "question": "What policy covers 'unverified_claim_048'?", "expected": "UNVERIFIABLE", "gold_uris": [], "notes": "Synthetic unverified claim"}

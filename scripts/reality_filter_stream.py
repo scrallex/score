@@ -162,13 +162,17 @@ def main() -> None:
     parser.add_argument("--repair-max-tokens", type=int, default=120)
     args = parser.parse_args()
 
+    manifest_data = json.loads(args.manifest.read_text())
+    default_seeds = manifest_data.get("seeds") or manifest_data.get("seed_families", {}).get("factual", [])
+
     engine = TruthPackEngine.from_manifest(
         args.manifest,
-        seeds=args.seeds or json.loads(args.manifest.read_text()).get("seeds", []),
+        seeds=args.seeds or default_seeds,
         embedding_method=args.embedding_method,
         model_name=args.model,
         hash_dims=args.hash_dims,
         embedding_min_occ=args.embedding_min_occ,
+        lru_size=200_000,
     )
 
     llm_kwargs = {}
@@ -258,52 +262,54 @@ def main() -> None:
             metrics["repetitions"] = evaluation.occurrences
             metrics["margin"] = metrics.get("semantic", 0.0)  # placeholder until novelty seeds arrive
 
-            event = {
-                "ts": datetime.now(timezone.utc).isoformat(),
-                "qid": f"Q{idx+1:03d}",
-                "question": question,
-                "original_span": span,
-                "span": evaluation.span,
-                "signature": evaluation.signature,
-                "label": span_data.get("label"),
-                "decisions": decisions,
-                "metrics": {k: round(float(v), 6) for k, v in metrics.items()},
-                "twins": [
-                    {
-                        "string": twin.string,
-                        "occurrences": twin.occurrences,
-                        "patternability": round(twin.patternability, 6),
-                        "semantic_similarity": round(twin.semantic_similarity, 6),
-                        "hazard": round(twin.hazard, 6),
-                        "source": twin.source,
-                    }
-                    for twin in evaluation.twins
-                ],
-                "action": action,
-                "latency_ms": latency,
-                "repeat_ok": evaluation.repeat_ok,
-                "hazard_ok": evaluation.hazard_ok,
-                "semantic_ok": evaluation.semantic_ok,
-                "naive_semantic_alert": evaluation.semantic_similarity >= args.semantic_threshold,
-                "naive_structural_alert": evaluation.patternability >= args.structural_threshold,
-                "latency_over_budget": over_budget,
-            }
-            if repaired_span is not None:
-                event["repair_span"] = repaired_span
-            fh.write(json.dumps(event) + "\n")
-            events.append(event)
+        event = {
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "qid": f"Q{idx+1:03d}",
+            "step": idx,
+            "question": question,
+            "original_span": span,
+            "span": evaluation.span,
+            "signature": evaluation.signature,
+            "label": span_data.get("label"),
+            "decisions": decisions,
+            "metrics": {k: round(float(v), 6) for k, v in metrics.items()},
+            "twins": [
+                {
+                    "string": twin.string,
+                    "occurrences": twin.occurrences,
+                    "patternability": round(twin.patternability, 6),
+                    "semantic_similarity": round(twin.semantic_similarity, 6),
+                    "hazard": round(twin.hazard, 6),
+                    "source": twin.source,
+                }
+                for twin in evaluation.twins
+            ],
+            "action": action,
+            "latency_ms": latency,
+            "repeat_ok": evaluation.repeat_ok,
+            "hazard_ok": evaluation.hazard_ok,
+            "semantic_ok": evaluation.semantic_ok,
+            "structural_ok": evaluation.structural_ok,
+            "naive_semantic_alert": evaluation.semantic_similarity >= args.semantic_threshold,
+            "naive_structural_alert": evaluation.patternability >= args.structural_threshold,
+            "latency_over_budget": over_budget,
+        }
+        if repaired_span is not None:
+            event["repair_span"] = repaired_span
+        fh.write(json.dumps(event) + "\n")
+        events.append(event)
 
-            if action == "repair":
-                approved += 1
-                repaired += 1
-            elif decisions["admit"]:
-                approved += 1
-            else:
-                declined += 1
-            if event["naive_semantic_alert"]:
-                semantic_alerts += 1
-            if event["naive_structural_alert"]:
-                structural_alerts += 1
+        if action == "repair":
+            approved += 1
+            repaired += 1
+        elif decisions["admit"]:
+            approved += 1
+        else:
+            declined += 1
+        if event["naive_semantic_alert"]:
+            semantic_alerts += 1
+        if event["naive_structural_alert"]:
+            structural_alerts += 1
 
     total = len(events)
     thresholds = {
