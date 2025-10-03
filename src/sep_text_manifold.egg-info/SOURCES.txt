@@ -15,6 +15,7 @@ src/sep_text_manifold/dilution.py
 src/sep_text_manifold/encode.py
 src/sep_text_manifold/feedback.py
 src/sep_text_manifold/filters.py
+src/sep_text_manifold/guardrail.py
 src/sep_text_manifold/index_builder.py
 src/sep_text_manifold/ingest.py
 src/sep_text_manifold/manifold.py
@@ -23,6 +24,7 @@ src/sep_text_manifold/pipeline.py
 src/sep_text_manifold/propose.py
 src/sep_text_manifold/scoring.py
 src/sep_text_manifold/seen.py
+src/sep_text_manifold/semantic.py
 src/sep_text_manifold/similar.py
 src/sep_text_manifold/stream.py
 src/sep_text_manifold/strings.py
@@ -37,6 +39,11 @@ src/stm_adapters/__init__.py
 src/stm_adapters/code_trace_adapter.py
 src/stm_adapters/nasa_themis.py
 src/stm_adapters/pddl_trace.py
+src/stm_backtest/__init__.py
+src/stm_backtest/backtester.py
+src/stm_backtest/data.py
+src/stm_backtest/reporting.py
+src/stm_backtest/signals.py
 src/stm_cli/__init__.py
 src/stm_cli/__main__.py
 src/stm_client/__init__.py
@@ -60,8 +67,13 @@ tests/test_feedback.py
 tests/test_guardrail_scripts.py
 tests/test_kernel_litmus.py
 tests/test_logistics_features.py
+tests/test_logistics_guardrail_demo.py
+tests/test_native_cli_flags.py
 tests/test_pipeline.py
 tests/test_propose.py
 tests/test_qfh_native.py
 tests/test_real_world_adapter.py
+tests/test_semantic.py
 tests/test_similar.py
+tests/test_stm_backtest.py
+tests/test_stm_backtest_parity.py

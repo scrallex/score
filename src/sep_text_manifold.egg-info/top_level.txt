@@ -1,6 +1,9 @@
+app
+core
 sep_quantum
 sep_text_manifold
 stm_adapters
+stm_backtest
 stm_cli
 stm_client
 stm_demo
