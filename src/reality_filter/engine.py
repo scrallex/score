@@ -5,6 +5,7 @@ import json
 import pickle
 import re
 import threading
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
@@ -160,6 +161,9 @@ class TruthPackEngine:
             "margin_cache_hits": 0,
             "margin_cache_misses": 0,
             "embedder_calls": 0,
+            "eval_batches": 0,
+            "eval_batch_size_total": 0,
+            "eval_time_total_ms": 0,
         }
 
     # ------------------------------------------------------------------
@@ -224,6 +228,7 @@ class TruthPackEngine:
         sigma_min: float,
         twins_needed: bool | Sequence[bool] = False,
     ) -> List[SpanEvaluation]:
+        start_time = time.perf_counter()
         if not spans:
             return []
 
@@ -289,6 +294,10 @@ class TruthPackEngine:
                 pending_twins.append((idx, sig, stats, margin, norm))
 
         self._attach_twins(results, pending_twins, limit=3)
+        elapsed_ms = (time.perf_counter() - start_time) * 1000.0
+        self._bump_counter("eval_batches")
+        self._bump_counter("eval_batch_size_total", len(spans))
+        self._bump_counter("eval_time_total_ms", elapsed_ms)
         return results
 
     # ------------------------------------------------------------------

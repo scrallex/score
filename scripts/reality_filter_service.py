@@ -9,6 +9,7 @@ import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache, partial
+import atexit
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
@@ -60,7 +61,7 @@ def _load_engine(
 
 
 class SeenBatcher:
-    def __init__(self, max_batch: int = 64, max_delay: float = 0.005) -> None:
+    def __init__(self, max_batch: int = 32, max_delay: float = 0.005) -> None:
         if os.environ.get("RF_DISABLE_BATCH") == "1":
             self._max_batch = 1
             self._max_delay = 0.0
@@ -162,16 +163,28 @@ class SeenBatcher:
                     future.set_result(evaluation)
 
 
-EXECUTOR = ThreadPoolExecutor(max_workers=int(os.environ.get("RF_EXECUTOR_WORKERS", "64")))
+EXECUTOR = ThreadPoolExecutor(max_workers=int(os.environ.get("RF_EXECUTOR_WORKERS", "8")))
 _batcher = SeenBatcher()
 COUNTERS_PATH = Path("results/seen_counters.json")
 COUNTER_WRITE_INTERVAL = 100
 _counter_last_written = 0
+_last_counters: Dict[str, float] = {}
 
 
 def _write_counters(data: Dict[str, float]) -> None:
+    global _last_counters
     COUNTERS_PATH.parent.mkdir(parents=True, exist_ok=True)
     COUNTERS_PATH.write_bytes(orjson.dumps(data, option=orjson.OPT_INDENT_2))
+    _last_counters.update(data)
+
+
+@atexit.register
+def _flush_counters_on_exit() -> None:
+    if _last_counters:
+        try:
+            _write_counters(_last_counters)
+        except Exception:
+            pass
 
 
 def _parse_payload(data: dict) -> Tuple[str, Optional[str], Path, List[str], Dict[str, object]]:

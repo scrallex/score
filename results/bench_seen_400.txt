@@ -2,8 +2,8 @@
   "total_requests": 8000,
   "successful": 8000,
   "errors": 0,
-  "elapsed_sec": 7.9117124379990855,
-  "throughput_rps": 1011.1590964273271,
-  "latency_ms_p50": 260.7024619974254,
-  "latency_ms_p90": 274.0954075001355
+  "elapsed_sec": 7.402457683005196,
+  "throughput_rps": 1080.7221523692951,
+  "latency_ms_p50": 247.8444655025669,
+  "latency_ms_p90": 255.27452550450107
 }
