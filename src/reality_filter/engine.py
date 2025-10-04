@@ -120,6 +120,19 @@ class TruthPackEngine:
             int(sig["id"]): sig for sig in self.state.get("signals", [])  # type: ignore[list-item]
         }
 
+        self.norm_metrics: Dict[str, Dict[str, object]] = {}
+        norm_path = manifest.get("norm_metrics_path")
+        if norm_path:
+            path = Path(norm_path)
+            if not path.is_absolute():
+                path = state_path.parent / path
+            if path.exists():
+                raw_norm = json.loads(path.read_text())
+                for key, payload in raw_norm.items():
+                    vec = np.array(payload.get("vector", []), dtype=np.float32)
+                    payload["vector"] = vec
+                    self.norm_metrics[key] = payload
+
         self.seeds = list(seeds)
         self.embedder = SemanticEmbedder(
             EmbeddingConfig(method=embedding_method, model_name=model_name, dims=hash_dims)
@@ -267,6 +280,33 @@ class TruthPackEngine:
 
     def _span_metrics(self, span: str) -> SpanMetrics:
         norm = _normalise_span(span)
+        cached = self.norm_metrics.get(norm)
+        if cached:
+            vector = cached["vector"]
+            if not isinstance(vector, np.ndarray):
+                vector = np.array(vector, dtype=np.float32)
+                cached["vector"] = vector
+            semantic_sim = cached.get("semantic")
+            if semantic_sim is None or self.seed_vector is not None:
+                if self.seed_vector is not None:
+                    semantic_sim = float(np.dot(vector, self.seed_vector))
+                else:
+                    semantic_sim = 0.0
+            return SpanMetrics(
+                span=cached.get("string", span),
+                norm_span=norm,
+                vector=vector,
+                occurrences=int(cached.get("occurrences", 0)),
+                patternability=float(cached.get("patternability", 0.0)),
+                coherence=float(cached.get("coherence", 0.0)),
+                stability=float(cached.get("stability", 0.0)),
+                entropy=float(cached.get("entropy", 1.0)),
+                rupture=float(cached.get("rupture", 0.0)),
+                hazard=float(cached.get("hazard", 1.0)),
+                signature=cached.get("signature"),
+                semantic_similarity=semantic_sim,
+                twins=[],
+            )
         cache_key = _span_cache_key(norm)
         return self._metrics_cache(cache_key, span, norm)
 

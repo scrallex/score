@@ -7,6 +7,7 @@ import argparse
 import json
 import re
 from pathlib import Path
+from collections import defaultdict
 from typing import Dict, Iterable, List, Optional
 
 import numpy as np
@@ -95,7 +96,7 @@ def repair_sentence(sentence_eval: Dict[str, object]) -> Optional[str]:
     if not twins:
         return None
     top = twins[0]
-    return f"Evidence cites {top['string']}."
+    return f"{sentence_eval['sentence']} (see {top['string']})"
 
 
 def assemble_answer(sentences: Iterable[Dict[str, object]], fallback: str = "No supporting evidence.") -> str:
@@ -112,10 +113,17 @@ def assemble_answer(sentences: Iterable[Dict[str, object]], fallback: str = "No 
 
 
 def predicted_label(final_answer: str, token: Optional[str]) -> str:
-    if token and token.lower() in final_answer.lower():
-        if "no" in final_answer.lower() or "not" in final_answer.lower():
+    text = final_answer.lower()
+    if token:
+        tok = token.lower()
+    else:
+        tok = ""
+    if tok and tok in text:
+        if any(neg in text for neg in ["no ", " not ", "without", "denies", "denied", "absent", "never"]):
             return "REFUTED"
         return "SUPPORTED"
+    if any(phrase in text for phrase in ["cannot find", "no information", "not documented", "unknown"]):
+        return "UNVERIFIABLE"
     return "UNVERIFIABLE"
 
 
@@ -135,8 +143,10 @@ def run_eval(
     hall_list: List[int] = []
     repair_list: List[int] = []
     latency_samples: List[float] = []
-    label_stats = {"SUPPORTED": 0, "REFUTED": 0, "UNVERIFIABLE": 0}
-    pred_stats = {"SUPPORTED": 0, "REFUTED": 0, "UNVERIFIABLE": 0}
+    classes = ["SUPPORTED", "REFUTED", "UNVERIFIABLE"]
+    label_stats = {cls: 0 for cls in classes}
+    pred_stats = {cls: 0 for cls in classes}
+    confusion = {cls: {c: 0 for c in classes} for cls in classes}
 
     for claim in claims:
         question = claim.get("question")
@@ -177,6 +187,7 @@ def run_eval(
         predicted = predicted_label(final_answer, token)
         pred_stats[predicted] += 1
         label_stats[expected] += 1
+        confusion[expected][predicted] += 1
 
         detail_records.append(
             {
@@ -199,6 +210,20 @@ def run_eval(
         for record in detail_records:
             fh.write(json.dumps(record, ensure_ascii=False) + "\n")
 
+    metrics_extra = {}
+    macro_f1 = 0.0
+    f1_sum = 0.0
+    for cls in classes:
+        tp = confusion[cls][cls]
+        fp = sum(confusion[other][cls] for other in classes if other != cls)
+        fn = sum(confusion[cls][other] for other in classes if other != cls)
+        precision = tp / (tp + fp) if (tp + fp) else 0.0
+        recall = tp / (tp + fn) if (tp + fn) else 0.0
+        f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) else 0.0
+        metrics_extra[cls] = {"precision": precision, "recall": recall, "f1": f1}
+        f1_sum += f1
+    macro_f1 = f1_sum / len(classes) if classes else 0.0
+
     summary = {
         "total": len(claims),
         "label_distribution": label_stats,
@@ -212,6 +237,9 @@ def run_eval(
         else 0.0,
         "latency_ms_p50": float(np.percentile(latency_samples, 50)) if latency_samples else 0.0,
         "latency_ms_p90": float(np.percentile(latency_samples, 90)) if latency_samples else 0.0,
+        "confusion_matrix": confusion,
+        "per_class": metrics_extra,
+        "macro_f1": macro_f1,
     }
     summary_path.parent.mkdir(parents=True, exist_ok=True)
     summary_path.write_text(json.dumps(summary, indent=2))

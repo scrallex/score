@@ -30,55 +30,56 @@ Full CSV: results/sweeps/whitepaper_demo.csv
 - **total**: 120
 - **hallucination_rate**: 1.0
 - **repair_yield**: 1.0
-- **citation_coverage**: 0.008333333333333333
+- **citation_coverage**: 0.8
 - **latency_ms_p50**: 85.0
 - **latency_ms_p90**: 85.0
+- **macro_f1**: 0.5555555555555555
 
 ## Before vs After Examples
 
-### WHITR001 (REFUTED → UNVERIFIABLE)
+### WHITR001 (REFUTED → REFUTED)
 
 **Question:** Is it correct that 'which' is explicitly denied in the pack?
 
 **Baseline:** The documentation explicitly denies which.
 
-**Filtered:** Evidence cites hazard_ok.
+**Filtered:** The documentation explicitly denies which (see hazard_ok)
 
 ---
-### WHITR002 (REFUTED → UNVERIFIABLE)
+### WHITR002 (REFUTED → REFUTED)
 
 **Question:** Is it correct that 'window' is explicitly denied in the pack?
 
 **Baseline:** The documentation explicitly denies window.
 
-**Filtered:** Evidence cites nudge.
+**Filtered:** The documentation explicitly denies window (see nudge)
 
 ---
-### WHITR003 (REFUTED → UNVERIFIABLE)
+### WHITR003 (REFUTED → REFUTED)
 
 **Question:** Is it correct that 'alerts' is explicitly denied in the pack?
 
 **Baseline:** The documentation explicitly denies alerts.
 
-**Filtered:** Evidence cites metrics.
+**Filtered:** The documentation explicitly denies alerts (see metrics)
 
 ---
-### WHITR004 (REFUTED → UNVERIFIABLE)
+### WHITR004 (REFUTED → REFUTED)
 
 **Question:** Is it correct that 'artefacts' is explicitly denied in the pack?
 
 **Baseline:** The documentation explicitly denies artefacts.
 
-**Filtered:** Evidence cites posthoc.
+**Filtered:** The documentation explicitly denies artefacts (see posthoc)
 
 ---
-### WHITR005 (REFUTED → UNVERIFIABLE)
+### WHITR005 (REFUTED → REFUTED)
 
 **Question:** Is it correct that 'before' is explicitly denied in the pack?
 
 **Baseline:** The documentation explicitly denies before.
 
-**Filtered:** Evidence cites goal.
+**Filtered:** The documentation explicitly denies before (see goal)
 
 ---
 ---

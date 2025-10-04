@@ -30,55 +30,56 @@ Full CSV: results/sweeps/docs_demo.csv
 - **total**: 120
 - **hallucination_rate**: 1.0
 - **repair_yield**: 1.0
-- **citation_coverage**: 0.0
+- **citation_coverage**: 0.7916666666666666
 - **latency_ms_p50**: 85.0
 - **latency_ms_p90**: 85.0
+- **macro_f1**: 0.545644831359117
 
 ## Before vs After Examples
 
-### DOCSR001 (REFUTED → UNVERIFIABLE)
+### DOCSR001 (REFUTED → REFUTED)
 
 **Question:** Is it correct that 'model' is explicitly denied in the pack?
 
 **Baseline:** The documentation explicitly denies model.
 
-**Filtered:** Evidence cites ictai.
+**Filtered:** The documentation explicitly denies model (see ictai)
 
 ---
-### DOCSR002 (REFUTED → UNVERIFIABLE)
+### DOCSR002 (REFUTED → REFUTED)
 
 **Question:** Is it correct that 'schema' is explicitly denied in the pack?
 
 **Baseline:** The documentation explicitly denies schema.
 
-**Filtered:** Evidence cites live.
+**Filtered:** The documentation explicitly denies schema (see live)
 
 ---
-### DOCSR003 (REFUTED → UNVERIFIABLE)
+### DOCSR003 (REFUTED → REFUTED)
 
 **Question:** Is it correct that 'time' is explicitly denied in the pack?
 
 **Baseline:** The documentation explicitly denies time.
 
-**Filtered:** Evidence cites repositories.
+**Filtered:** The documentation explicitly denies time (see repositories)
 
 ---
-### DOCSR004 (REFUTED → UNVERIFIABLE)
+### DOCSR004 (REFUTED → REFUTED)
 
 **Question:** Is it correct that 'api' is explicitly denied in the pack?
 
 **Baseline:** The documentation explicitly denies api.
 
-**Filtered:** Evidence cites fmdm.
+**Filtered:** The documentation explicitly denies api (see fmdm)
 
 ---
-### DOCSR005 (REFUTED → UNVERIFIABLE)
+### DOCSR005 (REFUTED → REFUTED)
 
 **Question:** Is it correct that 'twins' is explicitly denied in the pack?
 
 **Baseline:** The documentation explicitly denies twins.
 
-**Filtered:** Evidence cites brahman.
+**Filtered:** The documentation explicitly denies twins (see brahman)
 
 ---
 ---

@@ -41,6 +41,10 @@ except ImportError:  # pragma: no cover - NumPy is installed in dev env
     np = None  # type: ignore[assignment]
 
 
+def _normalise_span(span: str) -> str:
+    return " ".join(span.lower().strip().split())
+
+
 @dataclass
 class PackManifest:
     name: str
@@ -58,6 +62,7 @@ class PackManifest:
     seed_families: Dict[str, List[str]]
     source_globs: List[str]
     content_hash: str
+    norm_metrics_path: Optional[str]
     min_occurrences: int
     window_bytes: int
     stride: int
@@ -126,6 +131,73 @@ def compute_content_hash(root: Path, extensions: Optional[Sequence[str]]) -> str
             for chunk in iter(lambda: fh.read(8192), b""):
                 hasher.update(chunk)
     return f"blake2b:{hasher.hexdigest()}"
+
+
+def build_norm_metrics(
+    state: Dict[str, object],
+    *,
+    signals: List[Dict[str, object]],
+    embedder: SemanticEmbedder,
+    min_occurrences: int,
+    seeds: Sequence[str],
+) -> Dict[str, Dict[str, object]]:
+    signal_by_id: Dict[int, Dict[str, object]] = {}
+    sig_hazard: Dict[int, float] = {}
+    for sig in signals:
+        sig_id = int(sig["id"]) if "id" in sig else None
+        if sig_id is None:
+            continue
+        signal_by_id[sig_id] = sig
+        metrics = sig.get("metrics", {})
+        hazard = sig.get("lambda_hazard")
+        if hazard is None:
+            hazard = metrics.get("lambda_hazard", metrics.get("rupture", 1.0))
+        sig_hazard[sig_id] = float(hazard)
+
+    if seeds:
+        seed_vectors = embedder.encode(list(seeds))
+        seed_centroid = seed_vectors.mean(axis=0)
+        norm = np.linalg.norm(seed_centroid)
+        if norm > 0:
+            seed_centroid = seed_centroid / norm
+    else:
+        seed_centroid = None
+
+    norm_metrics: Dict[str, Dict[str, object]] = {}
+    strings: Dict[str, Dict[str, object]] = state.get("string_scores", {})  # type: ignore[assignment]
+    for string, payload in strings.items():
+        occ = int(payload.get("occurrences", 0))
+        if occ < min_occurrences:
+            continue
+        norm = _normalise_span(string)
+        metrics = payload.get("metrics", {})
+        vector = embedder.encode([string])[0]
+        if seed_centroid is not None:
+            semantic_sim = float(np.dot(vector, seed_centroid))
+        else:
+            semantic_sim = 0.0
+        hazard_values = [sig_hazard.get(int(wid), 1.0) for wid in payload.get("window_ids", [])]
+        hazard = float(np.mean(hazard_values)) if hazard_values else float(metrics.get("lambda", metrics.get("rupture", 1.0)))
+        signature = None
+        for wid in payload.get("window_ids", []):
+            sig = signal_by_id.get(int(wid))
+            if sig and sig.get("signature"):
+                signature = sig.get("signature")
+                break
+        norm_metrics[norm] = {
+            "string": string,
+            "occurrences": occ,
+            "patternability": float(payload.get("patternability", metrics.get("coherence", 0.0))),
+            "coherence": float(metrics.get("coherence", 0.0)),
+            "stability": float(metrics.get("stability", 0.0)),
+            "entropy": float(metrics.get("entropy", 1.0)),
+            "rupture": float(metrics.get("rupture", 0.0)),
+            "hazard": hazard,
+            "signature": signature,
+            "semantic": semantic_sim,
+            "vector": vector.tolist(),
+        }
+    return norm_metrics
 
 
 def build_semantic_outputs(
@@ -212,9 +284,21 @@ def main() -> None:
         q=3,
     )
 
+    seeds = args.seeds or []
+    signals = state.get("signals", [])  # type: ignore[assignment]
+    embedder = SemanticEmbedder(EmbeddingConfig(method="hash", model_name=args.model, dims=args.hash_dims))
+    norm_metrics = build_norm_metrics(
+        state,
+        signals=list(signals) if isinstance(signals, list) else [],
+        embedder=embedder,
+        min_occurrences=args.min_occurrences,
+        seeds=seeds,
+    )
+    norm_metrics_path = output_root / "norm_metrics.json"
+    write_json(norm_metrics_path, norm_metrics)
+
     semantic_report_path: Optional[Path] = None
     scatter_path: Optional[Path] = None
-    seeds = args.seeds or []
     if seeds:
         semantic_report, scatter_output = build_semantic_outputs(
             state_path,
@@ -254,6 +338,7 @@ def main() -> None:
         seed_families=seed_families,
         source_globs=source_globs,
         content_hash=content_hash,
+        norm_metrics_path=str(norm_metrics_path),
         min_occurrences=args.min_occurrences,
         window_bytes=args.window_bytes,
         stride=args.stride,

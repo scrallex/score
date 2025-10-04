@@ -6,13 +6,48 @@
     "UNVERIFIABLE": 48
   },
   "pred_distribution": {
-    "SUPPORTED": 1,
-    "REFUTED": 0,
-    "UNVERIFIABLE": 119
+    "SUPPORTED": 96,
+    "REFUTED": 24,
+    "UNVERIFIABLE": 0
   },
   "hallucination_rate": 1.0,
   "repair_yield": 1.0,
-  "citation_coverage": 0.008333333333333333,
+  "citation_coverage": 0.8,
   "latency_ms_p50": 85.0,
-  "latency_ms_p90": 85.0
+  "latency_ms_p90": 85.0,
+  "confusion_matrix": {
+    "SUPPORTED": {
+      "SUPPORTED": 48,
+      "REFUTED": 0,
+      "UNVERIFIABLE": 0
+    },
+    "REFUTED": {
+      "SUPPORTED": 0,
+      "REFUTED": 24,
+      "UNVERIFIABLE": 0
+    },
+    "UNVERIFIABLE": {
+      "SUPPORTED": 48,
+      "REFUTED": 0,
+      "UNVERIFIABLE": 0
+    }
+  },
+  "per_class": {
+    "SUPPORTED": {
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6666666666666666
+    },
+    "REFUTED": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "UNVERIFIABLE": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    }
+  },
+  "macro_f1": 0.5555555555555555
 }
