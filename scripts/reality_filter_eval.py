@@ -19,6 +19,8 @@ R_MIN_GRID = [1, 2, 3]
 LAMBDA_GRID = [0.12, 0.15, 0.18, 0.22, 0.25, 0.35, 0.45, 0.55]
 SIGMA_GRID = [0.15, 0.20, 0.25, 0.30]
 
+TOKEN_SUPPORT_MIN_MARGIN = 0.05
+
 TOKEN_PATTERN = re.compile(r"'([^']+)'")
 CLASSES = ["SUPPORTED", "REFUTED", "UNVERIFIABLE"]
 
@@ -251,6 +253,8 @@ def attempt_token_support(
         support_outcome = apply_thresholds(support_eval, thresholds)
         if not support_outcome.admit:
             gold_uris = context.claim.get("gold_uris", []) or []
+            margin = float(support_eval.semantic_similarity)
+            required_margin = max(TOKEN_SUPPORT_MIN_MARGIN, thresholds.semantic_threshold * 0.5)
             if (
                 gold_uris
                 and any(uri in gold_uris for uri in support_outcome.citations)
@@ -258,6 +262,7 @@ def attempt_token_support(
                 and support_outcome.repeat_ok
                 and support_outcome.hazard_ok
                 and support_outcome.structural_ok
+                and margin >= required_margin
             ):
                 support_outcome.semantic_ok = True
                 support_outcome.admit = True
@@ -269,6 +274,7 @@ def attempt_token_support(
         support_outcome.repair_meta = {
             "strategy": "token_support",
             "candidate": candidate,
+            "margin": float(support_eval.semantic_similarity),
         }
         outcomes.append(support_outcome)
         return support_outcome
@@ -388,7 +394,8 @@ def evaluate_contexts(
     sanity_flags: List[Dict[str, object]] = []
     confusion = init_confusion()
     baseline_confusion = init_confusion()
-    hall_list: List[int] = []
+    hall_initial_list: List[int] = []
+    hall_final_list: List[int] = []
     repair_list: List[int] = []
     supported_claims = 0
 
@@ -401,11 +408,11 @@ def evaluate_contexts(
         token = context.token
 
         outcomes: List[SentenceOutcome] = []
-        hallucinated = False
+        baseline_hallucinated = False
         for snapshot in context.snapshots:
             outcome = apply_thresholds(snapshot, thresholds)
             if not outcome.admit:
-                hallucinated = True
+                baseline_hallucinated = True
                 attempt_repair(outcome, thresholds, engine)
             outcomes.append(outcome)
 
@@ -415,6 +422,9 @@ def evaluate_contexts(
             supported_claims += 1
 
         violation = violates_rules(outcomes, claim.get("rules"))
+
+        repair_applied = any(outcome.action == "repair" for outcome in outcomes)
+        final_hallucinated = not any(outcome.admit for outcome in outcomes)
 
         if support_hits:
             predicted = "REFUTED" if negative_claim else "SUPPORTED"
@@ -437,8 +447,9 @@ def evaluate_contexts(
                 }
             )
 
-        hall_list.append(int(hallucinated))
-        repair_list.append(int(any(outcome.action == "repair" for outcome in outcomes)))
+        hall_initial_list.append(int(baseline_hallucinated))
+        hall_final_list.append(int(final_hallucinated))
+        repair_list.append(int(baseline_hallucinated and repair_applied))
 
         if collect_detail:
             sentence_payloads: List[Dict[str, object]] = []
@@ -492,7 +503,8 @@ def evaluate_contexts(
                     "final_answer": final_answer,
                     "baseline_answer": context.baseline_answer,
                     "sentences": sentence_payloads,
-                    "hallucinated": hallucinated,
+                    "hallucinated": final_hallucinated,
+                    "hallucinated_initial": baseline_hallucinated,
                     "repaired": any(outcome.action == "repair" for outcome in outcomes),
                     "supported": bool(support_hits),
                     "gold_uris": gold_uris,
@@ -502,8 +514,10 @@ def evaluate_contexts(
 
     macro = macro_f1(confusion)
     baseline_macro = macro_f1(baseline_confusion)
-    hallucination_rate = float(sum(hall_list) / len(hall_list)) if hall_list else 0.0
-    repair_rate_den = sum(hall_list)
+    hallucination_rate = (
+        float(sum(hall_final_list) / len(hall_final_list)) if hall_final_list else 0.0
+    )
+    repair_rate_den = sum(hall_initial_list)
     repair_yield = float(sum(repair_list) / repair_rate_den) if repair_rate_den else 0.0
     citation_coverage = float(supported_claims / len(contexts)) if contexts else 0.0
 
