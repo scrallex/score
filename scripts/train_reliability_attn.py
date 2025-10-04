@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 import torch
 from torch import nn
@@ -65,11 +65,8 @@ class EvalDetailDataset(Dataset[Dict[str, object]]):
             self.tokenizer.add_sentence(question)
             self.tokenizer.add_sentence(final_answer)
             self.tokenizer.add_sentence(baseline)
-            for sentence in record.get("sentences", []):
-                text = sentence.get("sentence", "")
-                self.tokenizer.add_sentence(text)
-                for twin in sentence.get("twins", []):
-                    self.tokenizer.add_sentence(twin.get("string", ""))
+            for evidence in self._extract_evidence_strings(record):
+                self.tokenizer.add_sentence(evidence)
 
     def __len__(self) -> int:
         return len(self.records)
@@ -81,6 +78,10 @@ class EvalDetailDataset(Dataset[Dict[str, object]]):
         baseline = record.get("baseline_answer", "")
         aggregate_text = " \u25cb ".join(token for token in [question, final_answer, baseline] if token)
         tokens = self.tokenizer.encode(aggregate_text)
+        phase_values = self._extract_phase_vector(record, len(tokens))
+        evidence_tokens = [self.tokenizer.encode(text) for text in self._extract_evidence_strings(record)]
+        if not evidence_tokens:
+            evidence_tokens = [tokens]
 
         # Use the maximum semantic margin from the sentences as a proxy target.
         margin_target = 0.0
@@ -93,7 +94,37 @@ class EvalDetailDataset(Dataset[Dict[str, object]]):
             "tokens": tokens,
             "label": label,
             "margin": margin_target,
+            "phase": phase_values,
+            "evidence": evidence_tokens,
         }
+
+    @staticmethod
+    def _extract_evidence_strings(record: Dict[str, object]) -> List[str]:
+        evidence: List[str] = []
+        for sentence in record.get("sentences", []):
+            text = sentence.get("sentence", "")
+            if text:
+                evidence.append(text)
+            for twin in sentence.get("twins", []):
+                twin_str = twin.get("string", "")
+                if twin_str:
+                    evidence.append(twin_str)
+        citations = record.get("citations")
+        if isinstance(citations, list):
+            for item in citations:
+                if isinstance(item, str) and item:
+                    evidence.append(item)
+        return evidence
+
+    @staticmethod
+    def _extract_phase_vector(record: Dict[str, object], length: int) -> List[float]:
+        phase_raw = record.get("phase_values")
+        if isinstance(phase_raw, list) and all(isinstance(val, (int, float)) for val in phase_raw):
+            floats = [float(val) for val in phase_raw]
+            if len(floats) >= length:
+                return floats[:length]
+            return floats + [0.0] * (length - len(floats))
+        return [0.0] * length
 
 
 def collate_batch(batch: Sequence[Dict[str, object]]) -> Dict[str, torch.Tensor]:
@@ -102,11 +133,40 @@ def collate_batch(batch: Sequence[Dict[str, object]]) -> Dict[str, torch.Tensor]
     attention_mask = (input_ids != 0).long()
     labels = torch.tensor([sample["label"] for sample in batch], dtype=torch.float32)
     margins = torch.tensor([sample["margin"] for sample in batch], dtype=torch.float32)
+
+    phase_tensors = [torch.tensor(sample["phase"], dtype=torch.float32) for sample in batch]
+    phase_values = pad_sequence(phase_tensors, batch_first=True, padding_value=0.0)
+
+    max_evidence_count = max(1, max(len(sample["evidence"]) for sample in batch))
+    max_evidence_len = max(
+        1,
+        max(
+            len(sequence)
+            for sample in batch
+            for sequence in (sample["evidence"] if sample["evidence"] else [[0]])
+        ),
+    )
+    evidence_ids = torch.zeros(len(batch), max_evidence_count, max_evidence_len, dtype=torch.long)
+    evidence_mask = torch.zeros(len(batch), max_evidence_count, dtype=torch.long)
+
+    for batch_idx, sample in enumerate(batch):
+        evidence_sequences = sample["evidence"] or [sample["tokens"]]
+        for evidence_idx, sequence in enumerate(evidence_sequences[:max_evidence_count]):
+            seq_len = min(len(sequence), max_evidence_len)
+            if seq_len:
+                evidence_ids[batch_idx, evidence_idx, :seq_len] = torch.tensor(
+                    sequence[:seq_len], dtype=torch.long
+                )
+                evidence_mask[batch_idx, evidence_idx] = 1
+
     return {
         "input_ids": input_ids,
         "attention_mask": attention_mask,
         "labels": labels,
         "margins": margins,
+        "phase_values": phase_values,
+        "evidence_ids": evidence_ids,
+        "evidence_mask": evidence_mask,
     }
 
 
@@ -144,7 +204,37 @@ def train() -> None:
         labels = batch["labels"].to(args.device)
         margins = batch["margins"].to(args.device)
 
-        output = model(input_ids, attention_mask=attention_mask)
+        phase_values = batch.get("phase_values")
+        if phase_values is not None:
+            phase_values = phase_values.to(args.device)
+            phase_features = phase_values.unsqueeze(-1).repeat(1, 1, config.d_model)
+        else:
+            phase_features = None
+
+        evidence_ids = batch.get("evidence_ids")
+        evidence_mask = batch.get("evidence_mask")
+        if evidence_ids is not None:
+            evidence_ids = evidence_ids.to(args.device)
+            evidence_mask = evidence_mask.to(args.device) if evidence_mask is not None else None
+            batch_size, mem_count, mem_len = evidence_ids.shape
+            flat_ids = evidence_ids.view(batch_size * mem_count, mem_len)
+            token_mask = (flat_ids != 0).unsqueeze(-1)
+            embedded = model.token_embed(flat_ids)
+            summed = (embedded * token_mask).sum(dim=1)
+            lengths = token_mask.sum(dim=1).clamp_min(1)
+            mean_embeddings = summed / lengths
+            evidence_memory = mean_embeddings.view(batch_size, mem_count, -1)
+        else:
+            evidence_memory = None
+            evidence_mask = None
+
+        output = model(
+            input_ids,
+            attention_mask=attention_mask,
+            phase_features=phase_features,
+            evidence_memory=evidence_memory,
+            evidence_mask=evidence_mask,
+        )
         admit_loss = bce_loss(output.admit_logits, labels)
         margin_loss = mse_loss(output.support_margin, margins)
         loss = admit_loss + 0.1 * margin_loss
@@ -211,4 +301,3 @@ def train() -> None:
 
 if __name__ == "__main__":  # pragma: no cover - script entrypoint
     train()
-
