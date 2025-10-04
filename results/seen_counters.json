@@ -1,0 +1,16 @@
+{
+  "requests_total": 2140.0,
+  "admit_true": 0,
+  "bloom_hits": 2140.0,
+  "bloom_misses": 0,
+  "signature_hits": 2140.0,
+  "signature_misses": 0,
+  "ann_batches": 0,
+  "ann_calls": 0,
+  "margin_cache_hits": 2140.0,
+  "margin_cache_misses": 567.0,
+  "embedder_calls": 0,
+  "bloom_miss_rate": 0.0,
+  "cache_hit_rate": 0.7905430365718508,
+  "ann_calls_per_request": 0.0
+}

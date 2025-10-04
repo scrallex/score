@@ -187,6 +187,10 @@ PACK_SRC ?= docs
 PACK_ARGS ?=
 SPANS ?= demo/truth_pack/sample_spans.json
 SEEDS ?= risk resilience volatility anomaly "predictive maintenance"
+CONCURRENCY ?= 600
+BENCH_REQUESTS ?= 2000
+UVICORN_WORKERS ?= 6
+BENCH_OUTPUT ?= results/bench_seen_$(CONCURRENCY).txt
 
 pack:
 	PYTHONPATH=src .venv/bin/python scripts/reality_filter_pack.py $(PACK_SRC) \
@@ -226,7 +230,13 @@ report:
 	  --packs $(PACK)
 
 bench-seen:
-	PYTHONPATH=src .venv/bin/python scripts/benchmark_seen.py --manifest $(PACK_PATH)/manifest.json --requests 4000 --concurrency 600 --hash-embeddings | tee results/bench_seen_latest.txt
+	@mkdir -p $(dir $(BENCH_OUTPUT)) results
+	OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 UVICORN_WORKERS=$(UVICORN_WORKERS) PYTHONPATH=src .venv/bin/python scripts/benchmark_seen.py \
+	  --manifest $(PACK_PATH)/manifest.json \
+	  --requests $(BENCH_REQUESTS) \
+	  --concurrency $(CONCURRENCY) \
+	  --hash-embeddings | tee $(BENCH_OUTPUT)
+	@cp $(BENCH_OUTPUT) results/bench_seen_latest.txt
 
 codetrace-report:
 	PYTHONPATH=src .venv/bin/python demo/coding/run_comparison.py

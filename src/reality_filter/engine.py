@@ -147,6 +147,21 @@ class TruthPackEngine:
         )
         self._ann_lock = threading.Lock()
 
+        self._counter_lock = threading.Lock()
+        self._counters: Dict[str, float] = {
+            "requests_total": 0,
+            "admit_true": 0,
+            "bloom_hits": 0,
+            "bloom_misses": 0,
+            "signature_hits": 0,
+            "signature_misses": 0,
+            "ann_batches": 0,
+            "ann_calls": 0,
+            "margin_cache_hits": 0,
+            "margin_cache_misses": 0,
+            "embedder_calls": 0,
+        }
+
     # ------------------------------------------------------------------
     @classmethod
     def from_manifest(
@@ -227,14 +242,24 @@ class TruthPackEngine:
             norm = _normalise_span(span)
             sig = _hash_signature(norm)
 
-            if self._signature_bloom is not None and sig not in self._signature_bloom:
-                results[idx] = self._blocked_evaluation(span, question, sig, norm)
-                continue
+            self._bump_counter("requests_total")
+            bloom = self._signature_bloom
+            if bloom is not None:
+                if sig in bloom:
+                    self._bump_counter("bloom_hits")
+                else:
+                    self._bump_counter("bloom_misses")
+                    self._bump_counter("signature_misses")
+                    results[idx] = self._blocked_evaluation(span, question, sig, norm)
+                    continue
 
             stats = self._signature_stats.get(sig)
             if stats is None:
+                self._bump_counter("signature_misses")
                 results[idx] = self._blocked_evaluation(span, question, sig, norm)
                 continue
+
+            self._bump_counter("signature_hits")
 
             margin = self._seed_margin_fast(span, norm=norm)
             repeat_ok = stats.repetitions >= r_min
@@ -242,6 +267,9 @@ class TruthPackEngine:
             semantic_ok = margin >= sigma_min and margin >= semantic_threshold
             structural_ok = stats.patternability >= structural_threshold
             admitted = repeat_ok and hazard_ok and semantic_ok and structural_ok
+
+            if admitted:
+                self._bump_counter("admit_true")
 
             evaluation = self._pack_evaluation(
                 span=span,
@@ -276,6 +304,21 @@ class TruthPackEngine:
                 if warmed >= max_items:
                     return
 
+    def _bump_counter(self, key: str, value: float = 1.0) -> None:
+        with self._counter_lock:
+            self._counters[key] = self._counters.get(key, 0.0) + value
+
+    def counters_snapshot(self) -> Dict[str, float]:
+        with self._counter_lock:
+            data = dict(self._counters)
+        bloom_total = data.get("bloom_hits", 0.0) + data.get("bloom_misses", 0.0)
+        cache_total = data.get("margin_cache_hits", 0.0) + data.get("margin_cache_misses", 0.0)
+        requests = data.get("requests_total", 0.0)
+        data["bloom_miss_rate"] = (data.get("bloom_misses", 0.0) / bloom_total) if bloom_total else 0.0
+        data["cache_hit_rate"] = (data.get("margin_cache_hits", 0.0) / cache_total) if cache_total else 0.0
+        data["ann_calls_per_request"] = (data.get("ann_calls", 0.0) / requests) if requests else 0.0
+        return data
+
     def lookup_signature(self, text: str) -> Optional[SignatureStats]:
         norm = _normalise_span(text)
         sig = _hash_signature(norm)
@@ -285,6 +328,22 @@ class TruthPackEngine:
         norm = _normalise_span(text)
         sig = _hash_signature(norm)
         return self._direct_twins(sig, self._seed_margin_fast(text, norm=norm), limit)
+
+    def search_strings(self, token: str, limit: int = 3) -> List[str]:
+        token_norm = _normalise_span(token)
+        if not token_norm:
+            return []
+        candidates: List[Tuple[int, float, str]] = []
+        for string, payload in self.strings.items():
+            norm_string = _normalise_span(string)
+            if token_norm not in norm_string.split():
+                continue
+            occurrences = int(payload.get("occurrences", 0))
+            metrics = payload.get("metrics", {})
+            hazard = float(metrics.get("lambda", metrics.get("rupture", 1.0)))
+            candidates.append((occurrences, -hazard, string))
+        candidates.sort(reverse=True)
+        return [string for _, _, string in candidates[:limit]]
 
     # ------------------------------------------------------------------
     def _resolve_path(self, path_str: Optional[str]) -> Path:
@@ -436,7 +495,9 @@ class TruthPackEngine:
         norm_span = norm or _normalise_span(text)
         cached = self._margin_cache.get(norm_span)
         if cached is not None:
+            self._bump_counter("margin_cache_hits")
             return cached
+        self._bump_counter("margin_cache_misses")
         vec = self._hash_vector(norm_span)
         factual = self._factual_centroid
         novelty = self._novelty_centroid
@@ -589,6 +650,8 @@ class TruthPackEngine:
     ) -> Dict[int, List[TwinResult]]:
         if self._ann_index is None or not pending:
             return {}
+        self._bump_counter("ann_batches")
+        self._bump_counter("ann_calls", float(len(pending)))
         vectors = np.vstack([self._ann_metric_vector(stats) for _, _, stats, _, _ in pending])
         try:
             with self._ann_lock:

@@ -39,17 +39,16 @@
   "metrics": {
     "total": 24,
     "hallucination_rate": 1.0,
-    "repair_yield": 0.4583333333333333,
-    "citation_coverage": 0.4583333333333333,
-    "latency_ms_p50": 85.0,
-    "latency_ms_p90": 85.0
+    "repair_yield": 0.7916666666666666,
+    "citation_coverage": 0.4583333333333333
   },
   "best_thresholds": {
     "r_min": 1,
     "lambda_max": 0.55,
     "sigma_min": 0.15,
     "structural_threshold": 0.46,
-    "semantic_threshold": 0.15
+    "semantic_threshold": 0.25
   },
-  "dev_macro_f1": 1.0
+  "dev_macro_f1": 1.0,
+  "sanity_flags_count": 0
 }

@@ -49,7 +49,7 @@ def load_eval_summary(pack: str) -> Dict[str, object]:
     return json.loads(path.read_text()) if path.exists() else {}
 
 
-def load_eval_examples(pack: str, limit: int = 5) -> List[Dict[str, object]]:
+def load_eval_examples(pack: str, limit: int = 10) -> List[Dict[str, object]]:
     path = Path(f"results/eval/{pack}/eval_detail.jsonl")
     if not path.exists():
         return []
@@ -99,10 +99,24 @@ def summarise(pack: str, output_dir: Path) -> None:
             fh.write(f"Full CSV: results/sweeps/{pack}.csv\n\n")
         if eval_summary:
             fh.write("## Evaluation Metrics\n\n")
-            for key, value in eval_summary.items():
-                if isinstance(value, dict):
-                    continue
-                fh.write(f"- **{key}**: {value}\n")
+            for key in [
+                "macro_f1",
+                "baseline_macro_f1",
+                "macro_f1_delta",
+                "dev_macro_f1",
+                "sanity_flags_count",
+            ]:
+                if key in eval_summary:
+                    fh.write(f"- **{key}**: {eval_summary[key]}\n")
+            metrics = eval_summary.get("metrics", {})
+            if isinstance(metrics, dict):
+                for m_key, m_value in metrics.items():
+                    fh.write(f"- **metrics.{m_key}**: {m_value}\n")
+            best = eval_summary.get("best_thresholds", {})
+            if isinstance(best, dict):
+                fh.write("- **best_thresholds**:\n")
+                for b_key, b_value in best.items():
+                    fh.write(f"  - {b_key}: {b_value}\n")
             fh.write("\n")
         if eval_examples:
             fh.write("## Before vs After Examples\n\n")

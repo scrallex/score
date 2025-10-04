@@ -7,6 +7,7 @@ import asyncio
 import json
 import os
 import time
+from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache, partial
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
@@ -16,6 +17,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import ORJSONResponse
 
 from reality_filter import TruthPackEngine
+from reality_filter.engine import SpanEvaluation
 
 app = FastAPI(
     title="Reality Filter /seen API",
@@ -58,7 +60,7 @@ def _load_engine(
 
 
 class SeenBatcher:
-    def __init__(self, max_batch: int = 128, max_delay: float = 0.010) -> None:
+    def __init__(self, max_batch: int = 64, max_delay: float = 0.005) -> None:
         if os.environ.get("RF_DISABLE_BATCH") == "1":
             self._max_batch = 1
             self._max_delay = 0.0
@@ -93,7 +95,9 @@ class SeenBatcher:
     async def _run(self) -> None:
         while True:
             engine, request, future = await self._queue.get()
-            batch: List[Tuple[TruthPackEngine, SeenRequest, asyncio.Future]] = [(engine, request, future)]
+            batch: List[Tuple[TruthPackEngine, Dict[str, object], asyncio.Future]] = [
+                (engine, request, future)
+            ]
             start = time.perf_counter()
             while len(batch) < self._max_batch:
                 remaining = self._max_delay - (time.perf_counter() - start)
@@ -107,7 +111,7 @@ class SeenBatcher:
             await self._process_batch(batch)
 
     async def _process_batch(
-        self, batch: Sequence[Tuple[TruthPackEngine, SeenRequest, asyncio.Future]]
+        self, batch: Sequence[Tuple[TruthPackEngine, Dict[str, object], asyncio.Future]]
     ) -> None:
         grouped: Dict[
             Tuple[TruthPackEngine, float, float, int, float, float],
@@ -147,7 +151,7 @@ class SeenBatcher:
                 twins_needed=twins_flags,
             )
             try:
-                evaluations = await loop.run_in_executor(None, evaluate)
+                evaluations = await loop.run_in_executor(EXECUTOR, evaluate)
             except Exception as exc:  # pragma: no cover - propagate evaluation failures
                 for _, _, future in items:
                     if not future.done():
@@ -158,7 +162,16 @@ class SeenBatcher:
                     future.set_result(evaluation)
 
 
+EXECUTOR = ThreadPoolExecutor(max_workers=int(os.environ.get("RF_EXECUTOR_WORKERS", "64")))
 _batcher = SeenBatcher()
+COUNTERS_PATH = Path("results/seen_counters.json")
+COUNTER_WRITE_INTERVAL = 100
+_counter_last_written = 0
+
+
+def _write_counters(data: Dict[str, float]) -> None:
+    COUNTERS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    COUNTERS_PATH.write_bytes(orjson.dumps(data, option=orjson.OPT_INDENT_2))
 
 
 def _parse_payload(data: dict) -> Tuple[str, Optional[str], Path, List[str], Dict[str, object]]:
@@ -251,6 +264,22 @@ async def seen(request: Request) -> ORJSONResponse:
         "action": action,
         "repair_candidate": repair_candidate,
     }
+
+    counters = engine.counters_snapshot()
+    requests_total = int(counters.get("requests_total", 0))
+    write_needed = False
+    global _counter_last_written
+    if requests_total and (
+        _counter_last_written == 0 or requests_total - _counter_last_written >= COUNTER_WRITE_INTERVAL
+    ):
+        _counter_last_written = requests_total
+        write_needed = True
+    elif requests_total <= 10 and _counter_last_written == 0:
+        _counter_last_written = requests_total
+        write_needed = True
+    if write_needed:
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, _write_counters, counters)
 
     return ORJSONResponse(response_payload)
 
