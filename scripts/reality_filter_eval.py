@@ -11,6 +11,24 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
+try:  # Optional transformer reliability model
+    import torch
+except ImportError:  # pragma: no cover - torch optional
+    torch = None  # type: ignore[assignment]
+
+try:  # sep_text_manifold attn module is optional
+    from sep_text_manifold.attn_ospace import (
+        OspaceTransformer,
+        OspaceTransformerConfig,
+        torch_available as attn_torch_available,
+    )
+except ImportError:  # pragma: no cover - attn extras may be unavailable
+    OspaceTransformer = None  # type: ignore[assignment]
+    OspaceTransformerConfig = None  # type: ignore[assignment]
+
+    def attn_torch_available() -> bool:  # type: ignore[override]
+        return False
+
 from reality_filter import TruthPackEngine
 from reality_filter.engine import SpanEvaluation
 from reality_filter.repair import propose_repair
@@ -70,6 +88,101 @@ class EvalResult:
     detail_records: List[Dict[str, object]]
     sanity_flags: List[Dict[str, object]]
 
+
+class ReliabilityModelWrapper:
+    """Thin inference wrapper around the O-space Transformer reliability head."""
+
+    def __init__(
+        self,
+        checkpoint: Path,
+        *,
+        device: str,
+        admit_threshold: float,
+        margin_threshold: float,
+        max_evidence: int = 16,
+    ) -> None:
+        if not attn_torch_available() or torch is None or OspaceTransformer is None:
+            raise RuntimeError("Transformer reliability model requested but torch/attn extras unavailable.")
+        ckpt = torch.load(checkpoint, map_location=device)
+        config_data = ckpt.get("config")
+        if isinstance(config_data, dict):
+            config = OspaceTransformerConfig(**config_data)
+        elif isinstance(config_data, OspaceTransformerConfig):
+            config = config_data
+        else:
+            raise ValueError("Reliability checkpoint missing 'config'.")
+        vocab = ckpt.get("tokenizer_vocab")
+        if not isinstance(vocab, dict):
+            raise ValueError("Reliability checkpoint missing 'tokenizer_vocab'.")
+        state_dict = ckpt.get("state_dict")
+        if not isinstance(state_dict, dict):
+            raise ValueError("Reliability checkpoint missing 'state_dict'.")
+
+        self._device = torch.device(device)
+        self._config = config
+        self._vocab: Dict[str, int] = {str(k): int(v) for k, v in vocab.items()}
+        self._pad_id = self._vocab.get("<pad>", 0)
+        self._unk_id = self._vocab.get("<unk>", 1)
+        self._model = OspaceTransformer(config)
+        self._model.load_state_dict(state_dict)
+        self._model.to(self._device)
+        self._model.eval()
+        self._admit_threshold = admit_threshold
+        self._margin_threshold = margin_threshold
+        self._max_evidence = max(1, max_evidence)
+
+    def encode(self, text: str) -> List[int]:
+        tokens = text.lower().split()
+        if not tokens:
+            return [self._unk_id]
+        return [self._vocab.get(token, self._unk_id) for token in tokens]
+
+    def _aggregate_evidence(self, evidence: Sequence[str]) -> torch.Tensor:
+        embeddings: List[torch.Tensor] = []
+        for item in evidence[: self._max_evidence]:
+            encoded = self.encode(item)
+            tensor = torch.tensor(encoded, dtype=torch.long, device=self._device)
+            if tensor.numel() == 0:
+                continue
+            embed = self._model.token_embed(tensor)
+            mask = (tensor != self._pad_id).float().unsqueeze(-1)
+            denom = mask.sum(dim=0).clamp_min(1.0)
+            mean = (embed * mask).sum(dim=0) / denom
+            embeddings.append(mean)
+        if not embeddings:
+            # Fall back to a single zero vector so cross-attention has something to attend to.
+            embeddings.append(torch.zeros(self._config.d_model, device=self._device))
+        stacked = torch.stack(embeddings, dim=0)
+        return stacked.unsqueeze(0)  # (1, mem_len, d_model)
+
+    def score(
+        self,
+        *,
+        question: str,
+        candidate: str,
+        baseline: str,
+        evidence: Sequence[str],
+    ) -> Tuple[float, float]:
+        aggregate = " \u25cb ".join(token for token in [question, candidate, baseline] if token)
+        encoded = self.encode(aggregate)
+        input_ids = torch.tensor([encoded], dtype=torch.long, device=self._device)
+        attention_mask = (input_ids != self._pad_id).long()
+        evidence_memory = self._aggregate_evidence(evidence)
+        evidence_mask = torch.ones(evidence_memory.size(1), dtype=torch.long, device=self._device).unsqueeze(0)
+
+        with torch.no_grad():
+            output = self._model(
+                input_ids,
+                attention_mask=attention_mask,
+                evidence_memory=evidence_memory,
+                evidence_mask=evidence_mask,
+            )
+        prob = torch.sigmoid(output.admit_logits)[0].item()
+        margin = output.support_margin[0].item()
+        return prob, margin
+
+    def should_admit(self, probability: float, margin: float) -> bool:
+        return probability >= self._admit_threshold and margin >= self._margin_threshold
 
 def load_claims(path: Path) -> List[Dict[str, object]]:
     claims: List[Dict[str, object]] = []
@@ -226,6 +339,7 @@ def attempt_token_support(
     thresholds: Thresholds,
     engine: TruthPackEngine,
     outcomes: List[SentenceOutcome],
+    reliability: Optional[ReliabilityModelWrapper],
 ) -> Optional[SentenceOutcome]:
     if context.token is None:
         return None
@@ -251,31 +365,51 @@ def attempt_token_support(
             fetch_twins=True,
         )
         support_outcome = apply_thresholds(support_eval, thresholds)
+        reliability_meta: Dict[str, object] = {}
         if not support_outcome.admit:
-            gold_uris = context.claim.get("gold_uris", []) or []
-            margin = float(support_eval.semantic_similarity)
-            required_margin = max(TOKEN_SUPPORT_MIN_MARGIN, thresholds.semantic_threshold * 0.5)
-            if (
-                gold_uris
-                and any(uri in gold_uris for uri in support_outcome.citations)
-                and not support_outcome.semantic_ok
-                and support_outcome.repeat_ok
-                and support_outcome.hazard_ok
-                and support_outcome.structural_ok
-                and margin >= required_margin
-            ):
-                support_outcome.semantic_ok = True
-                support_outcome.admit = True
+            if reliability is not None:
+                prob, margin_pred = reliability.score(
+                    question=context.claim.get("question", ""),
+                    candidate=candidate,
+                    baseline=context.baseline_answer,
+                    evidence=support_outcome.citations,
+                )
+                reliability_meta = {"probability": prob, "margin": margin_pred}
+                if reliability.should_admit(prob, margin_pred):
+                    support_outcome.semantic_ok = True
+                    support_outcome.admit = True
+                    support_outcome.evaluation = support_outcome.evaluation
+                else:
+                    continue
             else:
-                continue
+                gold_uris = context.claim.get("gold_uris", []) or []
+                margin = float(support_eval.semantic_similarity)
+                required_margin = max(TOKEN_SUPPORT_MIN_MARGIN, thresholds.semantic_threshold * 0.5)
+                if (
+                    gold_uris
+                    and any(uri in gold_uris for uri in support_outcome.citations)
+                    and not support_outcome.semantic_ok
+                    and support_outcome.repeat_ok
+                    and support_outcome.hazard_ok
+                    and support_outcome.structural_ok
+                    and margin >= required_margin
+                ):
+                    support_outcome.semantic_ok = True
+                    support_outcome.admit = True
+                    reliability_meta = {"heuristic_margin": margin}
+                else:
+                    continue
         support_outcome.sentence = candidate
         support_outcome.repair_span = candidate
         support_outcome.action = "repair"
-        support_outcome.repair_meta = {
+        meta: Dict[str, object] = {
             "strategy": "token_support",
             "candidate": candidate,
-            "margin": float(support_eval.semantic_similarity),
         }
+        if reliability_meta:
+            meta["reliability"] = reliability_meta
+        meta.setdefault("margin", float(support_eval.semantic_similarity))
+        support_outcome.repair_meta = meta
         outcomes.append(support_outcome)
         return support_outcome
     return None
@@ -389,6 +523,7 @@ def evaluate_contexts(
     engine: TruthPackEngine,
     *,
     collect_detail: bool,
+    reliability_model: Optional[ReliabilityModelWrapper] = None,
 ) -> EvalResult:
     detail_records: List[Dict[str, object]] = []
     sanity_flags: List[Dict[str, object]] = []
@@ -416,7 +551,7 @@ def evaluate_contexts(
                 attempt_repair(outcome, thresholds, engine)
             outcomes.append(outcome)
 
-        token_support = attempt_token_support(context, thresholds, engine, outcomes)
+        token_support = attempt_token_support(context, thresholds, engine, outcomes, reliability_model)
         support_hits = supported_outcomes(outcomes, gold_uris, thresholds)
         if support_hits and not negative_claim:
             supported_claims += 1
@@ -560,6 +695,7 @@ def best_thresholds(
     structural_threshold: float,
     engine: TruthPackEngine,
     semantic_threshold: float,
+    reliability_model: Optional[ReliabilityModelWrapper],
 ) -> Tuple[Thresholds, EvalResult]:
     best: Optional[Thresholds] = None
     best_result: Optional[EvalResult] = None
@@ -573,7 +709,13 @@ def best_thresholds(
                     structural_threshold=structural_threshold,
                     semantic_threshold=semantic_threshold,
                 )
-                result = evaluate_contexts(contexts, thresholds, engine, collect_detail=False)
+                result = evaluate_contexts(
+                    contexts,
+                    thresholds,
+                    engine,
+                    collect_detail=False,
+                    reliability_model=reliability_model,
+                )
                 if best_result is None or result.macro_f1 > best_result.macro_f1:
                     best = thresholds
                     best_result = result
@@ -607,12 +749,40 @@ def main() -> None:
     parser.add_argument("--sigma-min", type=float, default=0.28)
     parser.add_argument("--split-seed", type=int, default=7)
     parser.add_argument("--dev-ratio", type=float, default=0.8)
+    parser.add_argument("--reliability-model", type=Path, help="Optional path to reliability model checkpoint")
+    parser.add_argument("--reliability-device", type=str, help="Device for reliability model (cpu/cuda)")
+    parser.add_argument("--reliability-threshold", type=float, default=0.5, help="Probability threshold for admissions when using the reliability model")
+    parser.add_argument("--reliability-margin", type=float, default=0.25, help="Support margin threshold for the reliability model")
+    parser.add_argument("--reliability-max-evidence", type=int, default=16, help="Maximum evidence items passed to the reliability model")
     args = parser.parse_args()
 
     manifest = args.manifest.resolve()
     claims = load_claims(args.claims)
     manifest_data = json.loads(manifest.read_text())
     seeds = manifest_data.get("seeds") or manifest_data.get("seed_families", {}).get("factual", [])
+
+    reliability_model: Optional[ReliabilityModelWrapper]
+    reliability_model = None
+    if args.reliability_model is not None:
+        device = args.reliability_device
+        if device is None:
+            device = "cuda" if torch is not None and hasattr(torch, "cuda") and torch.cuda.is_available() else "cpu"
+        try:
+            reliability_model = ReliabilityModelWrapper(
+                args.reliability_model,
+                device=device,
+                admit_threshold=args.reliability_threshold,
+                margin_threshold=args.reliability_margin,
+                max_evidence=args.reliability_max_evidence,
+            )
+            print(
+                f"[reality_filter_eval] Loaded reliability model from {args.reliability_model} on {device}"
+            )
+        except Exception as exc:  # pragma: no cover - defensive logging
+            print(
+                f"[reality_filter_eval] Failed to load reliability model ({exc}). Falling back to heuristics."
+            )
+            reliability_model = None
 
     engine = TruthPackEngine.from_manifest(
         manifest,
@@ -631,8 +801,15 @@ def main() -> None:
         args.structural_threshold,
         engine,
         args.semantic_threshold,
+        reliability_model,
     )
-    test_result = evaluate_contexts(test_contexts, thresholds, engine, collect_detail=True)
+    test_result = evaluate_contexts(
+        test_contexts,
+        thresholds,
+        engine,
+        collect_detail=True,
+        reliability_model=reliability_model,
+    )
 
     pack_id = args.pack_id or manifest_data.get("pack_id") or manifest_data.get("name") or manifest.stem
     output_dir = args.output_dir / pack_id

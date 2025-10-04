@@ -4,16 +4,22 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
+import random
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 import torch
 from torch import nn
 from torch.nn.utils.rnn import pad_sequence
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, Subset
 
-from sep_text_manifold.attn_ospace import OspaceTransformer, OspaceTransformerConfig
+from sep_text_manifold.attn_ospace import (
+    OspaceTransformer,
+    OspaceTransformerConfig,
+    OspaceTransformerOutput,
+)
 
 
 class WhitespaceTokenizer:
@@ -170,10 +176,30 @@ def collate_batch(batch: Sequence[Dict[str, object]]) -> Dict[str, torch.Tensor]
     }
 
 
-def build_dataloader(path: Path, batch_size: int) -> Tuple[EvalDetailDataset, DataLoader[Dict[str, torch.Tensor]]]:
+def train_val_loaders(
+    path: Path,
+    batch_size: int,
+    val_ratio: float,
+    seed: int,
+) -> Tuple[EvalDetailDataset, DataLoader[Dict[str, torch.Tensor]], DataLoader[Dict[str, torch.Tensor]]]:
     dataset = EvalDetailDataset(path)
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_batch)
-    return dataset, loader
+    indices = list(range(len(dataset)))
+    rng = random.Random(seed)
+    rng.shuffle(indices)
+    if len(indices) <= 1 or val_ratio <= 0.0:
+        train_subset = Subset(dataset, indices)
+        val_subset = Subset(dataset, [])
+    else:
+        val_size = max(1, int(len(indices) * val_ratio))
+        if val_size >= len(indices):
+            val_size = len(indices) - 1
+        val_indices = indices[:val_size]
+        train_indices = indices[val_size:]
+        train_subset = Subset(dataset, train_indices)
+        val_subset = Subset(dataset, val_indices)
+    train_loader = DataLoader(train_subset, batch_size=batch_size, shuffle=True, collate_fn=collate_batch)
+    val_loader = DataLoader(val_subset, batch_size=batch_size, shuffle=False, collate_fn=collate_batch)
+    return dataset, train_loader, val_loader
 
 
 def parse_args() -> argparse.Namespace:
@@ -184,12 +210,90 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--learning-rate", type=float, default=3e-4)
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--dry-run", action="store_true", help="Load data and run a single forward pass only")
+    parser.add_argument("--val-ratio", type=float, default=0.2, help="Fraction of data used for validation")
+    parser.add_argument("--seed", type=int, default=7, help="Random seed for train/val split")
+    parser.add_argument("--admit-threshold", type=float, default=0.5, help="Decision threshold for admit probability")
+    parser.add_argument("--margin-threshold", type=float, default=0.25, help="Decision threshold for support margin")
+    parser.add_argument(
+        "--attention-entropy-weight",
+        type=float,
+        default=0.0,
+        help="Regularisation weight encouraging low-entropy attention",
+    )
+    parser.add_argument(
+        "--output-checkpoint",
+        type=Path,
+        help="Path to write the trained reliability checkpoint (config, vocab, state_dict)",
+    )
     return parser.parse_args()
+
+
+def run_model(
+    model: OspaceTransformer,
+    batch: Dict[str, torch.Tensor],
+    device: torch.device,
+    config: OspaceTransformerConfig,
+) -> OspaceTransformerOutput:
+    input_ids = batch["input_ids"].to(device)
+    attention_mask = batch["attention_mask"].to(device)
+
+    phase_values = batch.get("phase_values")
+    if phase_values is not None:
+        phase_tensor = phase_values.to(device)
+        phase_features = phase_tensor.unsqueeze(-1).repeat(1, 1, config.d_model)
+    else:
+        phase_features = None
+
+    evidence_ids = batch.get("evidence_ids")
+    evidence_mask = batch.get("evidence_mask")
+    if evidence_ids is not None:
+        evidence_ids = evidence_ids.to(device)
+        evidence_mask = evidence_mask.to(device) if evidence_mask is not None else None
+        batch_size, mem_count, mem_len = evidence_ids.shape
+        flat_ids = evidence_ids.view(batch_size * mem_count, mem_len)
+        token_mask = (flat_ids != 0).unsqueeze(-1)
+        embedded = model.token_embed(flat_ids)
+        summed = (embedded * token_mask).sum(dim=1)
+        lengths = token_mask.sum(dim=1).clamp_min(1)
+        mean_embeddings = summed / lengths
+        evidence_memory = mean_embeddings.view(batch_size, mem_count, -1)
+    else:
+        evidence_memory = None
+        evidence_mask = None
+
+    return model(
+        input_ids,
+        attention_mask=attention_mask,
+        phase_features=phase_features,
+        evidence_memory=evidence_memory,
+        evidence_mask=evidence_mask,
+    )
+
+
+def save_checkpoint(
+    path: Path,
+    *,
+    model: OspaceTransformer,
+    config: OspaceTransformerConfig,
+    vocab: Dict[str, int],
+    metrics: Dict[str, float],
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    state_dict = {key: value.detach().cpu() for key, value in model.state_dict().items()}
+    payload = {
+        "config": dataclasses.asdict(config),
+        "state_dict": state_dict,
+        "tokenizer_vocab": vocab,
+        "metrics": metrics,
+    }
+    torch.save(payload, path)
 
 
 def train() -> None:
     args = parse_args()
-    dataset, loader = build_dataloader(args.detail_path, args.batch_size)
+    dataset, train_loader, val_loader = train_val_loaders(
+        args.detail_path, args.batch_size, args.val_ratio, args.seed
+    )
 
     config = OspaceTransformerConfig(vocab_size=dataset.tokenizer.vocab_size)
     model = OspaceTransformer(config).to(args.device)
@@ -198,47 +302,159 @@ def train() -> None:
     bce_loss = nn.BCEWithLogitsLoss()
     mse_loss = nn.MSELoss()
 
-    def run_step(batch: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, float, float]:
-        input_ids = batch["input_ids"].to(args.device)
-        attention_mask = batch["attention_mask"].to(args.device)
+    def run_step(batch: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, float, float, float]:
         labels = batch["labels"].to(args.device)
         margins = batch["margins"].to(args.device)
-
-        phase_values = batch.get("phase_values")
-        if phase_values is not None:
-            phase_values = phase_values.to(args.device)
-            phase_features = phase_values.unsqueeze(-1).repeat(1, 1, config.d_model)
-        else:
-            phase_features = None
-
-        evidence_ids = batch.get("evidence_ids")
-        evidence_mask = batch.get("evidence_mask")
-        if evidence_ids is not None:
-            evidence_ids = evidence_ids.to(args.device)
-            evidence_mask = evidence_mask.to(args.device) if evidence_mask is not None else None
-            batch_size, mem_count, mem_len = evidence_ids.shape
-            flat_ids = evidence_ids.view(batch_size * mem_count, mem_len)
-            token_mask = (flat_ids != 0).unsqueeze(-1)
-            embedded = model.token_embed(flat_ids)
-            summed = (embedded * token_mask).sum(dim=1)
-            lengths = token_mask.sum(dim=1).clamp_min(1)
-            mean_embeddings = summed / lengths
-            evidence_memory = mean_embeddings.view(batch_size, mem_count, -1)
-        else:
-            evidence_memory = None
-            evidence_mask = None
-
-        output = model(
-            input_ids,
-            attention_mask=attention_mask,
-            phase_features=phase_features,
-            evidence_memory=evidence_memory,
-            evidence_mask=evidence_mask,
-        )
+        output = run_model(model, batch, args.device, config)
         admit_loss = bce_loss(output.admit_logits, labels)
         margin_loss = mse_loss(output.support_margin, margins)
-        loss = admit_loss + 0.1 * margin_loss
-        return loss, admit_loss.item(), margin_loss.item()
+        attention_reg = 0.0
+        if args.attention_entropy_weight > 0.0 and output.evidence_attention is not None:
+            attn = torch.clamp(output.evidence_attention.squeeze(1), min=1e-8)
+            attention_reg = -(attn * attn.log()).sum(dim=-1).mean()
+        total_loss = admit_loss + 0.1 * margin_loss + args.attention_entropy_weight * attention_reg
+        return total_loss, admit_loss.item(), margin_loss.item(), float(attention_reg)
+
+    @torch.no_grad()
+    def evaluate(loader: DataLoader[Dict[str, torch.Tensor]]) -> Dict[str, float]:
+        if len(loader.dataset) == 0:
+            return {key: float("nan") for key in [
+                "loss",
+                "admit_loss",
+                "margin_loss",
+                "attention_reg",
+                "precision",
+                "recall",
+                "brier",
+            ]}
+        model.eval()
+        total = 0
+        cumulative = {"loss": 0.0, "admit": 0.0, "margin": 0.0, "attn": 0.0}
+        probs: List[float] = []
+        labels: List[float] = []
+        margin_preds: List[float] = []
+        for batch in loader:
+            loss, admit_l, margin_l, attn_reg = run_step(batch)
+            cumulative["loss"] += loss.item()
+            cumulative["admit"] += admit_l
+            cumulative["margin"] += margin_l
+            cumulative["attn"] += attn_reg
+            total += 1
+
+            output = run_model(model, batch, args.device, config)
+            probs.extend(torch.sigmoid(output.admit_logits).detach().cpu().tolist())
+            labels.extend(batch["labels"].tolist())
+            margin_preds.extend(output.support_margin.detach().cpu().tolist())
+
+        precision, recall = compute_precision_recall(
+            probs, labels, margin_preds, args.admit_threshold, args.margin_threshold
+        )
+        brier = sum((p - y) ** 2 for p, y in zip(probs, labels)) / len(probs)
+        return {
+            "loss": cumulative["loss"] / total,
+            "admit_loss": cumulative["admit"] / total,
+            "margin_loss": cumulative["margin"] / total,
+            "attention_reg": cumulative["attn"] / total,
+            "precision": precision,
+            "recall": recall,
+            "brier": brier,
+        }
+
+    if args.dry_run:
+        batch = next(iter(train_loader))
+        loss, admit_l, margin_l, attn_reg = run_step(batch)
+        print(
+            json.dumps(
+                {
+                    "status": "dry_run",
+                    "loss": float(loss.item()),
+                    "admit_loss": admit_l,
+                    "margin_loss": margin_l,
+                    "attention_reg": attn_reg,
+                    "vocab_size": dataset.tokenizer.vocab_size,
+                },
+                indent=2,
+            )
+        )
+        return
+
+    final_val_metrics: Optional[Dict[str, float]] = None
+    for epoch in range(1, args.epochs + 1):
+        model.train()
+        running_loss = 0.0
+        running_admit = 0.0
+        running_margin = 0.0
+        running_attn = 0.0
+        for batch_idx, batch in enumerate(train_loader, start=1):
+            optimizer.zero_grad(set_to_none=True)
+            loss, admit_l, margin_l, attn_reg = run_step(batch)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
+            running_admit += admit_l
+            running_margin += margin_l
+            running_attn += attn_reg
+            if batch_idx % 10 == 0:
+                total = batch_idx
+                print(
+                    json.dumps(
+                        {
+                            "epoch": epoch,
+                            "step": batch_idx,
+                            "loss": running_loss / total,
+                            "admit_loss": running_admit / total,
+                            "margin_loss": running_margin / total,
+                            "attention_reg": running_attn / total,
+                        }
+                    )
+                )
+
+        train_metrics = {
+            "epoch": epoch,
+            "train_loss": running_loss / max(1, len(train_loader)),
+            "train_admit_loss": running_admit / max(1, len(train_loader)),
+            "train_margin_loss": running_margin / max(1, len(train_loader)),
+            "train_attention_reg": running_attn / max(1, len(train_loader)),
+        }
+        val_metrics = evaluate(val_loader)
+        final_val_metrics = val_metrics
+        train_metrics.update({f"val_{key}": value for key, value in val_metrics.items()})
+        print(json.dumps(train_metrics, indent=2))
+
+    if args.output_checkpoint:
+        metrics = final_val_metrics or {}
+        save_checkpoint(
+            args.output_checkpoint,
+            model=model,
+            config=config,
+            vocab=dataset.tokenizer.vocab,
+            metrics=metrics,
+        )
+        print(f"[train_reliability_attn] Checkpoint written to {args.output_checkpoint}")
+
+
+def compute_precision_recall(
+    probs: Sequence[float],
+    labels: Sequence[float],
+    margin_preds: Sequence[float],
+    admit_threshold: float,
+    margin_threshold: float,
+) -> Tuple[float, float]:
+    tp = 0
+    fp = 0
+    fn = 0
+    for prob, label, margin in zip(probs, labels, margin_preds):
+        predicted = (prob >= admit_threshold) and (margin >= margin_threshold)
+        label_bool = label >= 0.5
+        if predicted and label_bool:
+            tp += 1
+        elif predicted and not label_bool:
+            fp += 1
+        elif (not predicted) and label_bool:
+            fn += 1
+    precision = tp / (tp + fp) if tp + fp else 0.0
+    recall = tp / (tp + fn) if tp + fn else 0.0
+    return precision, recall
 
     if args.dry_run:
         batch = next(iter(loader))
@@ -285,19 +501,6 @@ def train() -> None:
                         }
                     )
                 )
-
-        print(
-            json.dumps(
-                {
-                    "epoch": epoch,
-                    "loss": running_loss / max(1, len(loader)),
-                    "admit_loss": running_admit / max(1, len(loader)),
-                    "margin_loss": running_margin / max(1, len(loader)),
-                },
-                indent=2,
-            )
-        )
-
 
 if __name__ == "__main__":  # pragma: no cover - script entrypoint
     train()

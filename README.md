@@ -55,6 +55,8 @@ source .venv/bin/activate
 pip install -e .
 # Build the optional native QFH/QBSA bindings (requires a C++20 toolchain and TBB)
 pip install -e .[native]
+# Install the optional Transformer-based reliability model (requires PyTorch)
+pip install -e .[attn]
 ```
 
 Once installed you can ingest a corpus and perform an initial analysis
@@ -93,6 +95,25 @@ PY
 ```
 
 For details on the commands and available options run `stm --help`.
+
+### Training the reliability Transformer
+
+If you install the `attn` extra, you can train the O-space Transformer
+reliability head using the evaluation detail artifacts:
+
+```bash
+PYTHONPATH=src python scripts/train_reliability_attn.py \
+  results/eval/whitepaper_demo/eval_detail.jsonl \
+  --epochs 5 --batch-size 32 --device cuda \
+  --output-checkpoint models/reliability_whitepaper_demo.pt
+```
+
+The harness logs admit precision/recall, Brier score, and attention regulariser
+metrics while validating against a hold-out split.  The script accepts
+`--dry-run` to execute a single forward pass when debugging new datasets.  When
+`--output-checkpoint` is provided, the script serialises the model state,
+configuration, tokenizer vocabulary, and final validation metrics, making it
+easy to plug the resulting file into `reality_filter_eval.py --reliability-model`.
 
 ## Reproducing the PlanBench++ and CodeTrace experiments
 
