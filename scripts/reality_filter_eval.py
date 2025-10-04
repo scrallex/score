@@ -270,6 +270,13 @@ def build_contexts(claims: Sequence[Dict[str, object]], engine: TruthPackEngine)
             )
             snapshots.append(snapshot)
         token = extract_token(question)
+        if token is None:
+            # Fall back to the first non-trivial word so token support remains available
+            for candidate in question.split():
+                word = candidate.strip("\"'.,?!;:")
+                if len(word) >= 3:
+                    token = word
+                    break
         token_snapshot: Optional[SpanEvaluation]
         if token:
             token_snapshot = engine.evaluate_span(
@@ -621,13 +628,14 @@ def evaluate_contexts(
 
         token_support = attempt_token_support(context, thresholds, engine, outcomes, reliability_model)
         support_hits = supported_outcomes(outcomes, gold_uris, thresholds)
-        if support_hits and not negative_claim:
+        has_support = bool(support_hits)
+        if has_support and not negative_claim:
             supported_claims += 1
 
         violation = violates_rules(outcomes, claim.get("rules"))
 
         repair_applied = any(outcome.action == "repair" for outcome in outcomes)
-        final_hallucinated = not any(outcome.admit for outcome in outcomes)
+        final_hallucinated = not has_support
 
         if support_hits:
             predicted = "REFUTED" if negative_claim else "SUPPORTED"
@@ -709,7 +717,7 @@ def evaluate_contexts(
                 "hallucinated": final_hallucinated,
                 "hallucinated_initial": baseline_hallucinated,
                 "repaired": any(outcome.action == "repair" for outcome in outcomes),
-                "supported": bool(support_hits),
+                "supported": has_support,
                 "gold_uris": gold_uris,
                 "negative_claim": negative_claim,
             }
