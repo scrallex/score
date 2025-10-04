@@ -396,7 +396,7 @@ def attempt_token_support(
     thresholds: Thresholds,
     engine: TruthPackEngine,
     outcomes: List[SentenceOutcome],
-    reliability: Optional[ReliabilityModelWrapper],
+    reliability: Optional[ReliabilityModelWrapper] = None,
 ) -> Optional[SentenceOutcome]:
     if context.token is None:
         return None
