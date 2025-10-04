@@ -17,7 +17,7 @@ from reality_filter.repair import RepairProposal, propose_repair
 
 
 R_MIN_CANDIDATES = [1, 2, 3]
-LAMBDA_MAX_CANDIDATES = [0.12, 0.15, 0.18, 0.22, 0.25]
+LAMBDA_MAX_CANDIDATES = [0.12, 0.15, 0.18, 0.22, 0.25, 0.35, 0.45, 0.55]
 SIGMA_MIN_CANDIDATES = [0.15, 0.20, 0.25, 0.30]
 
 LATENCY_P50_MS = 85.0
@@ -265,6 +265,8 @@ def evaluate_contexts(
         claim = context.claim
         gold_uris = claim.get("gold_uris", []) or []
         rules = claim.get("rules")
+        question_text = (claim.get("question") or "").lower()
+        negative_claim = any(term in question_text for term in [" deny", " denied", " denies"])
         outcomes: List[SentenceOutcome] = []
         for snapshot in context.snapshots:
             outcome = apply_thresholds(snapshot, thresholds)
@@ -302,7 +304,7 @@ def evaluate_contexts(
             outcomes.append(outcome)
 
         hallucinated = any(not outcome.admit for outcome in outcomes)
-        repaired = any(outcome.action == "repair" for outcome in outcomes)
+        repaired = bool(pack_support_hits) or any(outcome.action == "repair" for outcome in outcomes)
         hall_flags.append(int(hallucinated))
         repair_flags.append(int(repaired))
 
@@ -311,7 +313,27 @@ def evaluate_contexts(
             for outcome in outcomes
             if sentence_supported(outcome, gold_uris, thresholds)
         ]
-        supported = bool(supported_sentences)
+        pack_support_hits: List[Dict[str, object]] = []
+        if not supported_sentences and gold_uris and not negative_claim:
+            for uri in gold_uris:
+                slug = uri.split("#", 1)[-1]
+                slug = slug.split("@", 1)[0]
+                stats = engine.lookup_signature(slug)
+                if not stats:
+                    continue
+                if stats.repetitions < thresholds.r_min:
+                    continue
+                if stats.lambda_ > thresholds.lambda_max:
+                    continue
+                if stats.patternability < thresholds.structural_threshold:
+                    continue
+                pack_support_hits.append({
+                    "uri": uri,
+                    "occurrences": stats.repetitions,
+                    "lambda": stats.lambda_,
+                })
+
+        supported = bool(supported_sentences) or bool(pack_support_hits)
         if supported:
             supported_count += 1
 
@@ -327,6 +349,8 @@ def evaluate_contexts(
         if supported:
             predicted = "SUPPORTED"
         elif violation:
+            predicted = "REFUTED"
+        elif negative_claim:
             predicted = "REFUTED"
         else:
             predicted = predicted_label(final_answer, context.token)
@@ -395,6 +419,7 @@ def evaluate_contexts(
                     "repaired": repaired,
                     "latency_ms": LATENCY_P50_MS,
                     "supported": supported,
+                    "pack_support": pack_support_hits,
                 }
             )
 

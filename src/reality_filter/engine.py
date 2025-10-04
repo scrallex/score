@@ -276,6 +276,16 @@ class TruthPackEngine:
                 if warmed >= max_items:
                     return
 
+    def lookup_signature(self, text: str) -> Optional[SignatureStats]:
+        norm = _normalise_span(text)
+        sig = _hash_signature(norm)
+        return self._signature_stats.get(sig)
+
+    def signature_examples(self, text: str, limit: int = 3) -> List[TwinResult]:
+        norm = _normalise_span(text)
+        sig = _hash_signature(norm)
+        return self._direct_twins(sig, self._seed_margin_fast(text, norm=norm), limit)
+
     # ------------------------------------------------------------------
     def _resolve_path(self, path_str: Optional[str]) -> Path:
         if path_str is None:

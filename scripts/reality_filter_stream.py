@@ -19,7 +19,7 @@ except ImportError:  # pragma: no cover - optional
 
 from reality_filter import LLMSpanSource, SimSpanSource, SpanRecord, TruthPackEngine
 from reality_filter.engine import SpanEvaluation, TwinResult
-from reality_filter.repair import RepairProposal, propose_repair
+from reality_filter.repair import RepairProposal, extract_entities, propose_repair
 
 LATENCY_BUDGET_MS = 120.0
 
@@ -65,6 +65,7 @@ class TwinRepairer:
         original_margin: float,
         sigma_min: float,
     ) -> Optional[RepairProposal]:
+        original_entities = extract_entities(span)
         proposals = propose_repair(
             span,
             twins,
@@ -77,6 +78,9 @@ class TwinRepairer:
         if self.client is None:  # pragma: no cover - deterministic path
             if twins:
                 first = twins[0]
+                candidate_entities = extract_entities(first.string)
+                if original_entities and not original_entities.issubset(candidate_entities):
+                    return None
                 return RepairProposal(
                     text=first.string,
                     source=first.source,
@@ -115,6 +119,9 @@ class TwinRepairer:
         )
         content = (response.choices[0].message.content or "").strip()
         if not content:
+            return None
+        candidate_entities = extract_entities(content)
+        if original_entities and not original_entities.issubset(candidate_entities):
             return None
         return RepairProposal(
             text=content,
