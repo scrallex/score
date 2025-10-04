@@ -9,6 +9,10 @@ data_snapshot/
 tools/
 analysis/
 data/fever/wiki-pages/
+data/fever_repo/
+models/
+results/eval/fever_*/
+results/eval/**/logs/
 !scripts/analysis/
 !scripts/analysis/*.py
 
