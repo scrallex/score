@@ -2,10 +2,19 @@ const config = window.__STM_CONFIG__ || {};
 const API_BASE = typeof config.apiBase === 'string' ? config.apiBase.replace(/\/$/, '') : '/api';
 const DEMO_ENDPOINT = `${API_BASE}/demo`;
 const LIVE_ENDPOINT = `${API_BASE}/demo/live`;
+const BACKTEST_STATUS_ENDPOINT = `${API_BASE}/backtests/status`;
+const BACKTEST_LATEST_ENDPOINT = `${API_BASE}/backtests/latest`;
+const BACKTEST_STATIC_LATEST = typeof config.backtestsLatest === 'string'
+  ? config.backtestsLatest
+  : '/output/backtests/latest.json';
+const BACKTEST_STATIC_PARTIAL = typeof config.backtestsPartial === 'string'
+  ? config.backtestsPartial
+  : BACKTEST_STATIC_LATEST.replace(/latest\.json$/, 'latest.partial.json');
 
 const toastEl = document.getElementById('toast');
 let liveSocket = null;
 let liveEventSource = null;
+let backtestPollHandle = null;
 
 function showToast(message, kind = 'info') {
   if (!toastEl) return;
@@ -40,6 +49,39 @@ function fmtInteger(value) {
     return '—';
   }
   return Number(value).toLocaleString();
+}
+
+function fmtBps(value, digits = 1) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) {
+    return '—';
+  }
+  return Number(value).toFixed(digits);
+}
+
+function fmtPercentPoint(value, digits = 1) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) {
+    return '—';
+  }
+  return `${Number(value).toFixed(digits)}%`;
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (char) => {
+    switch (char) {
+      case '&':
+        return '&amp;';
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '"':
+        return '&quot;';
+      case "'":
+        return '&#39;';
+      default:
+        return char;
+    }
+  });
 }
 
 async function fetchJson(url) {
@@ -120,6 +162,199 @@ function renderRecommendations(context) {
     `;
     table.appendChild(tr);
   });
+}
+
+function renderBacktest(payload, status) {
+  const statusEl = document.getElementById('backtest-status-text');
+  const updatedEl = document.getElementById('backtest-updated');
+  const runEl = document.getElementById('backtest-run-name');
+  const errorEl = document.getElementById('backtest-error');
+  if (!statusEl || !updatedEl || !runEl || !errorEl) {
+    return;
+  }
+
+  errorEl.hidden = true;
+  errorEl.textContent = '';
+
+  const state = (status && typeof status.state === 'string' ? status.state : payload?.status) || 'unknown';
+  let label = state.charAt(0).toUpperCase() + state.slice(1);
+  if (status && typeof status.progress === 'number') {
+    const pct = Math.max(0, Math.min(1, Number(status.progress)));
+    label += ` · ${(pct * 100).toFixed(0)}%`;
+  }
+  statusEl.textContent = label;
+
+  const timestamp = payload?.generated_at;
+  if (timestamp) {
+    const date = new Date(timestamp);
+    updatedEl.textContent = `Updated ${date.toLocaleString(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    })}`;
+  } else {
+    updatedEl.textContent = '—';
+  }
+
+  const runs = Array.isArray(payload?.runs) ? payload.runs : [];
+  const activeRun = runs.length ? runs[runs.length - 1] : null;
+  if (activeRun) {
+    const instruments = Array.isArray(activeRun.instruments) ? activeRun.instruments : [];
+    const qualified = instruments.filter((entry) => entry?.metrics?.qualified).length;
+    const summary = [`Run: ${activeRun.name || 'Unnamed'}`, `${qualified}/${instruments.length} qualified`];
+    runEl.innerHTML = `<strong>${escapeHtml(summary[0])}</strong><span>${escapeHtml(summary[1])}</span>`;
+  } else {
+    runEl.textContent = 'No backtest runs available.';
+  }
+
+  renderBacktestTable(activeRun);
+}
+
+function renderBacktestTable(run) {
+  const tbody = document.getElementById('backtest-table-body');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const instruments = run?.instruments;
+  if (!Array.isArray(instruments) || instruments.length === 0) {
+    const row = document.createElement('tr');
+    row.innerHTML = '<td colspan="9">No instrument results yet.</td>';
+    tbody.appendChild(row);
+    return;
+  }
+
+  instruments.forEach((entry) => {
+    if (entry && typeof entry.error === 'string' && entry.error.length) {
+      const row = document.createElement('tr');
+      row.classList.add('backtest-row-error');
+      row.innerHTML = `
+        <td>${escapeHtml(entry.instrument || '—')}</td>
+        <td colspan="8" class="backtest-error-cell">${escapeHtml(entry.error)}</td>
+      `;
+      tbody.appendChild(row);
+      return;
+    }
+
+    const metrics = entry?.metrics || {};
+    const row = document.createElement('tr');
+    if (metrics.qualified) {
+      row.classList.add('backtest-row-qualified');
+    }
+    const winRate = fmtPercent(metrics.win_rate, 1);
+    const coverage = fmtPercent(entry?.gate_coverage, 1);
+    row.innerHTML = `
+      <td>${escapeHtml(entry?.instrument || '—')}</td>
+      <td>${fmtInteger(metrics.trade_count)}</td>
+      <td>${fmtBps(metrics.avg_return_bps, 1)}</td>
+      <td>${winRate}</td>
+      <td>${fmtNumber(metrics.profit_factor, 2)}</td>
+      <td>${fmtNumber(metrics.sharpe, 2)}</td>
+      <td>${fmtPercentPoint(metrics.max_drawdown_pct, 1)}</td>
+      <td>${coverage}</td>
+      <td>${escapeHtml((entry?.source || '').toUpperCase() || '—')}</td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+function renderBacktestError(message) {
+  const statusEl = document.getElementById('backtest-status-text');
+  const updatedEl = document.getElementById('backtest-updated');
+  const runEl = document.getElementById('backtest-run-name');
+  const errorEl = document.getElementById('backtest-error');
+  const tbody = document.getElementById('backtest-table-body');
+  if (!statusEl || !updatedEl || !runEl || !errorEl || !tbody) {
+    return;
+  }
+  statusEl.textContent = 'Error';
+  updatedEl.textContent = '—';
+  runEl.textContent = 'Backtest results unavailable.';
+  tbody.innerHTML = '<tr><td colspan="9">No data.</td></tr>';
+  errorEl.hidden = false;
+  errorEl.textContent = message || 'Failed to load backtest results.';
+}
+
+async function fetchBacktestLatestPayload() {
+  try {
+    return await fetchJson('/backtests/latest');
+  } catch (error) {
+    try {
+      const latestRes = await fetch(BACKTEST_STATIC_LATEST, {
+        headers: { Accept: 'application/json' },
+      });
+      if (latestRes.ok) {
+        return latestRes.json();
+      }
+      const partialRes = await fetch(BACKTEST_STATIC_PARTIAL, {
+        headers: { Accept: 'application/json' },
+      });
+      if (partialRes.ok) {
+        return partialRes.json();
+      }
+    } catch (staticError) {
+      console.debug('Static backtest payload unavailable', staticError);
+    }
+    throw error;
+  }
+}
+
+function scheduleBacktestPolling() {
+  if (backtestPollHandle) return;
+  backtestPollHandle = setInterval(() => {
+    refreshBacktests(false).catch(() => {});
+  }, 5000);
+}
+
+function stopBacktestPolling() {
+  if (!backtestPollHandle) return;
+  clearInterval(backtestPollHandle);
+  backtestPollHandle = null;
+}
+
+async function refreshBacktests(showToastMessage = true) {
+  try {
+    const [statusResult, latestResult] = await Promise.allSettled([
+      fetchJson('/backtests/status'),
+      fetchBacktestLatestPayload(),
+    ]);
+
+    const status = statusResult.status === 'fulfilled' ? statusResult.value : null;
+    if (statusResult.status !== 'fulfilled' && statusResult.reason) {
+      console.debug('Backtest status unavailable', statusResult.reason);
+    }
+
+    if (latestResult.status !== 'fulfilled') {
+      throw latestResult.reason || new Error('Failed to load latest backtest');
+    }
+
+    const latest = latestResult.value;
+    renderBacktest(latest, status);
+
+    if (status && status.state === 'running') {
+      scheduleBacktestPolling();
+    } else {
+      stopBacktestPolling();
+    }
+
+    if (showToastMessage) {
+      showToast('Backtests refreshed');
+    }
+  } catch (error) {
+    console.error('Failed to refresh backtests', error);
+    stopBacktestPolling();
+    renderBacktestError(error?.message || 'Unable to load backtest data');
+    if (showToastMessage) {
+      showToast('Failed to refresh backtests', 'error');
+    }
+  }
+}
+
+function setupBacktestControls() {
+  const refreshBtn = document.getElementById('backtest-refresh');
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      refreshBacktests(true);
+    });
+  }
 }
 
 function updateGeneratedAt(timestamp) {
@@ -278,4 +513,8 @@ window.addEventListener('DOMContentLoaded', () => {
     showToast('Failed to load dashboard snapshot', 'error');
   });
   setupControls();
+  setupBacktestControls();
+  refreshBacktests(false).catch((error) => {
+    console.error('Failed to load initial backtests', error);
+  });
 });

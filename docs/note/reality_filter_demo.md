@@ -88,5 +88,5 @@ Collect:
 
 - `make clean-demo` removes generated artefacts.
 - Use `PACK=<name>` to run the same flow on additional corpora.
-- `/seen` service: `uvicorn scripts.reality_filter_service:app --reload`
+- `/seen` service: `UVLOOP=1 gunicorn scripts.reality_filter_service:app -k uvicorn.workers.UvicornWorker -w 2 --bind 0.0.0.0:8000 --keep-alive 5`
 - Benchmark target: ≥1k spans/sec when using hash embeddings.

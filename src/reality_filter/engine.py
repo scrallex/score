@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import pickle
 import re
 import threading
@@ -13,6 +12,7 @@ from typing import Dict, List, Optional, Sequence, Tuple
 import numpy as np
 import pyarrow.parquet as pq
 from bloom_filter2 import BloomFilter
+import orjson
 
 try:  # Optional dependency for ANN-backed twin lookup
     import hnswlib  # type: ignore
@@ -119,7 +119,7 @@ class TruthPackEngine:
         del seeds  # seeds handled at pack time via centroids
         del embedding_method, model_name, hash_dims, embedding_min_occ, lru_size
 
-        manifest = json.loads(manifest_path.read_text())
+        manifest = orjson.loads(manifest_path.read_bytes())
         self.manifest = manifest
         self.pack_name = manifest.get("name", manifest_path.stem)
         self._manifest_path = manifest_path
@@ -128,7 +128,7 @@ class TruthPackEngine:
         if not state_path.exists():
             raise FileNotFoundError(f"State file not found: {state_path}")
         self.state_path = state_path
-        self.state: Dict[str, object] = json.loads(state_path.read_text())
+        self.state: Dict[str, object] = orjson.loads(state_path.read_bytes())
         self.strings: Dict[str, Dict[str, object]] = self.state.get("string_scores", {})  # type: ignore[assignment]
         self.signals: Dict[int, Dict[str, object]] = {
             int(sig.get("id", idx)): sig for idx, sig in enumerate(self.state.get("signals", []))  # type: ignore[list-item]
@@ -479,7 +479,7 @@ class TruthPackEngine:
         meta_path = self._resolve_path(ann_meta_path_str)
         if not ann_path.exists() or not meta_path.exists():
             return None, None
-        meta = json.loads(meta_path.read_text())
+        meta = orjson.loads(meta_path.read_bytes())
         dim = int(meta.get("dim", 5))
         index = hnswlib.Index(space="l2", dim=dim)
         index.load_index(str(ann_path))

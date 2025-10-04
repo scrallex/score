@@ -4,18 +4,18 @@
 from __future__ import annotations
 
 import asyncio
-import json
+import atexit
 import os
 import time
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 from functools import lru_cache, partial
-import atexit
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence, Tuple
 
 import orjson
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import ORJSONResponse
+from fastapi.responses import ORJSONResponse, Response
 
 from reality_filter import TruthPackEngine
 from reality_filter.engine import SpanEvaluation
@@ -27,33 +27,68 @@ app = FastAPI(
 )
 
 
+@dataclass(frozen=True)
+class EngineConfig:
+    embedding_method: str
+    model: str
+    hash_dims: int
+    embedding_min_occ: int
+
+
+@dataclass(frozen=True)
+class EvalConfig:
+    semantic_threshold: float
+    structural_threshold: float
+    r_min: int
+    hazard_max: float
+    sigma_min: float
+
+
+@dataclass(frozen=True)
+class SeenEvalRequest:
+    text: str
+    question: Optional[str]
+    config: EvalConfig
+
+
+@dataclass(frozen=True)
+class ParsedSeenPayload:
+    manifest: Path
+    seeds: Tuple[str, ...]
+    seeds_key: str
+    engine_config: EngineConfig
+    eval_request: SeenEvalRequest
+
+
 @lru_cache(maxsize=8)
-def _load_engine(
-    manifest_path: str,
-    seeds_key: str,
-    embedding_method: str,
-    model: str,
-    hash_dims: int,
-    embedding_min_occ: int,
-) -> TruthPackEngine:
-    seeds = [s for s in seeds_key.split("|||" ) if s]
+def _load_engine(manifest_path: str, seeds_key: str, engine_config: EngineConfig) -> TruthPackEngine:
+    seeds = tuple(filter(None, seeds_key.split("|||")))
     seeds_to_use: List[str]
     if seeds:
-        seeds_to_use = seeds
+        seeds_to_use = list(seeds)
     else:
         manifest = Path(manifest_path)
         if not manifest.exists():
             raise FileNotFoundError(f"Manifest not found: {manifest}")
-        data = json.loads(manifest.read_text())
-        seed_families = data.get("seed_families", {})
-        seeds_to_use = data.get("seeds") or seed_families.get("factual", [])
+        data = orjson.loads(manifest.read_bytes())
+        seeds_to_use = []
+        if isinstance(data, dict):
+            seeds_value = data.get("seeds")
+            if isinstance(seeds_value, list):
+                seeds_to_use = [s for s in seeds_value if isinstance(s, str)]
+            if not seeds_to_use:
+                seed_families = data.get("seed_families", {})
+                if isinstance(seed_families, dict):
+                    factual = seed_families.get("factual", [])
+                    if isinstance(factual, list):
+                        seeds_to_use = [s for s in factual if isinstance(s, str)]
     engine = TruthPackEngine.from_manifest(
         manifest_path,
         seeds=seeds_to_use,
-        embedding_method=embedding_method,
-        model_name=model,
-        hash_dims=hash_dims,
-        embedding_min_occ=embedding_min_occ,
+        embedding_method=engine_config.embedding_method,
+        model_name=engine_config.model,
+        hash_dims=engine_config.hash_dims,
+        embedding_min_occ=engine_config.embedding_min_occ,
         lru_size=200_000,
     )
     engine.prewarm(max_items=20_000)
@@ -68,25 +103,26 @@ class SeenBatcher:
         else:
             self._max_batch = max_batch
             self._max_delay = max_delay
-        self._queue: "asyncio.Queue[Tuple[TruthPackEngine, Dict[str, object], asyncio.Future]]" = asyncio.Queue()
+        self._queue: "asyncio.Queue[Tuple[TruthPackEngine, SeenEvalRequest, asyncio.Future]]" = asyncio.Queue()
         self._worker_task: Optional[asyncio.Task] = None
 
-    async def submit(self, engine: TruthPackEngine, payload: Dict[str, object]) -> "SpanEvaluation":
+    async def submit(self, engine: TruthPackEngine, payload: SeenEvalRequest) -> "SpanEvaluation":
         if self._worker_task is None or self._worker_task.done():
             loop = asyncio.get_running_loop()
             self._worker_task = loop.create_task(self._run())
         loop = asyncio.get_running_loop()
         future: "asyncio.Future" = loop.create_future()
         if self._max_batch == 1:
+            config = payload.config
             evaluation = engine.evaluate_spans(
-                [payload["text"]],
-                questions=[payload.get("question")],
-                semantic_threshold=float(payload["semantic_threshold"]),
-                structural_threshold=float(payload["structural_threshold"]),
-                r_min=int(payload["r_min"]),
-                hazard_max=float(payload["hazard_max"]),
-                sigma_min=float(payload["sigma_min"]),
-                twins_needed=[False],
+                [payload.text],
+                questions=[payload.question],
+                semantic_threshold=config.semantic_threshold,
+                structural_threshold=config.structural_threshold,
+                r_min=config.r_min,
+                hazard_max=config.hazard_max,
+                sigma_min=config.sigma_min,
+                twins_needed=False,
             )[0]
             future.set_result(evaluation)
             return await future
@@ -96,7 +132,7 @@ class SeenBatcher:
     async def _run(self) -> None:
         while True:
             engine, request, future = await self._queue.get()
-            batch: List[Tuple[TruthPackEngine, Dict[str, object], asyncio.Future]] = [
+            batch: List[Tuple[TruthPackEngine, SeenEvalRequest, asyncio.Future]] = [
                 (engine, request, future)
             ]
             start = time.perf_counter()
@@ -112,44 +148,37 @@ class SeenBatcher:
             await self._process_batch(batch)
 
     async def _process_batch(
-        self, batch: Sequence[Tuple[TruthPackEngine, Dict[str, object], asyncio.Future]]
+        self, batch: Sequence[Tuple[TruthPackEngine, SeenEvalRequest, asyncio.Future]]
     ) -> None:
         grouped: Dict[
-            Tuple[TruthPackEngine, float, float, int, float, float],
-            List[Tuple[TruthPackEngine, Dict[str, object], asyncio.Future]],
+            Tuple[TruthPackEngine, EvalConfig],
+            List[Tuple[TruthPackEngine, SeenEvalRequest, asyncio.Future]],
         ] = {}
         for item in batch:
             engine, payload, future = item
-            key = (
-                engine,
-                float(payload["semantic_threshold"]),
-                float(payload["structural_threshold"]),
-                int(payload["r_min"]),
-                float(payload["hazard_max"]),
-                float(payload["sigma_min"]),
-            )
+            key = (engine, payload.config)
             grouped.setdefault(key, []).append((engine, payload, future))
 
         loop = asyncio.get_running_loop()
         for key, items in grouped.items():
-            engine = key[0]
-            spans = [payload["text"] for _, payload, _ in items]
-            questions_raw = [payload.get("question") for _, payload, _ in items]
-            questions: Optional[List[Optional[str]]] = (
-                questions_raw if any(q is not None for q in questions_raw) else None
-            )
-            twins_flags = [False] * len(items)
+            engine, eval_config = key
+            spans = [payload.text for _, payload, _ in items]
+            questions = [payload.question for _, payload, _ in items]
+            if not any(question is not None for question in questions):
+                questions_payload: Optional[List[Optional[str]]] = None
+            else:
+                questions_payload = questions
 
             evaluate = partial(
                 engine.evaluate_spans,
                 spans,
-                questions=questions,
-                semantic_threshold=key[1],
-                structural_threshold=key[2],
-                r_min=key[3],
-                hazard_max=key[4],
-                sigma_min=key[5],
-                twins_needed=twins_flags,
+                questions=questions_payload,
+                semantic_threshold=eval_config.semantic_threshold,
+                structural_threshold=eval_config.structural_threshold,
+                r_min=eval_config.r_min,
+                hazard_max=eval_config.hazard_max,
+                sigma_min=eval_config.sigma_min,
+                twins_needed=False,
             )
             try:
                 evaluations = await loop.run_in_executor(EXECUTOR, evaluate)
@@ -187,7 +216,7 @@ def _flush_counters_on_exit() -> None:
             pass
 
 
-def _parse_payload(data: dict) -> Tuple[str, Optional[str], Path, List[str], Dict[str, object]]:
+def _parse_payload(data: dict) -> ParsedSeenPayload:
     if not isinstance(data, dict):
         raise HTTPException(status_code=400, detail="Payload must be a JSON object")
     text = data.get("text")
@@ -200,66 +229,94 @@ def _parse_payload(data: dict) -> Tuple[str, Optional[str], Path, List[str], Dic
     if not isinstance(manifest_path, str) or not manifest_path:
         raise HTTPException(status_code=400, detail="Field 'pack_manifest' is required")
     seeds_raw = data.get("seeds")
-    seeds = [s for s in seeds_raw if isinstance(s, str)] if isinstance(seeds_raw, list) else []
-    thresholds = {
-        "semantic_threshold": float(data.get("semantic_threshold", 0.25)),
-        "structural_threshold": float(data.get("structural_threshold", 0.46)),
-        "r_min": int(data.get("r_min", 2)),
-        "hazard_max": float(data.get("hazard_max", 0.55)),
-        "sigma_min": float(data.get("sigma_min", 0.28)),
-    }
-    embed_cfg = {
-        "embedding_method": data.get("embedding_method", "hash"),
-        "model": data.get("model", "all-MiniLM-L6-v2"),
-        "hash_dims": int(data.get("hash_dims", 256)),
-        "embedding_min_occ": int(data.get("embedding_min_occ", 1)),
-    }
-    return text, question, Path(manifest_path), seeds, {**thresholds, **embed_cfg}
+    seeds: Tuple[str, ...]
+    if isinstance(seeds_raw, list):
+        seeds = tuple(s for s in seeds_raw if isinstance(s, str) and s)
+    else:
+        seeds = tuple()
+
+    def _coerce_float(value: object, default: float, field: str) -> float:
+        if value is None:
+            return default
+        try:
+            return float(value)
+        except (TypeError, ValueError) as exc:  # pragma: no cover - validation guard
+            raise HTTPException(status_code=400, detail=f"Field '{field}' must be a number") from exc
+
+    def _coerce_int(value: object, default: int, field: str) -> int:
+        if value is None:
+            return default
+        try:
+            return int(value)
+        except (TypeError, ValueError) as exc:  # pragma: no cover - validation guard
+            raise HTTPException(status_code=400, detail=f"Field '{field}' must be an integer") from exc
+
+    eval_config = EvalConfig(
+        semantic_threshold=_coerce_float(data.get("semantic_threshold"), 0.25, "semantic_threshold"),
+        structural_threshold=_coerce_float(data.get("structural_threshold"), 0.46, "structural_threshold"),
+        r_min=_coerce_int(data.get("r_min"), 2, "r_min"),
+        hazard_max=_coerce_float(data.get("hazard_max"), 0.55, "hazard_max"),
+        sigma_min=_coerce_float(data.get("sigma_min"), 0.28, "sigma_min"),
+    )
+
+    embedding_method = data.get("embedding_method", "hash")
+    model = data.get("model", "all-MiniLM-L6-v2")
+    if not isinstance(embedding_method, str):
+        raise HTTPException(status_code=400, detail="Field 'embedding_method' must be a string")
+    if not isinstance(model, str):
+        raise HTTPException(status_code=400, detail="Field 'model' must be a string")
+
+    engine_config = EngineConfig(
+        embedding_method=embedding_method,
+        model=model,
+        hash_dims=_coerce_int(data.get("hash_dims"), 256, "hash_dims"),
+        embedding_min_occ=_coerce_int(data.get("embedding_min_occ"), 1, "embedding_min_occ"),
+    )
+
+    eval_request = SeenEvalRequest(text=text, question=question, config=eval_config)
+    seeds_key = "|||".join(seeds)
+    return ParsedSeenPayload(
+        manifest=Path(manifest_path),
+        seeds=seeds,
+        seeds_key=seeds_key,
+        engine_config=engine_config,
+        eval_request=eval_request,
+    )
 
 
 @app.post("/seen")
-async def seen(request: Request) -> ORJSONResponse:
+async def seen(request: Request) -> Response:
     try:
         payload = await request.body()
         data = orjson.loads(payload)
     except Exception as exc:  # pragma: no cover - invalid JSON
         raise HTTPException(status_code=400, detail="Invalid JSON payload") from exc
 
-    text, question, manifest, seeds, config = _parse_payload(data)
+    parsed = _parse_payload(data)
+    manifest = parsed.manifest
     if not manifest.exists():
         raise HTTPException(status_code=404, detail=f"Manifest not found: {manifest}")
+    manifest_resolved = manifest.resolve()
     try:
-        seeds_key = "|||".join(seeds)
         engine = _load_engine(
-            str(manifest.resolve()),
-            seeds_key,
-            config["embedding_method"],
-            config["model"],
-            config["hash_dims"],
-            config["embedding_min_occ"],
+            str(manifest_resolved),
+            parsed.seeds_key,
+            parsed.engine_config,
         )
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
-    request_payload = {
-        "text": text,
-        "question": question,
-        "semantic_threshold": config["semantic_threshold"],
-        "structural_threshold": config["structural_threshold"],
-        "r_min": config["r_min"],
-        "hazard_max": config["hazard_max"],
-        "sigma_min": config["sigma_min"],
-    }
-
-    eval_result = await _batcher.submit(engine, request_payload)
+    eval_result = await _batcher.submit(engine, parsed.eval_request)
 
     action = "emit" if eval_result.admitted else "decline"
     repair_candidate = eval_result.repair_candidate.string if eval_result.repair_candidate else None
 
+    manifest_str = str(manifest_resolved)
+
     response_payload = {
         "text": eval_result.span,
         "question": eval_result.question,
-        "pack": str(manifest.resolve()),
+        "pack": manifest_str,
         "decisions": eval_result.decisions(),
         "metrics": {**eval_result.metrics(), "repetitions": eval_result.occurrences},
         "signature": eval_result.signature,
@@ -294,7 +351,7 @@ async def seen(request: Request) -> ORJSONResponse:
         loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, _write_counters, counters)
 
-    return ORJSONResponse(response_payload)
+    return Response(content=orjson.dumps(response_payload), media_type="application/json")
 
 
 @app.get("/healthz")

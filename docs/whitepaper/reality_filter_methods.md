@@ -62,7 +62,7 @@ make eval-report PACK=<pack>
 make sweep PACK=<pack>
 make permutation PACK=<pack>
 make report PACK=<pack>
-uvicorn scripts.reality_filter_service:app --reload
+UVLOOP=1 gunicorn scripts.reality_filter_service:app -k uvicorn.workers.UvicornWorker -w 2 --bind 0.0.0.0:8000 --keep-alive 5
 make bench-seen PACK_PATH=analysis/truth_packs/<pack>
 ```
 

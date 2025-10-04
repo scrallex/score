@@ -456,6 +456,80 @@ tbody tr:last-child td {
   font-size: 0.85rem;
 }
 
+.backtest-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.backtest-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.backtest-updated {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.backtest-run {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.backtest-run strong {
+  color: var(--text-primary);
+}
+
+.scroll-table {
+  overflow-x: auto;
+}
+
+.backtest-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.backtest-table th,
+.backtest-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid rgba(124, 140, 255, 0.12);
+}
+
+.backtest-table th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+}
+
+.backtest-table tbody tr.backtest-row-qualified {
+  background: rgba(61, 214, 140, 0.08);
+}
+
+.backtest-table tbody tr.backtest-row-error {
+  background: rgba(255, 107, 107, 0.08);
+}
+
+.backtest-error-cell {
+  color: var(--danger);
+  font-size: 0.85rem;
+}
+
+.backtest-error {
+  margin-top: 8px;
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
 .demo__footer {
   margin-top: 4px;
   font-size: 0.8rem;

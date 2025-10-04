@@ -96,6 +96,51 @@
           </div>
         </div>
       </section>
+
+      <section class="demo" id="backtest-panel">
+        <div class="demo__heading">
+          <h2>Backtest Grid</h2>
+          <p>Latest echo trading simulation across configured instruments.</p>
+        </div>
+        <div class="demo__body">
+          <div class="card card--wide backtest-card">
+            <div class="backtest-card__header">
+              <div>
+                <p class="stat__note">Status</p>
+                <p class="stat" id="backtest-status-text">Loading…</p>
+              </div>
+              <div class="backtest-card__actions">
+                <button id="backtest-refresh" class="btn btn--ghost" type="button">Refresh</button>
+                <span class="backtest-updated" id="backtest-updated">—</span>
+              </div>
+            </div>
+            <div class="backtest-run" id="backtest-run-name">Awaiting first run.</div>
+            <div class="scroll-table">
+              <table class="backtest-table" id="backtest-table">
+                <thead>
+                  <tr>
+                    <th>Instrument</th>
+                    <th>Trades</th>
+                    <th>Avg Return (bps)</th>
+                    <th>Win Rate</th>
+                    <th>Profit Factor</th>
+                    <th>Sharpe</th>
+                    <th>Max DD</th>
+                    <th>Coverage</th>
+                    <th>Source</th>
+                  </tr>
+                </thead>
+                <tbody id="backtest-table-body">
+                  <tr>
+                    <td colspan="9">Loading results…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="backtest-error" id="backtest-error" hidden></div>
+          </div>
+        </div>
+      </section>
     </main>
 
     <footer class="site-footer">

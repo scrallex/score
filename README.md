@@ -22,7 +22,7 @@ notes, and evaluation assets.
 - Build a truth-pack manifold: `make pack PACK=docs_demo`
 - Stream spans (sim or LLM) through the reality filter: `make stream PACK=docs_demo -- SPANS=demo/truth_pack/sample_spans.json`
 - Benchmark the `/seen` service: `PYTHONPATH=src .venv/bin/python scripts/benchmark_seen.py --manifest analysis/truth_packs/docs_demo/manifest.json`
-- Run the FastAPI shim locally: `uvicorn scripts.reality_filter_service:app --reload`
+- Run the FastAPI shim locally: `UVLOOP=1 gunicorn scripts.reality_filter_service:app -k uvicorn.workers.UvicornWorker -w 2 --bind 0.0.0.0:8000 --keep-alive 5`
 - Generate sweeps/permutation/report artefacts: `make sweep PACK=docs_demo`, `make permutation PACK=docs_demo`, `make report PACK=docs_demo`
 
 ## Structural Intelligence Demo (mxbikes.xyz)

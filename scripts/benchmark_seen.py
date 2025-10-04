@@ -8,11 +8,12 @@ import json
 import os
 import statistics
 import subprocess
+import sys
 import time
 from pathlib import Path
 
-import httpx
 import asyncio
+import httpx
 
 APP_PATH = "scripts.reality_filter_service:app"
 
@@ -78,24 +79,23 @@ def main() -> None:
             env = os.environ.copy()
             env.setdefault("OMP_NUM_THREADS", "1")
             env.setdefault("MKL_NUM_THREADS", "1")
-            worker_count = int(env.get("UVICORN_WORKERS", max(2, args.concurrency // 200)))
+            env.setdefault("UVLOOP", "1")
+            worker_count = int(env.get("GUNICORN_WORKERS", env.get("UVICORN_WORKERS", max(2, args.concurrency // 200))))
             cmd = [
-                "python",
+                sys.executable,
                 "-m",
-                "uvicorn",
+                "gunicorn",
                 APP_PATH,
-                "--host",
-                "127.0.0.1",
-                "--port",
-                str(args.port),
+                "-k",
+                "uvicorn.workers.UvicornWorker",
+                "-w",
+                str(worker_count),
+                "-b",
+                f"127.0.0.1:{args.port}",
                 "--log-level",
                 "error",
-                "--loop",
-                "uvloop",
-                "--http",
-                "httptools",
-                "--workers",
-                str(worker_count),
+                "--keep-alive",
+                "5",
             ]
             server = subprocess.Popen(cmd, env=env)
             base_url = f"http://127.0.0.1:{args.port}"
