@@ -8,6 +8,7 @@ cpr/
 data_snapshot/
 tools/
 analysis/
+data/fever/wiki-pages/
 !scripts/analysis/
 !scripts/analysis/*.py
 
