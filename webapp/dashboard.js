@@ -15,6 +15,7 @@ const toastEl = document.getElementById('toast');
 let liveSocket = null;
 let liveEventSource = null;
 let backtestPollHandle = null;
+let backtestFeatureEnabled = config.enableBacktests !== false;
 
 function showToast(message, kind = 'info') {
   if (!toastEl) return;
@@ -88,7 +89,9 @@ async function fetchJson(url) {
   const res = await fetch(url, { headers: { Accept: 'application/json' } });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || res.statusText);
+    const error = new Error(text || res.statusText);
+    error.status = res.status;
+    throw error;
   }
   return res.json();
 }
@@ -275,7 +278,7 @@ function renderBacktestError(message) {
 
 async function fetchBacktestLatestPayload() {
   try {
-    return await fetchJson('/backtests/latest');
+    return await fetchJson(BACKTEST_LATEST_ENDPOINT);
   } catch (error) {
     try {
       const latestRes = await fetch(BACKTEST_STATIC_LATEST, {
@@ -298,7 +301,7 @@ async function fetchBacktestLatestPayload() {
 }
 
 function scheduleBacktestPolling() {
-  if (backtestPollHandle) return;
+  if (backtestPollHandle || !backtestFeatureEnabled) return;
   backtestPollHandle = setInterval(() => {
     refreshBacktests(false).catch(() => {});
   }, 5000);
@@ -310,19 +313,47 @@ function stopBacktestPolling() {
   backtestPollHandle = null;
 }
 
+function disableBacktestPanel(reason) {
+  if (!backtestFeatureEnabled) return;
+  backtestFeatureEnabled = false;
+  stopBacktestPolling();
+  const panel = document.getElementById('backtest-panel');
+  if (panel) {
+    panel.hidden = true;
+  }
+  const refreshBtn = document.getElementById('backtest-refresh');
+  if (refreshBtn) {
+    refreshBtn.disabled = true;
+  }
+  if (reason) {
+    console.info('Backtest panel disabled:', reason);
+  }
+}
+
 async function refreshBacktests(showToastMessage = true) {
+  if (!backtestFeatureEnabled) {
+    return;
+  }
   try {
     const [statusResult, latestResult] = await Promise.allSettled([
-      fetchJson('/backtests/status'),
+      fetchJson(BACKTEST_STATUS_ENDPOINT),
       fetchBacktestLatestPayload(),
     ]);
 
     const status = statusResult.status === 'fulfilled' ? statusResult.value : null;
     if (statusResult.status !== 'fulfilled' && statusResult.reason) {
+      if (statusResult.reason && statusResult.reason.status === 404) {
+        disableBacktestPanel('Backtest status endpoint returned 404.');
+        return;
+      }
       console.debug('Backtest status unavailable', statusResult.reason);
     }
 
     if (latestResult.status !== 'fulfilled') {
+      if (latestResult.reason && latestResult.reason.status === 404) {
+        disableBacktestPanel('Backtest latest endpoint returned 404.');
+        return;
+      }
       throw latestResult.reason || new Error('Failed to load latest backtest');
     }
 
@@ -341,6 +372,10 @@ async function refreshBacktests(showToastMessage = true) {
   } catch (error) {
     console.error('Failed to refresh backtests', error);
     stopBacktestPolling();
+    if (error && error.status === 404) {
+      disableBacktestPanel('Backtest endpoint returned 404.');
+      return;
+    }
     renderBacktestError(error?.message || 'Unable to load backtest data');
     if (showToastMessage) {
       showToast('Failed to refresh backtests', 'error');
@@ -514,7 +549,11 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   setupControls();
   setupBacktestControls();
-  refreshBacktests(false).catch((error) => {
-    console.error('Failed to load initial backtests', error);
-  });
+  if (backtestFeatureEnabled) {
+    refreshBacktests(false).catch((error) => {
+      console.error('Failed to load initial backtests', error);
+    });
+  } else {
+    disableBacktestPanel('Backtest panel disabled via configuration.');
+  }
 });

@@ -31,6 +31,17 @@ Full CSV: results/sweeps/whitepaper_demo.csv
 - **baseline_macro_f1**: 0.6049382716049383
 - **macro_f1_delta**: 0.3950617283950617
 - **dev_macro_f1**: 1.0
+- **sanity_flags_count**: 0
+- **metrics.total**: 24
+- **metrics.hallucination_rate**: 1.0
+- **metrics.repair_yield**: 0.7916666666666666
+- **metrics.citation_coverage**: 0.4583333333333333
+- **best_thresholds**:
+  - r_min: 1
+  - lambda_max: 0.55
+  - sigma_min: 0.15
+  - structural_threshold: 0.46
+  - semantic_threshold: 0.25
 
 ## Before vs After Examples
 
@@ -49,7 +60,7 @@ Full CSV: results/sweeps/whitepaper_demo.csv
 
 **Baseline:** The documentation states that lambda is covered in detail.
 
-**Filtered:** No supporting evidence.
+**Filtered:** lambda (see doc://whitepaper#lambda)
 
 ---
 ### WHITS047 (SUPPORTED → SUPPORTED)
@@ -58,7 +69,7 @@ Full CSV: results/sweeps/whitepaper_demo.csv
 
 **Baseline:** The documentation states that telemetry is covered in detail.
 
-**Filtered:** No supporting evidence.
+**Filtered:** telemetry (see doc://whitepaper#telemetry)
 
 ---
 ### WHITU033 (UNVERIFIABLE → UNVERIFIABLE)
@@ -76,7 +87,52 @@ Full CSV: results/sweeps/whitepaper_demo.csv
 
 **Baseline:** The documentation states that twin is covered in detail.
 
-**Filtered:** No supporting evidence.
+**Filtered:** twin (see doc://whitepaper#twin)
+
+---
+### WHITR009 (REFUTED → REFUTED)
+
+**Question:** Is it correct that 'filter' is explicitly denied in the pack?
+
+**Baseline:** The documentation explicitly denies filter.
+
+**Filtered:** filter (see doc://whitepaper#filter)
+
+---
+### WHITS030 (SUPPORTED → SUPPORTED)
+
+**Question:** What does the documentation state about 'from'?
+
+**Baseline:** The documentation states that from is covered in detail.
+
+**Filtered:** from (see doc://whitepaper#from)
+
+---
+### WHITS032 (SUPPORTED → SUPPORTED)
+
+**Question:** What does the documentation state about 'logistics'?
+
+**Baseline:** The documentation states that logistics is covered in detail.
+
+**Filtered:** logistics (see doc://whitepaper#logistics)
+
+---
+### WHITR012 (REFUTED → REFUTED)
+
+**Question:** Is it correct that 'instruct' is explicitly denied in the pack?
+
+**Baseline:** The documentation explicitly denies instruct.
+
+**Filtered:** instruct (see doc://whitepaper#instruct)
+
+---
+### WHITR005 (REFUTED → REFUTED)
+
+**Question:** Is it correct that 'before' is explicitly denied in the pack?
+
+**Baseline:** The documentation explicitly denies before.
+
+**Filtered:** before (see doc://whitepaper#before)
 
 ---
 ---

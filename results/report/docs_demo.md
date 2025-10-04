@@ -31,6 +31,17 @@ Full CSV: results/sweeps/docs_demo.csv
 - **baseline_macro_f1**: 0.5701357466063348
 - **macro_f1_delta**: 0.4298642533936652
 - **dev_macro_f1**: 1.0
+- **sanity_flags_count**: 0
+- **metrics.total**: 24
+- **metrics.hallucination_rate**: 1.0
+- **metrics.repair_yield**: 0.7916666666666666
+- **metrics.citation_coverage**: 0.4583333333333333
+- **best_thresholds**:
+  - r_min: 1
+  - lambda_max: 0.55
+  - sigma_min: 0.15
+  - structural_threshold: 0.46
+  - semantic_threshold: 0.25
 
 ## Before vs After Examples
 
@@ -49,7 +60,7 @@ Full CSV: results/sweeps/docs_demo.csv
 
 **Baseline:** The documentation states that not is covered in detail.
 
-**Filtered:** No supporting evidence.
+**Filtered:** not (see doc://docs#not, doc://docs#the)
 
 ---
 ### DOCSS047 (SUPPORTED → SUPPORTED)
@@ -58,7 +69,7 @@ Full CSV: results/sweeps/docs_demo.csv
 
 **Baseline:** The documentation states that models is covered in detail.
 
-**Filtered:** No supporting evidence.
+**Filtered:** models (see doc://docs#models, doc://docs#the)
 
 ---
 ### DOCSU033 (UNVERIFIABLE → UNVERIFIABLE)
@@ -76,7 +87,52 @@ Full CSV: results/sweeps/docs_demo.csv
 
 **Baseline:** The documentation states that alerts_pre_failure is covered in detail.
 
-**Filtered:** No supporting evidence.
+**Filtered:** alerts_pre_failure (see doc://docs#alerts_pre_failure, doc://docs#json)
+
+---
+### DOCSR009 (REFUTED → REFUTED)
+
+**Question:** Is it correct that 'into' is explicitly denied in the pack?
+
+**Baseline:** The documentation explicitly denies into.
+
+**Filtered:** into (see doc://docs#into, doc://docs#the)
+
+---
+### DOCSS030 (SUPPORTED → SUPPORTED)
+
+**Question:** What does the documentation state about 'action'?
+
+**Baseline:** The documentation states that action is covered in detail.
+
+**Filtered:** action (see doc://docs#action, doc://docs#the)
+
+---
+### DOCSS032 (SUPPORTED → SUPPORTED)
+
+**Question:** What does the documentation state about 'feedback'?
+
+**Baseline:** The documentation states that feedback is covered in detail.
+
+**Filtered:** feedback (see doc://docs#feedback, doc://docs#the)
+
+---
+### DOCSR012 (REFUTED → REFUTED)
+
+**Question:** Is it correct that 'blocksworld' is explicitly denied in the pack?
+
+**Baseline:** The documentation explicitly denies blocksworld.
+
+**Filtered:** blocksworld (see doc://docs#blocksworld, doc://docs#the)
+
+---
+### DOCSR005 (REFUTED → REFUTED)
+
+**Question:** Is it correct that 'twins' is explicitly denied in the pack?
+
+**Baseline:** The documentation explicitly denies twins.
+
+**Filtered:** twins (see doc://docs#twins, doc://docs#the)
 
 ---
 ---
