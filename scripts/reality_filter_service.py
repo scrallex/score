@@ -3,10 +3,12 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
-from functools import lru_cache
+import time
+from functools import lru_cache, partial
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence, Tuple
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import ORJSONResponse
@@ -90,8 +92,95 @@ def _load_engine(
     return engine
 
 
+class SeenBatcher:
+    def __init__(self, max_batch: int = 32, max_delay: float = 0.010) -> None:
+        self._max_batch = max_batch
+        self._max_delay = max_delay
+        self._queue: "asyncio.Queue[Tuple[TruthPackEngine, SeenRequest, asyncio.Future]]" = asyncio.Queue()
+        self._worker_task: Optional[asyncio.Task] = None
+
+    async def submit(self, engine: TruthPackEngine, request: SeenRequest) -> "SpanEvaluation":
+        if self._worker_task is None or self._worker_task.done():
+            loop = asyncio.get_running_loop()
+            self._worker_task = loop.create_task(self._run())
+        loop = asyncio.get_running_loop()
+        future: "asyncio.Future" = loop.create_future()
+        await self._queue.put((engine, request, future))
+        return await future
+
+    async def _run(self) -> None:
+        while True:
+            engine, request, future = await self._queue.get()
+            batch: List[Tuple[TruthPackEngine, SeenRequest, asyncio.Future]] = [(engine, request, future)]
+            start = time.perf_counter()
+            while len(batch) < self._max_batch:
+                remaining = self._max_delay - (time.perf_counter() - start)
+                if remaining <= 0:
+                    break
+                try:
+                    item = await asyncio.wait_for(self._queue.get(), timeout=remaining)
+                except asyncio.TimeoutError:
+                    break
+                batch.append(item)
+            await self._process_batch(batch)
+
+    async def _process_batch(
+        self, batch: Sequence[Tuple[TruthPackEngine, SeenRequest, asyncio.Future]]
+    ) -> None:
+        grouped: Dict[
+            Tuple[TruthPackEngine, float, float, int, float, float],
+            List[Tuple[TruthPackEngine, SeenRequest, asyncio.Future]],
+        ] = {}
+        for item in batch:
+            engine, request, future = item
+            key = (
+                engine,
+                request.semantic_threshold,
+                request.structural_threshold,
+                request.r_min,
+                request.hazard_max,
+                request.sigma_min,
+            )
+            grouped.setdefault(key, []).append((engine, request, future))
+
+        loop = asyncio.get_running_loop()
+        for key, items in grouped.items():
+            engine = key[0]
+            spans = [req.text for _, req, _ in items]
+            questions_raw = [req.question for _, req, _ in items]
+            questions: Optional[List[Optional[str]]] = (
+                questions_raw if any(q is not None for q in questions_raw) else None
+            )
+            twins_flags = [False] * len(items)
+
+            evaluate = partial(
+                engine.evaluate_spans,
+                spans,
+                questions=questions,
+                semantic_threshold=key[1],
+                structural_threshold=key[2],
+                r_min=key[3],
+                hazard_max=key[4],
+                sigma_min=key[5],
+                twins_needed=twins_flags,
+            )
+            try:
+                evaluations = await loop.run_in_executor(None, evaluate)
+            except Exception as exc:  # pragma: no cover - propagate evaluation failures
+                for _, _, future in items:
+                    if not future.done():
+                        future.set_exception(exc)
+                continue
+            for evaluation, (_, _request, future) in zip(evaluations, items):
+                if not future.done():
+                    future.set_result(evaluation)
+
+
+_batcher = SeenBatcher()
+
+
 @app.post("/seen", response_model=SeenResponse)
-def seen(request: SeenRequest) -> SeenResponse:
+async def seen(request: SeenRequest) -> SeenResponse:
     manifest = Path(request.pack_manifest)
     if not manifest.exists():
         raise HTTPException(status_code=404, detail=f"Manifest not found: {manifest}")
@@ -108,16 +197,7 @@ def seen(request: SeenRequest) -> SeenResponse:
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
-    eval_result = engine.evaluate_span(
-        request.text,
-        question=request.question,
-        semantic_threshold=request.semantic_threshold,
-        structural_threshold=request.structural_threshold,
-        r_min=request.r_min,
-        hazard_max=request.hazard_max,
-        sigma_min=request.sigma_min,
-        fetch_twins=False,
-    )
+    eval_result = await _batcher.submit(engine, request)
 
     action = "emit" if eval_result.admitted else "decline"
     repair_candidate = eval_result.repair_candidate.string if eval_result.repair_candidate else None

@@ -18,7 +18,8 @@ except ImportError:  # pragma: no cover - optional
     OpenAI = None  # type: ignore
 
 from reality_filter import LLMSpanSource, SimSpanSource, SpanRecord, TruthPackEngine
-from reality_filter.engine import SpanEvaluation
+from reality_filter.engine import SpanEvaluation, TwinResult
+from reality_filter.repair import RepairProposal, propose_repair
 
 LATENCY_BUDGET_MS = 120.0
 
@@ -33,6 +34,7 @@ class TwinRepairer:
         temperature: float = 0.0,
         max_tokens: int = 120,
         api_key: Optional[str] = None,
+        max_attempts: int = 2,
     ) -> None:
         key = api_key
         if key is None:
@@ -49,16 +51,40 @@ class TwinRepairer:
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
+        self.max_attempts = max_attempts
         self._system_prompt = (
             "You help rewrite answers so they match trusted precedent. Use the provided twin snippets verbatim when possible."
         )
 
-    def propose(self, question: Optional[str], span: str, twins: Sequence[str]) -> Optional[str]:
-        if not twins:
-            return None
-        # Offline fallback: return top twin string directly.
+    def propose(
+        self,
+        question: Optional[str],
+        span: str,
+        twins: Sequence[TwinResult],
+        *,
+        original_margin: float,
+        sigma_min: float,
+    ) -> Optional[RepairProposal]:
+        proposals = propose_repair(
+            span,
+            twins,
+            original_margin=original_margin,
+            sigma_min=sigma_min,
+            max_attempts=self.max_attempts,
+        )
+        if proposals:
+            return proposals
         if self.client is None:  # pragma: no cover - deterministic path
-            return twins[0]
+            if twins:
+                first = twins[0]
+                return RepairProposal(
+                    text=first.string,
+                    source=first.source,
+                    margin=original_margin,
+                    edit_distance=0.0,
+                    margin_gain=0.0,
+                )
+            return None
         prompt_lines = []
         if question:
             prompt_lines.append("Question:")
@@ -71,7 +97,7 @@ class TwinRepairer:
             ]
         )
         for idx, twin in enumerate(twins[:3], start=1):
-            prompt_lines.append(f"{idx}. {twin}")
+            prompt_lines.append(f"{idx}. {twin.string}")
         prompt_lines.append(
             "Rewrite a single-sentence answer using only the trusted snippets above."
         )
@@ -87,8 +113,16 @@ class TwinRepairer:
                 {"role": "user", "content": "\n".join(prompt_lines)},
             ],
         )
-        content = response.choices[0].message.content or ""
-        return content.strip() or None
+        content = (response.choices[0].message.content or "").strip()
+        if not content:
+            return None
+        return RepairProposal(
+            text=content,
+            source=None,
+            margin=original_margin,
+            edit_distance=0.0,
+            margin_gain=0.0,
+        )
 
 
 def build_span_source(source: str, spans_path: Path, llm_kwargs: Dict[str, object]) -> Iterable[SpanRecord]:
@@ -230,12 +264,16 @@ def main() -> None:
             repaired_span: Optional[str] = None
             repair_eval: Optional[SpanEvaluation] = None
 
-            if not evaluation.admitted and repairer and evaluation.repair_candidate:
-                twin_strings = [twin.string for twin in evaluation.twins]
-                proposal = repairer.propose(question, span, twin_strings)
-                if proposal and proposal.strip() and proposal.strip() != span.strip():
-                    repaired_span = proposal.strip()
-                    vector = engine.embedder.encode([repaired_span])[0]
+            if not evaluation.admitted and repairer and evaluation.twins:
+                proposal = repairer.propose(
+                    question,
+                    span,
+                    evaluation.twins,
+                    original_margin=evaluation.semantic_similarity,
+                    sigma_min=args.sigma_min,
+                )
+                if proposal and proposal.text.strip() and proposal.text.strip() != span.strip():
+                    repaired_span = proposal.text.strip()
                     repair_eval = engine.evaluate_span(
                         repaired_span,
                         question=question,
@@ -244,7 +282,6 @@ def main() -> None:
                         r_min=args.r_min,
                         hazard_max=args.hazard_max,
                         sigma_min=args.sigma_min,
-                        vector=vector,
                         fetch_twins=True,
                     )
                     if repair_eval.admitted:
@@ -256,6 +293,11 @@ def main() -> None:
                                 "original": span,
                                 "repair": repaired_span,
                                 "twins": evaluation.twins,
+                                "repair_meta": {
+                                    "source": proposal.source,
+                                    "margin_gain": proposal.margin_gain,
+                                    "edit_distance": proposal.edit_distance,
+                                },
                             }
                         )
 

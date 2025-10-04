@@ -26,6 +26,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
+HASH_DIM = 8192
+
+DEFAULT_NOVELTY_SEEDS = ["rumor", "speculation", "guess", "uncertain", "unknown"]
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.append(str(REPO_ROOT))
@@ -49,6 +53,19 @@ def _normalise_span(span: str) -> str:
     return " ".join(span.lower().strip().split())
 
 
+def _hash_vector(text: str, dim: int = HASH_DIM) -> np.ndarray:
+    vec = np.zeros(dim, dtype=np.float32)
+    tokens = _normalise_span(text).split()
+    for token in tokens:
+        h_bytes = hashlib.blake2b(token.encode("utf-8"), digest_size=8).digest()
+        idx = int.from_bytes(h_bytes, "little") % dim
+        vec[idx] += 1.0
+    norm = np.linalg.norm(vec)
+    if norm > 0:
+        vec /= norm
+    return vec
+
+
 @dataclass
 class PackManifest:
     name: str
@@ -69,6 +86,8 @@ class PackManifest:
     norm_metrics_path: Optional[str]
     signature_table: Optional[str]
     signature_bloom: Optional[str]
+    seed_centroids: Optional[str]
+    hash_dim: int
     min_occurrences: int
     window_bytes: int
     stride: int
@@ -230,6 +249,9 @@ def build_signature_table(
     coh_list: List[float] = []
     stab_list: List[float] = []
     pattern_list: List[float] = []
+    entropy_list: List[float] = []
+    rupture_list: List[float] = []
+    wid_list: List[int] = []
 
     for string, payload in strings.items():
         occ = int(payload.get("occurrences", 0))
@@ -238,13 +260,25 @@ def build_signature_table(
         norm = _normalise_span(string)
         sig = hashlib.blake2b(norm.encode("utf-8"), digest_size=16).digest()
         metrics = payload.get("metrics", {})
-        hazard_values = []
+        hazard_values: List[float] = []
+        entropy = float(metrics.get("entropy", 1.0))
+        rupture = float(metrics.get("rupture", 0.0))
+        primary_wid = 0
         for wid in payload.get("window_ids", []):
-            sig_info = signal_by_id.get(int(wid))
-            if sig_info:
-                metrics_sig = sig_info.get("metrics", {})
-                hazard = sig_info.get("lambda_hazard", metrics_sig.get("lambda_hazard", metrics_sig.get("rupture", 1.0)))
-                hazard_values.append(float(hazard))
+            wid_int = int(wid)
+            sig_info = signal_by_id.get(wid_int)
+            if not sig_info:
+                continue
+            metrics_sig = sig_info.get("metrics", {})
+            hazard = sig_info.get(
+                "lambda_hazard",
+                metrics_sig.get("lambda_hazard", metrics_sig.get("rupture", 1.0)),
+            )
+            hazard_values.append(float(hazard))
+            if primary_wid == 0:
+                primary_wid = wid_int
+                entropy = float(metrics_sig.get("entropy", entropy))
+                rupture = float(metrics_sig.get("rupture", rupture))
         lam = float(np.mean(hazard_values)) if hazard_values else float(metrics.get("lambda", metrics.get("rupture", 1.0)))
         coherence = float(metrics.get("coherence", 0.0))
         stability = float(metrics.get("stability", 0.0))
@@ -256,7 +290,11 @@ def build_signature_table(
             "coherence": coherence,
             "stability": stability,
             "patternability": patternability,
+            "entropy": entropy,
+            "rupture": rupture,
+            "window_id": primary_wid,
         }
+
         bloom.add(sig)
         sig_list.append(sig)
         reps_list.append(occ)
@@ -264,6 +302,9 @@ def build_signature_table(
         coh_list.append(coherence)
         stab_list.append(stability)
         pattern_list.append(patternability)
+        entropy_list.append(entropy)
+        rupture_list.append(rupture)
+        wid_list.append(primary_wid)
 
     table = pa.Table.from_arrays(
         [
@@ -273,8 +314,21 @@ def build_signature_table(
             pa.array(coh_list, type=pa.float32()),
             pa.array(stab_list, type=pa.float32()),
             pa.array(pattern_list, type=pa.float32()),
+            pa.array(entropy_list, type=pa.float32()),
+            pa.array(rupture_list, type=pa.float32()),
+            pa.array(wid_list, type=pa.uint32()),
         ],
-        names=["sig", "repetitions", "lambda", "coherence", "stability", "patternability"],
+        names=[
+            "sig",
+            "repetitions",
+            "lambda",
+            "coherence",
+            "stability",
+            "patternability",
+            "entropy",
+            "rupture",
+            "window_id",
+        ],
     )
     return sig_dict, bloom, table
 
@@ -317,6 +371,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--drop-numeric", action="store_true", help="Drop purely numeric tokens during ingest")
     parser.add_argument("--min-occurrences", type=int, default=1, help="Minimum occurrences to retain strings during ingest")
     parser.add_argument("--seeds", nargs="+", help="Semantic seeds for bridge analysis")
+    parser.add_argument("--novelty-seeds", nargs="*", help="Seeds representing novelty/unsupported language")
     parser.add_argument("--embedding-method", choices=["auto", "transformer", "hash"], default="transformer")
     parser.add_argument("--model", default="all-MiniLM-L6-v2")
     parser.add_argument("--hash-dims", type=int, default=256)
@@ -364,6 +419,7 @@ def main() -> None:
     )
 
     seeds = args.seeds or []
+    novelty_seeds = args.novelty_seeds or DEFAULT_NOVELTY_SEEDS
     signals = state.get("signals", [])  # type: ignore[assignment]
     embedder = SemanticEmbedder(EmbeddingConfig(method="hash", model_name=args.model, dims=args.hash_dims))
     norm_metrics = build_norm_metrics(
@@ -386,6 +442,27 @@ def main() -> None:
     bloom_path = output_root / "signatures.bloom"
     with bloom_path.open("wb") as fh:
         pickle.dump(bloom, fh)
+
+    seed_centroids_path: Optional[Path] = None
+    if np is not None:
+        def _centroid(vectors: List[np.ndarray]) -> np.ndarray:
+            if not vectors:
+                return np.zeros(HASH_DIM, dtype=np.float32)
+            stack = np.vstack(vectors)
+            centroid_vec = stack.mean(axis=0)
+            norm = np.linalg.norm(centroid_vec)
+            if norm > 0.0:
+                centroid_vec = centroid_vec / norm
+            return centroid_vec.astype(np.float32)
+
+        factual_vectors = [_hash_vector(seed, dim=HASH_DIM) for seed in seeds]
+        novelty_vectors = [_hash_vector(seed, dim=HASH_DIM) for seed in novelty_seeds]
+        factual_centroid = _centroid(factual_vectors)
+        novelty_centroid = _centroid(novelty_vectors)
+        seed_centroids_path = output_root / "seed_centroids.npz"
+        seed_centroids_path.parent.mkdir(parents=True, exist_ok=True)
+        np.savez(seed_centroids_path, factual=factual_centroid, novelty=novelty_centroid)
+
 
     semantic_report_path: Optional[Path] = None
     scatter_path: Optional[Path] = None
@@ -410,7 +487,7 @@ def main() -> None:
     source_globs = [f"**/*.{ext}" for ext in (args.extensions or [])] or ["**/*"]
     seed_families = {
         "factual": list(seeds),
-        "novelty": [],
+        "novelty": list(novelty_seeds),
     }
     manifest = PackManifest(
         name=pack_name,
@@ -431,6 +508,8 @@ def main() -> None:
         norm_metrics_path=str(norm_metrics_path),
         signature_table=str(signature_table_path),
         signature_bloom=str(bloom_path),
+        seed_centroids=str(seed_centroids_path) if seed_centroids_path else None,
+        hash_dim=HASH_DIM,
         min_occurrences=args.min_occurrences,
         window_bytes=args.window_bytes,
         stride=args.stride,
