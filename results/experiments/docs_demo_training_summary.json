@@ -1,0 +1,15 @@
+{
+  "dataset": "docs_demo",
+  "epochs": 5,
+  "train_loss": 0.0968117848969996,
+  "train_admit_loss": 0.09511104039847851,
+  "train_margin_loss": 0.017007480841130018,
+  "train_attention_reg": 0.0,
+  "val_loss": 0.2236868143081665,
+  "val_admit_loss": 0.22353218495845795,
+  "val_margin_loss": 0.0015462740557268262,
+  "val_attention_reg": 0.0,
+  "val_precision": 0.0,
+  "val_recall": 0.0,
+  "val_brier": 0.04875434237755383
+}

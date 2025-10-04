@@ -49,3 +49,11 @@ The goal of this whitepaper is to merge our O-space reliability gating work with
 - How do we ensure reproducibility and versioning for attention maps so audits can trace decisions post-hoc?
 
 This outline sets the structure for the whitepaper and the accompanying implementation work. Next steps: build the `attn_ospace` module, stand up the training harness, and begin running E1/E2 experiments to validate the Transformer-backed admit pipeline.
+
+## Experiment log (2025-10-04)
+- **Whitepaper demo (training, 5 epochs, CPU):** final train loss 0.051, val loss 0.035, val Brier 0.0011; checkpoint stored at `models/reliability_whitepaper_demo.pt` with summary `results/experiments/whitepaper_demo_training_summary.json`.
+- **Docs demo (training, 5 epochs, CPU):** final train loss 0.097, val loss 0.224, val Brier 0.0488; checkpoint stored at `models/reliability_docs_demo.pt` with summary `results/experiments/docs_demo_training_summary.json`.
+- **Evaluation baselines vs. reliability:**
+  * `results/experiments/whitepaper_demo_baseline` vs `whitepaper_demo_reliability` — reliability model currently leaves macro-F1 (0.115) and hallucination rate (1.0) unchanged, indicating token-support paths are not yet firing on this small pack.
+  * `results/experiments/docs_demo_baseline` vs `docs_demo_reliability` — same outcome; reliability gating has no effect pending richer evidence hooks.
+- **CI update:** `.github/workflows/attn-tests.yml` now trains a 1-epoch demo model and runs the evaluator against it, in addition to the reliability unit tests.

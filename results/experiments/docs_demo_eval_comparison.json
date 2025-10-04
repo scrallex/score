@@ -1,0 +1,15 @@
+{
+  "dataset": "docs_demo",
+  "baseline": {
+    "macro_f1": 0.1149425287356322,
+    "hallucination_rate": 1.0,
+    "repair_yield": 0.0,
+    "citation_coverage": 0.0
+  },
+  "reliability": {
+    "macro_f1": 0.1149425287356322,
+    "hallucination_rate": 1.0,
+    "repair_yield": 0.0,
+    "citation_coverage": 0.0
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "r_min": 1,
+  "lambda_max": 0.12,
+  "sigma_min": 0.15,
+  "structural_threshold": 0.46,
+  "semantic_threshold": 0.25,
+  "dev_macro_f1": 0.2062350119904077
+}

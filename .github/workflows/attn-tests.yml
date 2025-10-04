@@ -19,6 +19,20 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .[attn,test]
+      - name: Train demo reliability checkpoint (1 epoch)
+        run: |
+          PYTHONPATH=src python scripts/train_reliability_attn.py \
+            results/eval/whitepaper_demo/eval_detail.jsonl \
+            --epochs 1 --batch-size 8 --device cpu \
+            --output-checkpoint /tmp/reliability_ci.pt
+      - name: Smoke test evaluator with reliability model
+        run: |
+          PYTHONPATH=src python scripts/reality_filter_eval.py \
+            --manifest analysis/truth_packs/whitepaper_demo/manifest.json \
+            --claims data/eval/whitepaper_demo/claims.jsonl \
+            --output-dir /tmp --pack-id ci_whitepaper_reliability \
+            --reliability-model /tmp/reliability_ci.pt \
+            --reliability-device cpu
       - name: Run transformer reliability tests
         run: |
           pytest tests/test_reality_filter_eval_reliability.py -q

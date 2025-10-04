@@ -1,0 +1,15 @@
+{
+  "dataset": "whitepaper_demo",
+  "epochs": 5,
+  "train_loss": 0.05148467607796192,
+  "train_admit_loss": 0.047646284103393555,
+  "train_margin_loss": 0.038383930921554565,
+  "train_attention_reg": 0.0,
+  "val_loss": 0.03472304716706276,
+  "val_admit_loss": 0.03434976935386658,
+  "val_margin_loss": 0.0037327753379940987,
+  "val_attention_reg": 0.0,
+  "val_precision": 0.0,
+  "val_recall": 0.0,
+  "val_brier": 0.0011481558721211371
+}
