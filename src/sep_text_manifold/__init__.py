@@ -29,6 +29,12 @@ from .comparison import stm_val_alignment, detection_lead_time, AlignmentResult,
 from .feedback import suggest_twin_action, TwinSuggestion
 from .semantic import SemanticEmbedder, EmbeddingConfig, seed_similarity
 
+try:  # Optional transformer-based reliability model
+    from .attn_ospace import OspaceTransformer, OspaceTransformerConfig
+except ImportError:  # pragma: no cover - torch may be unavailable
+    OspaceTransformer = None  # type: ignore[assignment]
+    OspaceTransformerConfig = None  # type: ignore[assignment]
+
 __all__ = [
     "ingest_directory",
     "encode_window",
@@ -56,4 +62,6 @@ __all__ = [
     "TwinSuggestion",
     "calibrate_threshold",
     "summarise_guardrail",
+    "OspaceTransformer",
+    "OspaceTransformerConfig",
 ]
