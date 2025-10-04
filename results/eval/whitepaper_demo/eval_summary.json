@@ -32,22 +32,43 @@
       "UNVERIFIABLE": 0
     }
   },
+  "baseline_confusion": {
+    "SUPPORTED": {
+      "SUPPORTED": 48,
+      "REFUTED": 0,
+      "UNVERIFIABLE": 0
+    },
+    "REFUTED": {
+      "SUPPORTED": 0,
+      "REFUTED": 24,
+      "UNVERIFIABLE": 0
+    },
+    "UNVERIFIABLE": {
+      "SUPPORTED": 48,
+      "REFUTED": 0,
+      "UNVERIFIABLE": 0
+    }
+  },
   "per_class": {
     "SUPPORTED": {
       "precision": 0.5,
       "recall": 1.0,
-      "f1": 0.6666666666666666
+      "f1": 0.6666666666666666,
+      "baseline_f1": 0.6666666666666666
     },
     "REFUTED": {
       "precision": 1.0,
       "recall": 1.0,
-      "f1": 1.0
+      "f1": 1.0,
+      "baseline_f1": 1.0
     },
     "UNVERIFIABLE": {
       "precision": 0.0,
       "recall": 0.0,
-      "f1": 0.0
+      "f1": 0.0,
+      "baseline_f1": 0.0
     }
   },
-  "macro_f1": 0.5555555555555555
+  "macro_f1": 0.5555555555555555,
+  "baseline_macro_f1": 0.5555555555555555
 }

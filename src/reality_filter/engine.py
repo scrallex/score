@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import pickle
 import hashlib
 import re
 from dataclasses import dataclass
@@ -9,6 +10,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
 import numpy as np
+import pyarrow.parquet as pq
+from bloom_filter2 import BloomFilter
 
 from sep_text_manifold.semantic import EmbeddingConfig, SemanticEmbedder
 
@@ -132,6 +135,42 @@ class TruthPackEngine:
                     vec = np.array(payload.get("vector", []), dtype=np.float32)
                     payload["vector"] = vec
                     self.norm_metrics[key] = payload
+
+        self.sig_metrics: Dict[bytes, Dict[str, float]] = {}
+        signature_table_path = manifest.get("signature_table")
+        bloom_path = manifest.get("signature_bloom")
+        if signature_table_path:
+            table_path = Path(signature_table_path)
+            if not table_path.is_absolute():
+                table_path = state_path.parent / table_path
+            if table_path.exists():
+                table = pq.read_table(table_path, memory_map=True)
+                sig_col = table.column("sig")
+                reps_col = table.column("repetitions")
+                lam_col = table.column("lambda")
+                coh_col = table.column("coherence")
+                stab_col = table.column("stability")
+                pattern_col = table.column("patternability")
+                for i in range(table.num_rows):
+                    sig = sig_col[i].as_buffer().to_pybytes()
+                    self.sig_metrics[sig] = {
+                        "repetitions": reps_col[i].as_py(),
+                        "lambda": lam_col[i].as_py(),
+                        "coherence": coh_col[i].as_py(),
+                        "stability": stab_col[i].as_py(),
+                        "patternability": pattern_col[i].as_py(),
+                    }
+        if bloom_path:
+            path = Path(bloom_path)
+            if not path.is_absolute():
+                path = state_path.parent / path
+            if path.exists():
+                with path.open("rb") as fh:
+                    self.signature_bloom = pickle.load(fh)
+            else:
+                self.signature_bloom = None
+        else:
+            self.signature_bloom = None
 
         self.seeds = list(seeds)
         self.embedder = SemanticEmbedder(
@@ -408,6 +447,37 @@ class TruthPackEngine:
         vector: Optional[np.ndarray] = None,
         fetch_twins: bool = False,
     ) -> SpanEvaluation:
+        norm = _normalise_span(span)
+        sig = hashlib.blake2b(norm.encode("utf-8"), digest_size=16).digest()
+        sig_data = self.sig_metrics.get(sig)
+        if vector is None and sig_data is not None:
+            # try to reuse cached vector from norm metrics
+            cached = self.norm_metrics.get(norm)
+            if cached:
+                vector = cached["vector"] if isinstance(cached["vector"], np.ndarray) else np.array(cached["vector"], dtype=np.float32)
+
+        if self.signature_bloom and sig not in self.signature_bloom and sig_data is None:
+            return SpanEvaluation(
+                span=span,
+                question=question,
+                occurrences=0,
+                patternability=0.0,
+                semantic_similarity=0.0,
+                coherence=0.0,
+                stability=0.0,
+                entropy=1.0,
+                rupture=0.0,
+                hazard=1.0,
+                signature=sig,
+                repeat_ok=False,
+                hazard_ok=False,
+                semantic_ok=False,
+                structural_ok=False,
+                admitted=False,
+                twins=[],
+                repair_candidate=None,
+            )
+
         metrics = self._span_metrics(span)
         if vector is None:
             vector = metrics.vector
@@ -420,6 +490,14 @@ class TruthPackEngine:
         entropy = metrics.entropy
         rupture = metrics.rupture
         signature = metrics.signature
+
+        if sig_data is not None:
+            occurrences = sig_data.get("repetitions", occurrences)
+            hazard = sig_data.get("lambda", hazard)
+            coherence = sig_data.get("coherence", coherence)
+            stability = sig_data.get("stability", stability)
+            pattern = sig_data.get("patternability", pattern)
+            signature = signature or sig
 
         twins: List[TwinResult]
         if fetch_twins:

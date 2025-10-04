@@ -213,6 +213,12 @@ def run_eval(
     metrics_extra = {}
     macro_f1 = 0.0
     f1_sum = 0.0
+    baseline_confusion = {cls: {c: 0 for c in classes} for cls in classes}
+    for record in detail_records:
+        expected = record["expected"]
+        baseline_pred = predicted_label(record["raw_answer"], record.get("token"))
+        baseline_confusion[expected][baseline_pred] += 1
+
     for cls in classes:
         tp = confusion[cls][cls]
         fp = sum(confusion[other][cls] for other in classes if other != cls)
@@ -220,9 +226,26 @@ def run_eval(
         precision = tp / (tp + fp) if (tp + fp) else 0.0
         recall = tp / (tp + fn) if (tp + fn) else 0.0
         f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) else 0.0
-        metrics_extra[cls] = {"precision": precision, "recall": recall, "f1": f1}
+        metrics_extra[cls] = {
+            "precision": precision,
+            "recall": recall,
+            "f1": f1,
+        }
         f1_sum += f1
     macro_f1 = f1_sum / len(classes) if classes else 0.0
+
+    baseline_macro_f1 = 0.0
+    f1_sum = 0.0
+    for cls in classes:
+        tp = baseline_confusion[cls][cls]
+        fp = sum(baseline_confusion[other][cls] for other in classes if other != cls)
+        fn = sum(baseline_confusion[cls][other] for other in classes if other != cls)
+        precision = tp / (tp + fp) if (tp + fp) else 0.0
+        recall = tp / (tp + fn) if (tp + fn) else 0.0
+        f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) else 0.0
+        metrics_extra[cls]["baseline_f1"] = f1
+        f1_sum += f1
+    baseline_macro_f1 = f1_sum / len(classes) if classes else 0.0
 
     summary = {
         "total": len(claims),
@@ -238,8 +261,10 @@ def run_eval(
         "latency_ms_p50": float(np.percentile(latency_samples, 50)) if latency_samples else 0.0,
         "latency_ms_p90": float(np.percentile(latency_samples, 90)) if latency_samples else 0.0,
         "confusion_matrix": confusion,
+        "baseline_confusion": baseline_confusion,
         "per_class": metrics_extra,
         "macro_f1": macro_f1,
+        "baseline_macro_f1": baseline_macro_f1,
     }
     summary_path.parent.mkdir(parents=True, exist_ok=True)
     summary_path.write_text(json.dumps(summary, indent=2))

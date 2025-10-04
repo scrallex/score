@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import pickle
 import sys
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
@@ -34,6 +35,9 @@ from sep_text_manifold.cli import analyse_directory, build_indices
 from scripts.semantic_bridge_demo import run_demo
 from scripts.semantic_bridge_plot import build_dataframe, plot_bridge
 from sep_text_manifold.semantic import EmbeddingConfig, SemanticEmbedder
+import pyarrow as pa
+import pyarrow.parquet as pq
+from bloom_filter2 import BloomFilter
 
 try:  # optional dependency
     import numpy as np
@@ -63,6 +67,8 @@ class PackManifest:
     source_globs: List[str]
     content_hash: str
     norm_metrics_path: Optional[str]
+    signature_table: Optional[str]
+    signature_bloom: Optional[str]
     min_occurrences: int
     window_bytes: int
     stride: int
@@ -200,6 +206,79 @@ def build_norm_metrics(
     return norm_metrics
 
 
+def build_signature_table(
+    state: Dict[str, object],
+    signals: List[Dict[str, object]],
+    *,
+    min_occurrences: int,
+) -> Tuple[Dict[bytes, Dict[str, float]], BloomFilter, pa.Table]:
+    signal_by_id: Dict[int, Dict[str, object]] = {}
+    for sig in signals:
+        sig_id = sig.get("id")
+        if sig_id is None:
+            continue
+        sig_id = int(sig_id)
+        signal_by_id[sig_id] = sig
+
+    sig_dict: Dict[bytes, Dict[str, float]] = {}
+    bloom = BloomFilter(max_elements=2000000, error_rate=0.001)
+
+    strings: Dict[str, Dict[str, object]] = state.get("string_scores", {})  # type: ignore[assignment]
+    sig_list: List[bytes] = []
+    reps_list: List[int] = []
+    lam_list: List[float] = []
+    coh_list: List[float] = []
+    stab_list: List[float] = []
+    pattern_list: List[float] = []
+
+    for string, payload in strings.items():
+        occ = int(payload.get("occurrences", 0))
+        if occ < min_occurrences:
+            continue
+        norm = _normalise_span(string)
+        sig = hashlib.blake2b(norm.encode("utf-8"), digest_size=16).digest()
+        metrics = payload.get("metrics", {})
+        hazard_values = []
+        for wid in payload.get("window_ids", []):
+            sig_info = signal_by_id.get(int(wid))
+            if sig_info:
+                metrics_sig = sig_info.get("metrics", {})
+                hazard = sig_info.get("lambda_hazard", metrics_sig.get("lambda_hazard", metrics_sig.get("rupture", 1.0)))
+                hazard_values.append(float(hazard))
+        lam = float(np.mean(hazard_values)) if hazard_values else float(metrics.get("lambda", metrics.get("rupture", 1.0)))
+        coherence = float(metrics.get("coherence", 0.0))
+        stability = float(metrics.get("stability", 0.0))
+        patternability = float(payload.get("patternability", coherence))
+
+        sig_dict[sig] = {
+            "repetitions": occ,
+            "lambda": lam,
+            "coherence": coherence,
+            "stability": stability,
+            "patternability": patternability,
+        }
+        bloom.add(sig)
+        sig_list.append(sig)
+        reps_list.append(occ)
+        lam_list.append(lam)
+        coh_list.append(coherence)
+        stab_list.append(stability)
+        pattern_list.append(patternability)
+
+    table = pa.Table.from_arrays(
+        [
+            pa.array(sig_list, type=pa.binary(16)),
+            pa.array(reps_list, type=pa.uint32()),
+            pa.array(lam_list, type=pa.float32()),
+            pa.array(coh_list, type=pa.float32()),
+            pa.array(stab_list, type=pa.float32()),
+            pa.array(pattern_list, type=pa.float32()),
+        ],
+        names=["sig", "repetitions", "lambda", "coherence", "stability", "patternability"],
+    )
+    return sig_dict, bloom, table
+
+
 def build_semantic_outputs(
     state_path: Path,
     *,
@@ -297,6 +376,17 @@ def main() -> None:
     norm_metrics_path = output_root / "norm_metrics.json"
     write_json(norm_metrics_path, norm_metrics)
 
+    sig_dict, bloom, sig_table = build_signature_table(
+        state,
+        list(signals) if isinstance(signals, list) else [],
+        min_occurrences=args.min_occurrences,
+    )
+    signature_table_path = output_root / "signature_table.parquet"
+    pq.write_table(sig_table, signature_table_path, compression="zstd")
+    bloom_path = output_root / "signatures.bloom"
+    with bloom_path.open("wb") as fh:
+        pickle.dump(bloom, fh)
+
     semantic_report_path: Optional[Path] = None
     scatter_path: Optional[Path] = None
     if seeds:
@@ -339,6 +429,8 @@ def main() -> None:
         source_globs=source_globs,
         content_hash=content_hash,
         norm_metrics_path=str(norm_metrics_path),
+        signature_table=str(signature_table_path),
+        signature_bloom=str(bloom_path),
         min_occurrences=args.min_occurrences,
         window_bytes=args.window_bytes,
         stride=args.stride,

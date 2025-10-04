@@ -34,6 +34,7 @@ Full CSV: results/sweeps/whitepaper_demo.csv
 - **latency_ms_p50**: 85.0
 - **latency_ms_p90**: 85.0
 - **macro_f1**: 0.5555555555555555
+- **baseline_macro_f1**: 0.5555555555555555
 
 ## Before vs After Examples
 
