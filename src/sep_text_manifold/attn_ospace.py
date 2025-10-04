@@ -46,6 +46,12 @@ class OspaceTransformerConfig:
     use_phase_channel: bool = True
     phase_scale: float = 1.0
     cross_attention_heads: Optional[int] = None
+    use_cross_attention: bool = True
+    max_evidence_len: int = 256
+    evidence_encoder_layers: int = 1
+    evidence_encoder_heads: int = 4
+    evidence_feature_dim: int = 0
+    evidence_dropout: float = 0.1
 
 
 @dataclass
@@ -85,6 +91,96 @@ def _build_position_encoding(length: int, dim: int, device: "torch.device") -> "
 
 if torch is not None:
 
+    class EvidenceEncoder(nn.Module):
+        """Encode evidence sentences into memory vectors with optional feature fusion."""
+
+        def __init__(self, config: OspaceTransformerConfig) -> None:
+            super().__init__()
+            self.config = config
+            self.dropout = nn.Dropout(config.evidence_dropout)
+            self.layer_norm = nn.LayerNorm(config.d_model)
+
+            if config.evidence_encoder_layers > 0:
+                encoder_layer = nn.TransformerEncoderLayer(
+                    d_model=config.d_model,
+                    nhead=config.evidence_encoder_heads,
+                    dim_feedforward=config.ffn_hidden_dim,
+                    dropout=config.dropout,
+                    batch_first=True,
+                    activation="gelu",
+                )
+                self.encoder = nn.TransformerEncoder(
+                    encoder_layer,
+                    num_layers=config.evidence_encoder_layers,
+                )
+            else:
+                self.encoder = None
+
+            if config.evidence_feature_dim > 0:
+                self.feature_proj = nn.Linear(config.evidence_feature_dim, config.d_model)
+            else:
+                self.feature_proj = None
+
+            pe = _build_position_encoding(
+                config.max_evidence_len,
+                config.d_model,
+                device=torch.device("cpu"),
+            )
+            self.register_buffer("positional_encoding", pe, persistent=False)
+
+        def forward(
+            self,
+            embeddings: "torch.Tensor",
+            *,
+            token_mask: Optional["torch.Tensor"] = None,
+            features: Optional["torch.Tensor"] = None,
+        ) -> "torch.Tensor":
+            """Encode evidence tokens and fuse structural features."""
+
+            batch, evidences, seq_len, dim = embeddings.shape
+            if evidences == 0:
+                return embeddings.new_zeros(batch, 0, dim)
+            if features is not None and features.shape[:2] != (batch, evidences):
+                raise ValueError(
+                    "evidence_features must align with embeddings on batch and evidence dimensions"
+                )
+            if seq_len > self.config.max_evidence_len:
+                embeddings = embeddings[:, :, : self.config.max_evidence_len, :]
+                if token_mask is not None:
+                    token_mask = token_mask[:, :, : self.config.max_evidence_len]
+                seq_len = self.config.max_evidence_len
+
+            pos = self.positional_encoding[:seq_len].to(embeddings.device)
+            enriched = embeddings + pos
+            enriched = self.dropout(enriched)
+
+            flat = enriched.view(batch * evidences, seq_len, dim)
+            if token_mask is not None:
+                flat_mask = token_mask.view(batch * evidences, seq_len)
+                src_key_padding_mask = flat_mask == 0
+            else:
+                flat_mask = None
+                src_key_padding_mask = None
+
+            if self.encoder is not None:
+                encoded = self.encoder(flat, src_key_padding_mask=src_key_padding_mask)
+            else:
+                encoded = flat
+
+            if flat_mask is not None:
+                mask = flat_mask.float().unsqueeze(-1)
+                denom = mask.sum(dim=1).clamp_min(1.0)
+                pooled = (encoded * mask).sum(dim=1) / denom
+            else:
+                pooled = encoded.mean(dim=1)
+
+            if features is not None and self.feature_proj is not None:
+                feature_proj = self.feature_proj(features.view(batch * evidences, -1))
+                pooled = pooled + feature_proj
+
+            pooled = self.layer_norm(pooled)
+            return pooled.view(batch, evidences, dim)
+
     class ReliabilityHead(nn.Module):
         """Small MLP projecting the pooled representation to admit logits + margin."""
 
@@ -116,7 +212,11 @@ if torch is not None:
         def __init__(self, config: OspaceTransformerConfig) -> None:
             super().__init__()
             self.config = config
-            self.token_embed = nn.Embedding(config.vocab_size, config.d_model)
+            self.token_embed = nn.Embedding(
+                config.vocab_size,
+                config.d_model,
+                padding_idx=0,
+            )
             self.dropout = nn.Dropout(config.dropout)
 
             encoder_layer = nn.TransformerEncoderLayer(
@@ -129,13 +229,18 @@ if torch is not None:
             )
             self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=config.num_layers)
 
-            cross_heads = config.cross_attention_heads or config.num_heads
-            self.cross_attention = nn.MultiheadAttention(
-                config.d_model,
-                cross_heads,
-                dropout=config.dropout,
-                batch_first=True,
-            )
+            if config.use_cross_attention:
+                cross_heads = config.cross_attention_heads or config.num_heads
+                self.cross_attention = nn.MultiheadAttention(
+                    config.d_model,
+                    cross_heads,
+                    dropout=config.dropout,
+                    batch_first=True,
+                )
+            else:
+                self.cross_attention = None
+
+            self.evidence_encoder = EvidenceEncoder(config)
 
             self.reliability_head = ReliabilityHead(config.d_model * 2, config.dropout)
 
@@ -172,6 +277,9 @@ if torch is not None:
             phase_features: Optional["torch.Tensor"] = None,
             evidence_memory: Optional["torch.Tensor"] = None,
             evidence_mask: Optional["torch.Tensor"] = None,
+            evidence_tokens: Optional["torch.Tensor"] = None,
+            evidence_token_mask: Optional["torch.Tensor"] = None,
+            evidence_features: Optional["torch.Tensor"] = None,
         ) -> OspaceTransformerOutput:
             """Run the Transformer and return admit logits + support margin.
 
@@ -200,7 +308,22 @@ if torch is not None:
             pooled = hidden[:, -1, :]
 
             cross_attn_weights = None
-            if evidence_memory is not None:
+
+            if evidence_tokens is not None:
+                if evidence_token_mask is None:
+                    evidence_token_mask = (evidence_tokens != 0).long()
+                if evidence_features is not None and evidence_features.dim() != 3:
+                    raise ValueError("evidence_features must be shaped (batch, items, features)")
+                embeddings = self.token_embed(evidence_tokens)
+                evidence_memory = self.evidence_encoder(
+                    embeddings,
+                    token_mask=evidence_token_mask,
+                    features=evidence_features,
+                )
+                evidence_mask = evidence_token_mask.sum(dim=-1) > 0
+                evidence_mask = evidence_mask.long()
+
+            if self.cross_attention is not None and evidence_memory is not None:
                 query = pooled.unsqueeze(1)
                 key = value = evidence_memory
                 if evidence_mask is not None:

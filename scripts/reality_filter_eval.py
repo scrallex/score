@@ -9,7 +9,7 @@ import random
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 try:  # Optional transformer reliability model
     import torch
@@ -41,6 +41,15 @@ TOKEN_SUPPORT_MIN_MARGIN = 0.05
 
 TOKEN_PATTERN = re.compile(r"'([^']+)'")
 CLASSES = ["SUPPORTED", "REFUTED", "UNVERIFIABLE"]
+METRIC_KEYS = (
+    "patternability",
+    "semantic",
+    "coherence",
+    "stability",
+    "entropy",
+    "rupture",
+    "lambda",
+)
 
 
 @dataclass(frozen=True)
@@ -65,6 +74,7 @@ class SentenceOutcome:
     action: str
     repair_span: Optional[str]
     repair_meta: Optional[Dict[str, object]]
+    reliability: Optional[Dict[str, object]] = None
 
 
 @dataclass
@@ -130,6 +140,9 @@ class ReliabilityModelWrapper:
         self._admit_threshold = admit_threshold
         self._margin_threshold = margin_threshold
         self._max_evidence = max(1, max_evidence)
+        self._metric_keys = tuple(METRIC_KEYS)
+        feature_dim = getattr(config, "evidence_feature_dim", len(self._metric_keys))
+        self._feature_dim = feature_dim if feature_dim > 0 else len(self._metric_keys)
 
     def encode(self, text: str) -> List[int]:
         tokens = text.lower().split()
@@ -137,23 +150,41 @@ class ReliabilityModelWrapper:
             return [self._unk_id]
         return [self._vocab.get(token, self._unk_id) for token in tokens]
 
-    def _aggregate_evidence(self, evidence: Sequence[str]) -> torch.Tensor:
-        embeddings: List[torch.Tensor] = []
+    def _prepare_evidence(
+        self,
+        evidence: Sequence[Dict[str, object]],
+    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        tokens: List[List[int]] = []
+        metrics: List[List[float]] = []
+
         for item in evidence[: self._max_evidence]:
-            encoded = self.encode(item)
-            tensor = torch.tensor(encoded, dtype=torch.long, device=self._device)
-            if tensor.numel() == 0:
-                continue
-            embed = self._model.token_embed(tensor)
-            mask = (tensor != self._pad_id).float().unsqueeze(-1)
-            denom = mask.sum(dim=0).clamp_min(1.0)
-            mean = (embed * mask).sum(dim=0) / denom
-            embeddings.append(mean)
-        if not embeddings:
-            # Fall back to a single zero vector so cross-attention has something to attend to.
-            embeddings.append(torch.zeros(self._config.d_model, device=self._device))
-        stacked = torch.stack(embeddings, dim=0)
-        return stacked.unsqueeze(0)  # (1, mem_len, d_model)
+            text = str(item.get("text") or "").strip()
+            encoded = self.encode(text)
+            tokens.append(encoded)
+            raw_metrics = item.get("metrics") if isinstance(item.get("metrics"), dict) else {}
+            vector = [float(raw_metrics.get(key, 0.0)) for key in self._metric_keys]
+            metrics.append(vector)
+
+        if not tokens:
+            tokens = [[self._unk_id]]
+            metrics = [[0.0] * self._feature_dim]
+
+        mem_count = len(tokens)
+        max_len = max(len(seq) for seq in tokens)
+        token_tensor = torch.zeros(1, mem_count, max_len, dtype=torch.long, device=self._device)
+        mask_tensor = torch.zeros(1, mem_count, max_len, dtype=torch.long, device=self._device)
+        feature_tensor = torch.zeros(1, mem_count, self._feature_dim, dtype=torch.float32, device=self._device)
+
+        for idx, seq in enumerate(tokens):
+            length = len(seq)
+            token_tensor[0, idx, :length] = torch.tensor(seq, dtype=torch.long, device=self._device)
+            mask_tensor[0, idx, :length] = 1
+            metric_vec = metrics[idx]
+            if len(metric_vec) < self._feature_dim:
+                metric_vec = metric_vec + [0.0] * (self._feature_dim - len(metric_vec))
+            feature_tensor[0, idx] = torch.tensor(metric_vec[: self._feature_dim], dtype=torch.float32, device=self._device)
+
+        return token_tensor, mask_tensor, feature_tensor
 
     def score(
         self,
@@ -161,21 +192,21 @@ class ReliabilityModelWrapper:
         question: str,
         candidate: str,
         baseline: str,
-        evidence: Sequence[str],
+        evidence: Sequence[Dict[str, object]],
     ) -> Tuple[float, float]:
         aggregate = " \u25cb ".join(token for token in [question, candidate, baseline] if token)
         encoded = self.encode(aggregate)
         input_ids = torch.tensor([encoded], dtype=torch.long, device=self._device)
         attention_mask = (input_ids != self._pad_id).long()
-        evidence_memory = self._aggregate_evidence(evidence)
-        evidence_mask = torch.ones(evidence_memory.size(1), dtype=torch.long, device=self._device).unsqueeze(0)
+        evidence_tokens, evidence_token_mask, evidence_features = self._prepare_evidence(evidence)
 
         with torch.no_grad():
             output = self._model(
                 input_ids,
                 attention_mask=attention_mask,
-                evidence_memory=evidence_memory,
-                evidence_mask=evidence_mask,
+                evidence_tokens=evidence_tokens,
+                evidence_token_mask=evidence_token_mask,
+                evidence_features=evidence_features,
             )
         prob = torch.sigmoid(output.admit_logits)[0].item()
         margin = output.support_margin[0].item()
@@ -288,6 +319,32 @@ def apply_thresholds(evaluation: SpanEvaluation, thresholds: Thresholds) -> Sent
     )
 
 
+def build_reliability_evidence(outcome: SentenceOutcome) -> List[Dict[str, object]]:
+    evidence: List[Dict[str, object]] = []
+    seen: Set[str] = set()
+
+    def add(text: Optional[str], metrics: Dict[str, float]) -> None:
+        if not text:
+            return
+        key = text.lower()
+        if key in seen:
+            return
+        seen.add(key)
+        evidence.append({"text": text, "metrics": metrics})
+
+    add(outcome.sentence, outcome.evaluation.metrics())
+    for twin in outcome.evaluation.twins:
+        twin_metrics = {
+            "patternability": twin.patternability,
+            "semantic": twin.semantic_similarity,
+            "lambda": twin.hazard,
+        }
+        add(twin.string, twin_metrics)
+    for citation in outcome.citations:
+        add(citation, {})
+    return evidence
+
+
 def attempt_repair(outcome: SentenceOutcome, thresholds: Thresholds, engine: TruthPackEngine) -> bool:
     if outcome.admit:
         return False
@@ -368,13 +425,19 @@ def attempt_token_support(
         reliability_meta: Dict[str, object] = {}
         if not support_outcome.admit:
             if reliability is not None:
+                evidence_items = build_reliability_evidence(support_outcome)
                 prob, margin_pred = reliability.score(
                     question=context.claim.get("question", ""),
                     candidate=candidate,
                     baseline=context.baseline_answer,
-                    evidence=support_outcome.citations,
+                    evidence=evidence_items,
                 )
-                reliability_meta = {"probability": prob, "margin": margin_pred}
+                reliability_meta = {
+                    "probability": prob,
+                    "margin": margin_pred,
+                    "source": "transformer",
+                }
+                support_outcome.reliability = reliability_meta
                 if reliability.should_admit(prob, margin_pred):
                     support_outcome.semantic_ok = True
                     support_outcome.admit = True
@@ -396,7 +459,12 @@ def attempt_token_support(
                 ):
                     support_outcome.semantic_ok = True
                     support_outcome.admit = True
-                    reliability_meta = {"heuristic_margin": margin}
+                    reliability_meta = {
+                        "probability": None,
+                        "margin": margin,
+                        "source": "heuristic",
+                    }
+                    support_outcome.reliability = reliability_meta
                 else:
                     continue
         support_outcome.sentence = candidate
@@ -624,28 +692,38 @@ def evaluate_contexts(
                         "repair_span": outcome.repair_span,
                         "repair_meta": outcome.repair_meta,
                         "citations": outcome.citations,
+                        "reliability": outcome.reliability,
                     }
                 )
 
-            detail_records.append(
+            detail = {
+                "id": claim.get("id"),
+                "question": question,
+                "expected": expected,
+                "predicted": predicted,
+                "baseline_predicted": baseline_pred,
+                "token": token,
+                "final_answer": final_answer,
+                "baseline_answer": context.baseline_answer,
+                "sentences": sentence_payloads,
+                "hallucinated": final_hallucinated,
+                "hallucinated_initial": baseline_hallucinated,
+                "repaired": any(outcome.action == "repair" for outcome in outcomes),
+                "supported": bool(support_hits),
+                "gold_uris": gold_uris,
+                "negative_claim": negative_claim,
+            }
+            reliability_trace = [
                 {
-                    "id": claim.get("id"),
-                    "question": question,
-                    "expected": expected,
-                    "predicted": predicted,
-                    "baseline_predicted": baseline_pred,
-                    "token": token,
-                    "final_answer": final_answer,
-                    "baseline_answer": context.baseline_answer,
-                    "sentences": sentence_payloads,
-                    "hallucinated": final_hallucinated,
-                    "hallucinated_initial": baseline_hallucinated,
-                    "repaired": any(outcome.action == "repair" for outcome in outcomes),
-                    "supported": bool(support_hits),
-                    "gold_uris": gold_uris,
-                    "negative_claim": negative_claim,
+                    "sentence": outcome.sentence,
+                    **outcome.reliability,
                 }
-            )
+                for outcome in outcomes
+                if outcome.reliability
+            ]
+            if reliability_trace:
+                detail["reliability_trace"] = reliability_trace
+            detail_records.append(detail)
 
     macro = macro_f1(confusion)
     baseline_macro = macro_f1(baseline_confusion)

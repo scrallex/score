@@ -98,22 +98,40 @@ For details on the commands and available options run `stm --help`.
 
 ### Training the reliability Transformer
 
-If you install the `attn` extra, you can train the O-space Transformer
-reliability head using the evaluation detail artifacts:
+If you install the `attn` extra, start by converting a public fact-verification
+corpus (FEVER or SciFact) into STM's evaluation format:
+
+```bash
+# FEVER example (needs the wiki snapshot alongside the JSONL split)
+python scripts/convert_fever_to_eval.py \
+  data/fever/train.jsonl results/eval/fever_train/eval_detail.jsonl \
+  --wiki-pages data/fever/wiki-pages --split train --progress
+```
+
+Then train the O-space Transformer reliability head.  The harness now supports
+calibration sweeps, richer evidence encodings, and attention-entropy
+regularisation:
 
 ```bash
 PYTHONPATH=src python scripts/train_reliability_attn.py \
-  results/eval/whitepaper_demo/eval_detail.jsonl \
+  results/eval/fever_train/eval_detail.jsonl \
   --epochs 5 --batch-size 32 --device cuda \
-  --output-checkpoint models/reliability_whitepaper_demo.pt
+  --calibrate-thresholds --admit-threshold 0.5 --margin-threshold 0.25 \
+  --output-checkpoint models/reliability_fever.pt
 ```
 
-The harness logs admit precision/recall, Brier score, and attention regulariser
-metrics while validating against a hold-out split.  The script accepts
-`--dry-run` to execute a single forward pass when debugging new datasets.  When
-`--output-checkpoint` is provided, the script serialises the model state,
-configuration, tokenizer vocabulary, and final validation metrics, making it
-easy to plug the resulting file into `reality_filter_eval.py --reliability-model`.
+The trainer logs admit precision/recall, macro-F1, Brier score, Expected
+Calibration Error, and attention entropy for the validation split.  Use
+`--dry-run` to execute a single forward pass and `--disable-phase-channel` or
+`--disable-cross-attention` when running ablations.  The saved checkpoint packs
+the model weights, configuration (including evidence encoder settings), and
+tokeniser vocabulary so it can be loaded via
+`reality_filter_eval.py --reliability-model`.
+
+During evaluation the reliability wrapper now feeds full evidence sentences and
+their structural metrics into the Transformer; each repaired span records the
+model's admit probability and support margin in the `reliability_trace` field of
+`eval_detail.jsonl`, making calibration diagnostics easy to audit.
 
 ## Reproducing the PlanBench++ and CodeTrace experiments
 

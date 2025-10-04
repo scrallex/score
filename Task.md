@@ -29,6 +29,7 @@ The goal of this whitepaper is to merge our O-space reliability gating work with
 5. **Structured sparsity:** Employ restricted self-attention (local window plus global rupture tokens) to preserve throughput (target ≥1k rps) while retaining O(1) access to critical anchors.
 
 ## 5. Experimental Programme
+- **E0 – Dataset bootstrapping:** Convert FEVER and SciFact JSONL corpora into STM `eval_detail` artefacts using the new ingestion tooling, double-check label mappings, and quantify evidence coverage before model training.
 - **E1 – Final-answer scoring:** Train/evaluate on repaired answers; report macro-F1, admit precision/recall, calibration error. Expect hallucination rate to drop versus heuristic pipeline.
 - **E2 – Margin/overlap calibration:** Impose dual thresholds on admit probability and attention mass over evidence; produce reliability diagrams to confirm zero-margin URI hits no longer slip through.
 - **E3 – Phase encoding ablation:** Compare models with/without extra phase channels; track long-lag recurrence recall and head specialisation metrics.
@@ -38,6 +39,7 @@ The goal of this whitepaper is to merge our O-space reliability gating work with
 ## 6. Integration Plan
 - **Model implementation:** Add `src/sep_text_manifold/attn_ospace.py` containing the Transformer backbone, evidence cross-attention, and reliability head.
 - **Training harness:** Create `scripts/train_reliability_attn.py` to ingest evaluation JSONL, train the model, and log precision/recall, calibration error, and attention entropy.
+- **Dataset ingestion:** Provide `scripts/convert_fever_to_eval.py` to hydrate FEVER/SciFact into STM-compatible evaluation detail files (evidence sentences + hazard metrics + citation URIs).
 - **Service swap:** Modify `scripts/reality_filter_eval.py` to consume the trained reliability head output instead of heuristic token-support overrides; thresholds become calibrated probabilities.
 - **Logging & reports:** Persist per-head attention maps under `results/eval/<pack>/attention_heads/` and surface them in the report markdown to show which evidence drove each admit.
 - **CI guardrails:** Extend tests to compare confusion matrices and calibration metrics between detail outputs and summaries; fail if divergence exceeds tolerated bounds.
@@ -57,3 +59,7 @@ This outline sets the structure for the whitepaper and the accompanying implemen
   * `results/experiments/whitepaper_demo_baseline` vs `whitepaper_demo_reliability` — reliability model currently leaves macro-F1 (0.115) and hallucination rate (1.0) unchanged, indicating token-support paths are not yet firing on this small pack.
   * `results/experiments/docs_demo_baseline` vs `docs_demo_reliability` — same outcome; reliability gating has no effect pending richer evidence hooks.
 - **CI update:** `.github/workflows/attn-tests.yml` now trains a 1-epoch demo model and runs the evaluator against it, in addition to the reliability unit tests.
+
+## Experiment log (2025-10-05)
+- **FEVER ingestion tooling:** `scripts/convert_fever_to_eval.py` converts FEVER claims plus wiki evidence into STM `eval_detail` records with mapped metrics and citations; supports `--limit`, `--include-predicted`, and wiki snapshot hydration.
+- **Reliability pipeline refresh:** `scripts/train_reliability_attn.py` now emits calibration sweeps (`--calibrate-thresholds`), Expected Calibration Error, and richer evidence encodings; `scripts/reality_filter_eval.py` records transformer probabilities/margins per repaired span.
