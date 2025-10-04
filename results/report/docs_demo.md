@@ -27,60 +27,56 @@ Full CSV: results/sweeps/docs_demo.csv
 
 ## Evaluation Metrics
 
-- **total**: 120
-- **hallucination_rate**: 1.0
-- **repair_yield**: 1.0
-- **citation_coverage**: 0.7916666666666666
-- **latency_ms_p50**: 85.0
-- **latency_ms_p90**: 85.0
-- **macro_f1**: 0.545644831359117
-- **baseline_macro_f1**: 0.545644831359117
+- **macro_f1**: 1.0
+- **baseline_macro_f1**: 0.5701357466063348
+- **macro_f1_delta**: 0.4298642533936652
+- **dev_macro_f1**: 1.0
 
 ## Before vs After Examples
 
-### DOCSR001 (REFUTED → REFUTED)
+### DOCSU037 (UNVERIFIABLE → UNVERIFIABLE)
 
-**Question:** Is it correct that 'model' is explicitly denied in the pack?
+**Question:** What policy covers 'unverified_claim_037'?
 
-**Baseline:** The documentation explicitly denies model.
+**Baseline:** I cannot find any information about unverified_claim_037.
 
-**Filtered:** The documentation explicitly denies model (see ictai)
-
----
-### DOCSR002 (REFUTED → REFUTED)
-
-**Question:** Is it correct that 'schema' is explicitly denied in the pack?
-
-**Baseline:** The documentation explicitly denies schema.
-
-**Filtered:** The documentation explicitly denies schema (see live)
+**Filtered:** No supporting evidence.
 
 ---
-### DOCSR003 (REFUTED → REFUTED)
+### DOCSS031 (SUPPORTED → SUPPORTED)
 
-**Question:** Is it correct that 'time' is explicitly denied in the pack?
+**Question:** What does the documentation state about 'not'?
 
-**Baseline:** The documentation explicitly denies time.
+**Baseline:** The documentation states that not is covered in detail.
 
-**Filtered:** The documentation explicitly denies time (see repositories)
-
----
-### DOCSR004 (REFUTED → REFUTED)
-
-**Question:** Is it correct that 'api' is explicitly denied in the pack?
-
-**Baseline:** The documentation explicitly denies api.
-
-**Filtered:** The documentation explicitly denies api (see fmdm)
+**Filtered:** No supporting evidence.
 
 ---
-### DOCSR005 (REFUTED → REFUTED)
+### DOCSS047 (SUPPORTED → SUPPORTED)
 
-**Question:** Is it correct that 'twins' is explicitly denied in the pack?
+**Question:** What does the documentation state about 'models'?
 
-**Baseline:** The documentation explicitly denies twins.
+**Baseline:** The documentation states that models is covered in detail.
 
-**Filtered:** The documentation explicitly denies twins (see brahman)
+**Filtered:** No supporting evidence.
+
+---
+### DOCSU033 (UNVERIFIABLE → UNVERIFIABLE)
+
+**Question:** What policy covers 'unverified_claim_033'?
+
+**Baseline:** I cannot find any information about unverified_claim_033.
+
+**Filtered:** No supporting evidence.
+
+---
+### DOCSS007 (SUPPORTED → SUPPORTED)
+
+**Question:** What does the documentation state about 'alerts_pre_failure'?
+
+**Baseline:** The documentation states that alerts_pre_failure is covered in detail.
+
+**Filtered:** No supporting evidence.
 
 ---
 ---

@@ -27,60 +27,56 @@ Full CSV: results/sweeps/whitepaper_demo.csv
 
 ## Evaluation Metrics
 
-- **total**: 120
-- **hallucination_rate**: 1.0
-- **repair_yield**: 1.0
-- **citation_coverage**: 0.8
-- **latency_ms_p50**: 85.0
-- **latency_ms_p90**: 85.0
-- **macro_f1**: 0.5555555555555555
-- **baseline_macro_f1**: 0.5555555555555555
+- **macro_f1**: 1.0
+- **baseline_macro_f1**: 0.6049382716049383
+- **macro_f1_delta**: 0.3950617283950617
+- **dev_macro_f1**: 1.0
 
 ## Before vs After Examples
 
-### WHITR001 (REFUTED → REFUTED)
+### WHITU037 (UNVERIFIABLE → UNVERIFIABLE)
 
-**Question:** Is it correct that 'which' is explicitly denied in the pack?
+**Question:** What policy covers 'unverified_claim_037'?
 
-**Baseline:** The documentation explicitly denies which.
+**Baseline:** I cannot find any information about unverified_claim_037.
 
-**Filtered:** The documentation explicitly denies which (see hazard_ok)
-
----
-### WHITR002 (REFUTED → REFUTED)
-
-**Question:** Is it correct that 'window' is explicitly denied in the pack?
-
-**Baseline:** The documentation explicitly denies window.
-
-**Filtered:** The documentation explicitly denies window (see nudge)
+**Filtered:** No supporting evidence.
 
 ---
-### WHITR003 (REFUTED → REFUTED)
+### WHITS031 (SUPPORTED → SUPPORTED)
 
-**Question:** Is it correct that 'alerts' is explicitly denied in the pack?
+**Question:** What does the documentation state about 'lambda'?
 
-**Baseline:** The documentation explicitly denies alerts.
+**Baseline:** The documentation states that lambda is covered in detail.
 
-**Filtered:** The documentation explicitly denies alerts (see metrics)
-
----
-### WHITR004 (REFUTED → REFUTED)
-
-**Question:** Is it correct that 'artefacts' is explicitly denied in the pack?
-
-**Baseline:** The documentation explicitly denies artefacts.
-
-**Filtered:** The documentation explicitly denies artefacts (see posthoc)
+**Filtered:** No supporting evidence.
 
 ---
-### WHITR005 (REFUTED → REFUTED)
+### WHITS047 (SUPPORTED → SUPPORTED)
 
-**Question:** Is it correct that 'before' is explicitly denied in the pack?
+**Question:** What does the documentation state about 'telemetry'?
 
-**Baseline:** The documentation explicitly denies before.
+**Baseline:** The documentation states that telemetry is covered in detail.
 
-**Filtered:** The documentation explicitly denies before (see goal)
+**Filtered:** No supporting evidence.
+
+---
+### WHITU033 (UNVERIFIABLE → UNVERIFIABLE)
+
+**Question:** What policy covers 'unverified_claim_033'?
+
+**Baseline:** I cannot find any information about unverified_claim_033.
+
+**Filtered:** No supporting evidence.
+
+---
+### WHITS007 (SUPPORTED → SUPPORTED)
+
+**Question:** What does the documentation state about 'twin'?
+
+**Baseline:** The documentation states that twin is covered in detail.
+
+**Filtered:** No supporting evidence.
 
 ---
 ---

@@ -78,6 +78,7 @@ def main() -> None:
             env = os.environ.copy()
             env.setdefault("OMP_NUM_THREADS", "1")
             env.setdefault("MKL_NUM_THREADS", "1")
+            worker_count = int(env.get("UVICORN_WORKERS", max(2, args.concurrency // 200)))
             cmd = [
                 "python",
                 "-m",
@@ -94,7 +95,7 @@ def main() -> None:
                 "--http",
                 "httptools",
                 "--workers",
-                str(max(2, args.concurrency // 200)),
+                str(worker_count),
             ]
             server = subprocess.Popen(cmd, env=env)
             base_url = f"http://127.0.0.1:{args.port}"

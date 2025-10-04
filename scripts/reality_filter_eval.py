@@ -303,11 +303,6 @@ def evaluate_contexts(
                         continue
             outcomes.append(outcome)
 
-        hallucinated = any(not outcome.admit for outcome in outcomes)
-        repaired = bool(pack_support_hits) or any(outcome.action == "repair" for outcome in outcomes)
-        hall_flags.append(int(hallucinated))
-        repair_flags.append(int(repaired))
-
         supported_sentences = [
             outcome
             for outcome in outcomes
@@ -336,6 +331,11 @@ def evaluate_contexts(
         supported = bool(supported_sentences) or bool(pack_support_hits)
         if supported:
             supported_count += 1
+
+        hallucinated = any(not outcome.admit for outcome in outcomes)
+        repaired = bool(pack_support_hits) or any(outcome.action == "repair" for outcome in outcomes)
+        hall_flags.append(int(hallucinated))
+        repair_flags.append(int(repaired))
 
         violation = any(
             violates_rules(outcome.repair_span or outcome.sentence, rules)
