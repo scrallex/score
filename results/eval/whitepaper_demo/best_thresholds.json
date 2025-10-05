@@ -4,5 +4,5 @@
   "sigma_min": 0.15,
   "structural_threshold": 0.46,
   "semantic_threshold": 0.25,
-  "dev_macro_f1": 0.2062350119904077
+  "dev_macro_f1": 0.5663956639566395
 }

@@ -134,7 +134,12 @@ class ReliabilityModelWrapper:
         self._pad_id = self._vocab.get("<pad>", 0)
         self._unk_id = self._vocab.get("<unk>", 1)
         self._model = OspaceTransformer(config)
-        self._model.load_state_dict(state_dict)
+        incompatible = self._model.load_state_dict(state_dict, strict=False)
+        if incompatible.missing_keys or incompatible.unexpected_keys:
+            print(  # noqa: T201 - surfaced once per load for operator awareness
+                "[reality_filter_eval] Reliability checkpoint loaded with partial state: "
+                f"missing={len(incompatible.missing_keys)}, unexpected={len(incompatible.unexpected_keys)}"
+            )
         self._model.to(self._device)
         self._model.eval()
         self._admit_threshold = admit_threshold
@@ -439,13 +444,15 @@ def attempt_token_support(
                     baseline=context.baseline_answer,
                     evidence=evidence_items,
                 )
+                decision = "admit" if reliability.should_admit(prob, margin_pred) else "reject"
                 reliability_meta = {
                     "probability": prob,
                     "margin": margin_pred,
                     "source": "transformer",
+                    "decision": decision,
                 }
                 support_outcome.reliability = reliability_meta
-                if reliability.should_admit(prob, margin_pred):
+                if decision == "admit":
                     support_outcome.semantic_ok = True
                     support_outcome.admit = True
                     support_outcome.evaluation = support_outcome.evaluation
@@ -470,6 +477,7 @@ def attempt_token_support(
                         "probability": None,
                         "margin": margin,
                         "source": "heuristic",
+                        "decision": "admit",
                     }
                     support_outcome.reliability = reliability_meta
                 else:
@@ -490,6 +498,39 @@ def attempt_token_support(
     return None
 
 
+def apply_reliability_gate(
+    outcome: SentenceOutcome,
+    *,
+    reliability: Optional[ReliabilityModelWrapper],
+    question: str,
+    baseline_answer: str,
+    heuristic_admit: bool,
+) -> None:
+    if reliability is None:
+        return
+    candidate_text = outcome.repair_span or outcome.sentence
+    evidence_items = build_reliability_evidence(outcome)
+    prob, margin_pred = reliability.score(
+        question=question,
+        candidate=candidate_text,
+        baseline=baseline_answer,
+        evidence=evidence_items,
+    )
+    decision = "admit" if reliability.should_admit(prob, margin_pred) else "reject"
+    outcome.reliability = {
+        "probability": prob,
+        "margin": margin_pred,
+        "source": "transformer",
+        "decision": decision,
+        "heuristic_admit": heuristic_admit,
+    }
+    if decision == "admit":
+        outcome.admit = True
+        outcome.semantic_ok = True
+    else:
+        outcome.admit = False
+
+
 def supported_outcomes(
     outcomes: Sequence[SentenceOutcome],
     gold_uris: Sequence[str],
@@ -504,7 +545,10 @@ def supported_outcomes(
             continue
         margin_ok = outcome.evaluation.semantic_similarity >= thresholds.sigma_min
         token_support = bool(outcome.repair_meta and outcome.repair_meta.get("strategy") == "token_support")
-        if not margin_ok and not token_support:
+        reliability_admit = bool(
+            outcome.reliability and outcome.reliability.get("source") == "transformer" and outcome.reliability.get("decision") == "admit"
+        )
+        if not margin_ok and not token_support and not reliability_admit:
             continue
         if any(uri in uri_set for uri in outcome.citations):
             supported.append(outcome)
@@ -624,6 +668,15 @@ def evaluate_contexts(
             if not outcome.admit:
                 baseline_hallucinated = True
                 attempt_repair(outcome, thresholds, engine)
+            heuristic_admit = outcome.admit
+            if reliability_model is not None:
+                apply_reliability_gate(
+                    outcome,
+                    reliability=reliability_model,
+                    question=question,
+                    baseline_answer=context.baseline_answer,
+                    heuristic_admit=heuristic_admit,
+                )
             outcomes.append(outcome)
 
         token_support = attempt_token_support(context, thresholds, engine, outcomes, reliability_model)

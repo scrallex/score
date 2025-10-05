@@ -1,35 +1,54 @@
-# Manifolds Meet Attention — Draft
+# O-Space Reliability Meets Transformer Attention
 
-## Methods
-- **Structural manifold features:** Every claim and evidence sentence carries O-space metrics — patternability, semantic alignment, coherence, stability, entropy, rupture density, and hazard \(\lambda\). These metrics drive the reliability head alongside the admission priors inherited from the manifold repairs. The feature bundle matches the signals defined in the twin-gating work and keeps the admit policy grounded in interpretable structure.
-- **Transformer reliability head:** We reuse the lightweight encoder from *Attention Is All You Need* (Vaswani et al., 2017) with sinusoidal + phase channels and optional cross-attention into the evidence cache. The cross-attention block mirrors the citation alignment module sketched in 2509.13351v1, allowing the final hidden state to retrieve supporting spans before the reliability MLP emits admit probability and support margin.
-- **Calibration hooks:** Training minimises binary cross-entropy on admit logits plus an \(\ell_2\) loss on the margin target. Validation wraps threshold sweeps (admit grid 0.1–0.9, margin grid −0.5–1.0) and Expected Calibration Error to keep probabilities auditable.
+## 1. Introduction: Problem Framing
+- Whitepaper demo runs still rely on the heuristic reality filter: macro-F1 sits at 0.115 with hallucination rate pinned at 1.0 (`results/eval/whitepaper_demo/eval_summary.json`), even though the report summary shows 3 approved spans out of 5 (`results/report/whitepaper_demo.md`).
+- Threshold sweeps collapse to zero coverage because the heuristic admit gate deactivates every span once the structural margin falls below 0.46, leaving us with no calibrated operating point (`results/eval/whitepaper_demo/best_thresholds.json`).
+- URI hits continue to bypass structural checks: zero-margin links emit ``SUPPORTED`` in the baseline answers while the repaired answers refuse to admit, highlighting the brittleness of the current token-support override.
+- The goal is to replace the rule set with an attention-backed admit policy that learns when structural evidence in O-space is present, so we can gate both generated answers and market spans on measurable support.
 
-## Experiments
-### FEVER
-- Curriculum run (3:1 FEVER→SciFact batches, warm-started from the FEVER checkpoint) lands **test F1 0.748** (precision 0.691 / recall 0.817) with calibrated thresholds 0.2 / −0.5 (`results/experiments/fever_scifact_curriculum.json`). Baseline FEVER-only fine-tune remains at **test F1 ≈0.76**, so the mixed schedule trades ~1% absolute F1 for SciFact coverage while keeping Brier at 0.16.
-- Admit probability mass stays broad (mean 0.27, std 0.32) and attention concentrates on a single evidence span (max weight mean 0.66), matching the behaviour logged in `results/analysis/attention_metrics.json`.
+## 2. Primer on Transformer Attention
+- **Scaled dot-product attention (Sec. 3.2.1, Fig. 2, Vaswani et al., 2017):** Queries attend to keys via sqrt(d_k) scaling and softmax weighting, mirroring our O-space lookups where a span retrieves manifold neighbours based on structural similarity.
+- **Multi-head diversity (Sec. 3.2.2):** Splitting into 4-8 heads lets each projection specialise (support, contradiction, recurrence, noise suppression) and replaces the manually maintained reliability bands in the current filter.
+- **Long-range connectivity (Table 1):** Self-attention delivers $O(1)$ maximum path length versus the $O(n)$ latency of the recurrent twin-repair loop, which is essential for rupture-spanning evidence.
+- **Position and phase (Sec. 3.5):** Standard sinusoidal encodings preserve generalisation; we add prime/phase channels so rhythmic structure enters the network without losing extrapolation ability.
+- **Cross-attention for evidence gating (Sec. 3.2.3):** Decoder-to-encoder attention maps directly onto "query span attends to manifold memory," foreshadowing a cross-attention block that grounds admit decisions in stored citations or price windows.
 
-### SciFact
-- **Zero-shot FEVER checkpoint:** validation F1 collapses to 0.0 with nearly all admit mass at <\(10^{-4}\) (`scifact_val_fever_init`), replicating the generalisation failure noted in the whitepaper demo.
-- **Targeted fine-tune:** five SciFact epochs (batch 32, LR 5e-5) restore **val F1 0.58** / **test F1 0.52**; calibration pushes val F1 to 0.68 but still leaves the model under-confident (`results/experiments/scifact_finetune.json`).
-- **Curriculum schedule:** the FEVER↔SciFact interleave lifts SciFact metrics to **val F1 0.69** / **test F1 0.64** with calibrated thresholds 0.3 / 1.0. Admit mass now peaks near 0.9 (mean 0.71) and attention entropy stays moderate (0.69), signalling that the model now commits when cross-domain evidence aligns (`results/experiments/scifact_val_curriculum_eval.json`).
+## 3. Recap of the Manifold / QFH / QBSA Framework
+- Every window carries coherence, stability, entropy, rupture density, and hazard lambda plus derived patternability and semantic metrics; these live in the ORJSON manifolds emitted by the QFH/QBSA stack.
+- Sliding-window ingestion feeds `sep_text_manifold.encode_window`, repetition counts, and hazard thresholds into manifests that drive both the heuristic guardrail and the new transformer features.
+- The twin-repair loop still runs end to end but exhibits failure modes documented in recent runs: latched hallucination flags and unchecked URI overrides inside `scripts/reality_filter_eval.py`.
+- Prior whitepapers (`docs/whitepaper/QFH_Manifold_Foundation.tex`, `docs/whitepaper/reliability_gated_recurrence_polished.tex`) capture empirical support for the manifold, giving us a foundation to cite in the new draft.
 
-### HoVer
-- **Baseline (FEVER checkpoint):** HoVer validation F1 is 0.0, Brier 0.52, and 100% of admit probability lies in the first histogram bin; attention max weight averages 0.24, so the model refuses to pick supporting hops (`results/experiments/hover_val_fever_base_eval.json`).
-- **Adapted run:** Three GPU epochs over the HoVer train split (3.2M steps, batch 48) nudge validation F1 to 0.095, drop Brier to 0.48, and lift mean admit probability to 0.048 with heavier mass beyond 0.2. Calibration (0.1 / −0.5) reaches F1 0.164. Attention remains diffuse (max weight 0.25) but entropy tightens slightly; see `results/experiments/hover_val_fever_adapt_eval.json`.
-- **Artifacts:** calibration curves for HoVer, FEVER, and SciFact live in `results/eval/hover_dev/calibration_hover_adapt.png`, `results/eval/fever_dev/calibration_curriculum_fever.png`, and `results/eval/scifact_dev/calibration_curriculum_scifact.png`.
+## 4. Proposed Model Architecture (O-Space Transformer)
+1. **Backbone:** Lightweight Transformer (2-4 layers, 4-8 heads) with causal self-attention over span/candle sequences, tuned via `sep_text_manifold.attn_ospace.OspaceTransformer`.
+2. **Evidence memory + cross-attention:** Truth-pack strings or price windows flow through the `EvidenceEncoder`, yielding the key/value cache consumed by the cross-attention block.
+3. **Reliability head:** A two-branch MLP outputs admit probability and support margin, trained on repaired labels pulled from evaluation artefacts.
+4. **Phase/prime encoding:** Phase tensors align with prime ticks and rhythm metrics, concatenated with sinusoidal encodings so the model sees O-space beat structure.
+5. **Structured sparsity:** Local-plus-rupture attention masks keep throughput at the >=1k rps target while retaining global access to hazard spikes.
+6. **Calibration hooks:** Admit/margin thresholds and optional temperature scaling are baked into `scripts/train_reliability_attn.py` so the model emits calibrated probabilities.
 
-## Discussion
-- **Attention behaviour:** Figure `docs/figures/attention_summary.png` captures the contrast: FEVER runs keep max attention ≈0.66 with mid-range entropy, SciFact gains sharper distributions post-curriculum (probability mean 0.71, entropy 0.69), and HoVer remains weakly focused even after fine-tuning. The diffuse HoVer pattern indicates we still miss multi-hop alignment.
-- **Calibration impact:** HoVer improves from a flat reliability curve (ECE 0.52) to ECE 0.48, while FEVER’s curriculum model holds ECE at 0.12 and SciFact’s calibrated recall jumps to 0.91. Threshold sweeps surface workable operating points for each corpus; the combined calibration summary is recorded in `results/analysis/calibration_summary.json`.
-- **Failure modes:** SciFact still exhibits overconfident false positives (Brier 0.34) and relies on high margins (threshold 1.0) to rein in recall. HoVer remains data-starved — attention entropy >1.45 and F1 <0.2 point to missing multi-hop evidence or insufficient memory coverage.
+## 5. Experimental Programme
+- **E0 - Dataset bootstrapping:** FEVER, SciFact, and HoVer converters now emit STM-compatible `eval_detail.jsonl` files with structural metrics (`scripts/convert_*_to_eval.py`). Coverage audits still show whitepaper_demo lacks evidence density, explaining the zero-coverage sweep.
+- **E1 - Final-answer scoring:** GPU retrains on FEVER reach test F1 0.756 with calibrated thresholds (checkpoint `models/reliability_fever_attn_full.pt`); whitepaper_demo remains unchanged because the reliability head is not yet wired into the admission path.
+- **E2 - Margin/overlap calibration:** Calibration sweeps and temperature scaling reduce SciFact ECE from 0.207 to 0.075 (`results/analysis/scifact_temperature_finetune.json`), but we still need to propagate the calibrated thresholds into `reality_filter_eval.py`.
+- **E3 - Phase encoding ablation:** Dropping phase channels cuts FEVER test F1 from 0.756 to 0.690; SciFact remains fragile without them, so the whitepaper will position phase information as a key ablation result.
+- **E4 - Head specialisation analysis:** `docs/figures/attention_summary.png` visualises head entropy and max weights across FEVER, SciFact, and HoVer; HoVer stays diffuse (mean max ~=0.25), motivating multi-hop retrieval.
+- **E5 - Sparsity sweep:** Structured masks are still pending; we hold >=1k rps in the existing demo but need to formalise throughput + admit precision trade-offs.
 
-## Appendices
-- **Ingestion pipelines:** `scripts/convert_fever_to_eval.py`, `scripts/convert_scifact_to_eval.py`, and `scripts/convert_hover_to_eval.py` emit STM-compatible `eval_detail` files with structural metrics, semantic hashes, and citations. Sentence segmentation for HoVer requires the bundled NLTK punkt models.
-- **Dataset splits:** Deterministic IDs reside in `data/splits/fever_*`, `data/splits/scifact_*`, `data/splits/hover_train_*`, and `data/splits/hover_dev_*`. The curriculum run consumes `fever_train_dev/eval_detail.jsonl` and `scifact_train_dev/eval_detail.jsonl` with these splits.
-- **Figure inventory:**
-  1. `docs/figures/attention_summary.png` — aggregated attention/probability chart (updated).
-  2. `results/eval/hover_dev/calibration_hover_adapt.png` — HoVer reliability diagram.
-  3. `results/eval/fever_dev/calibration_curriculum_fever.png` — FEVER curriculum calibration.
-  4. `results/eval/scifact_dev/calibration_curriculum_scifact.png` — SciFact curriculum calibration.
+## 6. Integration Plan
+- **Model implementation:** `src/sep_text_manifold/attn_ospace.py` hosts the Transformer backbone, phase fusion, cross-attention, and reliability head.
+- **Training harness:** `scripts/train_reliability_attn.py` ingests eval details, trains with calibration sweeps, and logs admit precision/recall, Brier score, ECE, and attention entropy.
+- **Dataset ingestion:** `scripts/convert_fever_to_eval.py`, `scripts/convert_scifact_to_eval.py`, and `scripts/convert_hover_to_eval.py` hydrate corpora into STM evaluation artefacts with structural metrics and citations.
+- **Service swap:** `scripts/reality_filter_eval.py` now accepts a reliability checkpoint flag, but the whitepaper demo still defaults to heuristics; we need to switch the admit path to the Transformer output before rerunning metrics.
+- **Logging & reports:** Attention maps for FEVER/SciFact/HoVer runs live in `results/eval/fever_attention/`, `results/eval/fever_scifact_attention/`, and related directories; the aggregate figure (`docs/figures/attention_summary.png`) is ready for the whitepaper appendix.
+- **CI guardrails:** `.github/workflows/attn-tests.yml` trains a 1-epoch demo model and ensures evaluator parity; next step is wiring the calibration comparison when the reality filter consumes the new admit scores.
+
+## 7. Discussion and Open Questions
+- **Evidence memory:** Should we pre-compute embeddings, learn them jointly, or keep a hybrid cache that fuses manifold metrics with token embeddings?
+- **Attention sparsity vs coverage:** What balance between local restricted attention and global rupture tokens preserves admit precision while meeting the >=1k rps SLO?
+- **API exposure:** Do we surface the reliability head as a standalone endpoint so planning/execution agents can query admit probabilities directly?
+- **Auditability:** How do we version and store per-head attention maps so future audits can reconstruct decisions across FEVER, SciFact, HoVer, and internal packs?
+- **Immediate actions:**
+  1. Prototype multi-hop retrieval or expanded evidence memory ahead of the HoVer adaptation run to reduce attention entropy and lift admit mass.
+  2. Apply SciFact temperature scaling inside the evaluation pipeline so calibrated thresholds govern the admit/repair path.
+  3. Integrate `scripts/evaluate_reliability.py` into CI to regenerate calibration plots and histograms for FEVER, SciFact, HoVer, and whitepaper packs.
