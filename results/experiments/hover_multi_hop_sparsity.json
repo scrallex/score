@@ -1,0 +1,44 @@
+{
+  "detail_path": "results/eval/hover_dev_multi_hop/eval_detail.jsonl",
+  "checkpoint": "models/reliability_hover_multi_hop.pt",
+  "settings": {
+    "local_32_rupture_4": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "accuracy": 1.0,
+      "records": 4000,
+      "avg_evidence": 6.4175,
+      "records_per_second": 180.4242204202789
+    },
+    "local_32_rupture_8": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "accuracy": 1.0,
+      "records": 4000,
+      "avg_evidence": 6.4175,
+      "records_per_second": 183.6164159928504
+    },
+    "local_64_rupture_4": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "accuracy": 1.0,
+      "records": 4000,
+      "avg_evidence": 6.4175,
+      "records_per_second": 178.9687104016022
+    },
+    "local_64_rupture_8": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "accuracy": 1.0,
+      "records": 4000,
+      "avg_evidence": 6.4175,
+      "records_per_second": 181.16227256181813
+    }
+  },
+  "admit_threshold": 0.2,
+  "margin_threshold": 0.0
+}
