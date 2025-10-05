@@ -42,14 +42,73 @@ from scripts.train_reliability_attn import (
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--fever-detail", type=Path, default=Path("results/eval/fever_train/eval_detail.jsonl"))
-    parser.add_argument("--scifact-detail", type=Path, default=Path("results/eval/scifact_train/eval_detail.jsonl"))
+    parser.add_argument(
+        "--secondary-detail",
+        dest="secondary_detail",
+        type=Path,
+        help="Eval detail file for the secondary dataset (overrides the SciFact default).",
+    )
+    parser.add_argument(
+        "--scifact-detail",
+        dest="secondary_detail",
+        type=Path,
+        default=Path("results/eval/scifact_train/eval_detail.jsonl"),
+        help="Alias for --secondary-detail; defaults to the SciFact curriculum artefact.",
+    )
     parser.add_argument("--fever-train-index", type=Path, default=Path("data/splits/fever_train_ids.txt"))
     parser.add_argument("--fever-val-index", type=Path, default=Path("data/splits/fever_val_ids.txt"))
     parser.add_argument("--fever-test-index", type=Path, default=Path("data/splits/fever_test_ids.txt"))
-    parser.add_argument("--scifact-train-index", type=Path, default=Path("data/splits/scifact_train_ids.txt"))
-    parser.add_argument("--scifact-val-index", type=Path, default=Path("data/splits/scifact_val_ids.txt"))
-    parser.add_argument("--scifact-test-index", type=Path, default=Path("data/splits/scifact_test_ids.txt"))
-    parser.add_argument("--ratio", type=str, default="3:1", help="FEVER:SciFact batch ratio (e.g. 3:1)")
+    parser.add_argument(
+        "--secondary-train-index",
+        dest="secondary_train_index",
+        type=Path,
+        help="Training split ids for the secondary dataset (overrides SciFact default).",
+    )
+    parser.add_argument(
+        "--secondary-val-index",
+        dest="secondary_val_index",
+        type=Path,
+        help="Validation split ids for the secondary dataset (overrides SciFact default).",
+    )
+    parser.add_argument(
+        "--secondary-test-index",
+        dest="secondary_test_index",
+        type=Path,
+        help="Test split ids for the secondary dataset (overrides SciFact default).",
+    )
+    parser.add_argument(
+        "--scifact-train-index",
+        dest="secondary_train_index",
+        type=Path,
+        default=Path("data/splits/scifact_train_ids.txt"),
+        help="Alias for --secondary-train-index; defaults to SciFact ids.",
+    )
+    parser.add_argument(
+        "--scifact-val-index",
+        dest="secondary_val_index",
+        type=Path,
+        default=Path("data/splits/scifact_val_ids.txt"),
+        help="Alias for --secondary-val-index; defaults to SciFact ids.",
+    )
+    parser.add_argument(
+        "--scifact-test-index",
+        dest="secondary_test_index",
+        type=Path,
+        default=Path("data/splits/scifact_test_ids.txt"),
+        help="Alias for --secondary-test-index; defaults to SciFact ids.",
+    )
+    parser.add_argument(
+        "--secondary-label",
+        type=str,
+        default="scifact",
+        help="Human-friendly label for the secondary dataset (used in logs and summaries).",
+    )
+    parser.add_argument(
+        "--ratio",
+        type=str,
+        default="3:1",
+        help="FEVER:secondary batch ratio (e.g. 3:1)",
+    )
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--learning-rate", type=float, default=2e-4)
@@ -66,6 +125,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--calibrate", action="store_true", help="Run threshold sweeps for both validation splits")
     parser.add_argument("--admit-grid", type=str, default="0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9")
     parser.add_argument("--margin-grid", type=str, default="-0.5,-0.25,0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,1.0")
+    parser.add_argument(
+        "--max-steps",
+        type=int,
+        default=0,
+        help="Optional cap on FEVER batches per epoch for quicker curricula debugging (0 = full epoch).",
+    )
     return parser.parse_args()
 
 
@@ -234,8 +299,10 @@ def calibrate_split(
 def main() -> None:
     args = parse_args()
     device = torch.device(args.device)
-    fever_ratio, scifact_ratio = parse_ratio(args.ratio)
-    ratio_modulus = fever_ratio
+    fever_ratio, secondary_ratio = parse_ratio(args.ratio)
+    secondary_label_raw = (args.secondary_label or "secondary").strip()
+    secondary_label = secondary_label_raw or "secondary"
+    secondary_slug = secondary_label.lower().replace(" ", "_")
 
     checkpoint_payload = torch.load(args.load_checkpoint, map_location=device)
     vocab_payload = checkpoint_payload.get("tokenizer_vocab")
@@ -251,8 +318,8 @@ def main() -> None:
         tokenizer=tokenizer,
         feature_dim_override=feature_dim,
     )
-    scifact_dataset = EvalDetailDataset(
-        args.scifact_detail,
+    secondary_dataset = EvalDetailDataset(
+        args.secondary_detail,
         tokenizer=tokenizer,
         feature_dim_override=feature_dim,
     )
@@ -266,11 +333,11 @@ def main() -> None:
         test_index=args.fever_test_index,
         batch_size=args.batch_size,
     )
-    scifact_train_loader, scifact_val_loader, scifact_test_loader, _, _, _ = build_loader(
-        scifact_dataset,
-        train_index=args.scifact_train_index,
-        val_index=args.scifact_val_index,
-        test_index=args.scifact_test_index,
+    secondary_train_loader, secondary_val_loader, secondary_test_loader, _, _, _ = build_loader(
+        secondary_dataset,
+        train_index=args.secondary_train_index,
+        val_index=args.secondary_val_index,
+        test_index=args.secondary_test_index,
         batch_size=args.batch_size,
     )
 
@@ -282,7 +349,7 @@ def main() -> None:
     else:
         raise ValueError("Checkpoint missing config payload")
     config.vocab_size = combined_vocab
-    config.evidence_feature_dim = max(fever_dataset.feature_dim, scifact_dataset.feature_dim)
+    config.evidence_feature_dim = max(fever_dataset.feature_dim, secondary_dataset.feature_dim)
 
     state_dict = checkpoint_payload.get("state_dict")
     if not isinstance(state_dict, dict):
