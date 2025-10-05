@@ -42,17 +42,25 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--fever-detail", type=Path, default=Path("results/eval/fever_train/eval_detail.jsonl"))
     parser.add_argument(
+        "--secondary-preset",
+        choices=["scifact", "hover"],
+        default="scifact",
+        help=(
+            "Preset describing the secondary dataset. 'scifact' keeps the existing defaults, while "
+            "'hover' points to the HoVer multi-hop artefacts (detail + split ids)."
+        ),
+    )
+    parser.add_argument(
         "--secondary-detail",
         dest="secondary_detail",
         type=Path,
-        help="Eval detail file for the secondary dataset (overrides the SciFact default).",
+        help="Eval detail file for the secondary dataset (overrides the preset default).",
     )
     parser.add_argument(
         "--scifact-detail",
         dest="secondary_detail",
         type=Path,
-        default=Path("results/eval/scifact_train/eval_detail.jsonl"),
-        help="Alias for --secondary-detail; defaults to the SciFact curriculum artefact.",
+        help="Alias for --secondary-detail (kept for backwards compatibility).",
     )
     parser.add_argument("--fever-train-index", type=Path, default=Path("data/splits/fever_train_ids.txt"))
     parser.add_argument("--fever-val-index", type=Path, default=Path("data/splits/fever_val_ids.txt"))
@@ -61,45 +69,41 @@ def parse_args() -> argparse.Namespace:
         "--secondary-train-index",
         dest="secondary_train_index",
         type=Path,
-        help="Training split ids for the secondary dataset (overrides SciFact default).",
+        help="Training split ids for the secondary dataset (overrides the preset default).",
     )
     parser.add_argument(
         "--secondary-val-index",
         dest="secondary_val_index",
         type=Path,
-        help="Validation split ids for the secondary dataset (overrides SciFact default).",
+        help="Validation split ids for the secondary dataset (overrides the preset default).",
     )
     parser.add_argument(
         "--secondary-test-index",
         dest="secondary_test_index",
         type=Path,
-        help="Test split ids for the secondary dataset (overrides SciFact default).",
+        help="Test split ids for the secondary dataset (overrides the preset default).",
     )
     parser.add_argument(
         "--scifact-train-index",
         dest="secondary_train_index",
         type=Path,
-        default=Path("data/splits/scifact_train_ids.txt"),
-        help="Alias for --secondary-train-index; defaults to SciFact ids.",
+        help="Alias for --secondary-train-index; retained for backwards compatibility.",
     )
     parser.add_argument(
         "--scifact-val-index",
         dest="secondary_val_index",
         type=Path,
-        default=Path("data/splits/scifact_val_ids.txt"),
-        help="Alias for --secondary-val-index; defaults to SciFact ids.",
+        help="Alias for --secondary-val-index; retained for backwards compatibility.",
     )
     parser.add_argument(
         "--scifact-test-index",
         dest="secondary_test_index",
         type=Path,
-        default=Path("data/splits/scifact_test_ids.txt"),
-        help="Alias for --secondary-test-index; defaults to SciFact ids.",
+        help="Alias for --secondary-test-index; retained for backwards compatibility.",
     )
     parser.add_argument(
         "--secondary-label",
         type=str,
-        default="scifact",
         help="Human-friendly label for the secondary dataset (used in logs and summaries).",
     )
     parser.add_argument(
@@ -130,7 +134,38 @@ def parse_args() -> argparse.Namespace:
         default=0,
         help="Optional cap on FEVER batches per epoch for quicker curricula debugging (0 = full epoch).",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    # Resolve defaults for the secondary dataset when explicit overrides are not supplied.
+    preset = (args.secondary_preset or "scifact").lower()
+    if preset not in {"scifact", "hover"}:  # pragma: no cover - argparse guards this already
+        raise ValueError(f"Unknown secondary preset: {preset}")
+
+    if preset == "hover":
+        default_detail = Path("results/eval/hover_multi_hop_combined/eval_detail.jsonl")
+        default_train = Path("data/splits/hover_train_train_ids.txt")
+        default_val = Path("data/splits/hover_train_val_ids.txt")
+        default_test = Path("data/splits/hover_dev_test_ids.txt")
+        default_label = "hover_multi_hop"
+    else:  # scifact preset
+        default_detail = Path("results/eval/scifact_train/eval_detail.jsonl")
+        default_train = Path("data/splits/scifact_train_ids.txt")
+        default_val = Path("data/splits/scifact_val_ids.txt")
+        default_test = Path("data/splits/scifact_test_ids.txt")
+        default_label = "scifact"
+
+    if args.secondary_detail is None:
+        args.secondary_detail = default_detail
+    if args.secondary_train_index is None:
+        args.secondary_train_index = default_train
+    if args.secondary_val_index is None:
+        args.secondary_val_index = default_val
+    if args.secondary_test_index is None:
+        args.secondary_test_index = default_test
+    if args.secondary_label is None:
+        args.secondary_label = default_label
+
+    return args
 
 
 def parse_ratio(spec: str) -> Tuple[int, int]:
