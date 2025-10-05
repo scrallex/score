@@ -951,6 +951,11 @@ def main() -> None:
     parser.add_argument("--split-seed", type=int, default=7)
     parser.add_argument("--dev-ratio", type=float, default=0.8)
     parser.add_argument(
+        "--skip-threshold-sweep",
+        action="store_true",
+        help="Use the provided thresholds instead of running the exhaustive sweep on the dev split.",
+    )
+    parser.add_argument(
         "--disable-reliability",
         action="store_true",
         help="Disable the Transformer reliability gate and fall back to heuristic token-support admissions.",
@@ -1066,14 +1071,31 @@ def main() -> None:
     contexts = build_contexts(claims, engine)
     dev_contexts, test_contexts = split_contexts(contexts, args.dev_ratio, args.split_seed)
 
-    thresholds, dev_result = best_thresholds(
-        dev_contexts,
-        args.structural_threshold,
-        engine,
-        args.semantic_threshold,
-        reliability_model,
-        heuristic_fallback=heuristic_fallback,
-    )
+    if args.skip_threshold_sweep:
+        thresholds = Thresholds(
+            r_min=args.r_min,
+            lambda_max=args.hazard_max,
+            sigma_min=args.sigma_min,
+            structural_threshold=args.structural_threshold,
+            semantic_threshold=args.semantic_threshold,
+        )
+        dev_result = evaluate_contexts(
+            dev_contexts,
+            thresholds,
+            engine,
+            collect_detail=False,
+            reliability_model=reliability_model,
+            heuristic_fallback=heuristic_fallback,
+        )
+    else:
+        thresholds, dev_result = best_thresholds(
+            dev_contexts,
+            args.structural_threshold,
+            engine,
+            args.semantic_threshold,
+            reliability_model,
+            heuristic_fallback=heuristic_fallback,
+        )
     test_result = evaluate_contexts(
         test_contexts,
         thresholds,

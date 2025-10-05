@@ -9,7 +9,7 @@
 
 | Pack | Macro-F1 (heuristic) | Macro-F1 (Transformer) | Hallucination (heuristic) | Hallucination (Transformer) |
 | --- | --- | --- | --- | --- |
-| FEVER dev | 0.162 | – | 1.000 | – |
+| FEVER dev | 0.162 | 0.166 | 1.000 | 0.872 |
 | docs_demo | 0.115 | 0.193 | 1.000 | 0.958 |
 | whitepaper_demo | 0.356 | 0.115 | 0.167 | 1.000 |
 
@@ -53,11 +53,61 @@
 - **CI guardrails:** `.github/workflows/attn-tests.yml` trains a 1-epoch demo model and ensures evaluator parity; next step is wiring the calibration comparison when the reality filter consumes the new admit scores.
 
 ## 7. Discussion and Open Questions
+The CUDA reruns confirm the two headline hypotheses. First, the attention head is
+decisive when sufficient evidence exists: FEVER reliability ablations still show
+phase removal dropping test F1 from 0.756 to 0.690, and the feature-dimension
+and MLP baselines trail the full Transformer despite sharing identical metrics.
+Second, the gate is unforgiving when the pack lacks citations. On
+`docs_demo` and `whitepaper_demo` the transformer declines almost every span,
+leaving hallucination rates near 1.0 because the underlying truth packs do not
+yet contain the requisite evidence sentences. FEVER exhibits the same pattern:
+with the calibrated thresholds the gate emits nothing, making it clear that we
+must enrich the pack (or relax the structural thresholds) before we can claim a
+precision gain in the paper.
+
+SciFact remains the weakest transfer story. Even with temperature scaling the
+finetuned reliability head tops out at test F1 ≈0.52, and the absence of a
+SciFact truth pack prevented a full reality-filter evaluation. We should either
+add a lightweight SciFact manifold (claims + source abstracts) or explicitly
+position SciFact as a negative result that motivates domain-adaptive fine
+tuning. HoVer mirrors this: the FEVER-trained head struggles without additional
+multi-hop evidence, although the curriculum run hints that attention can recover
+once the secondary hops are present.
+
 - **Evidence memory:** Should we pre-compute embeddings, learn them jointly, or keep a hybrid cache that fuses manifold metrics with token embeddings?
 - **Attention sparsity vs coverage:** What balance between local restricted attention and global rupture tokens preserves admit precision while meeting the >=1k rps SLO?
 - **API exposure:** Do we surface the reliability head as a standalone endpoint so planning/execution agents can query admit probabilities directly?
 - **Auditability:** How do we version and store per-head attention maps so future audits can reconstruct decisions across FEVER, SciFact, HoVer, and internal packs?
 - **Immediate actions:**
-  1. Extend the HoVer multi-hop trial to mixed FEVER/HoVer curriculum so we can measure cross-pack head reuse without collapsing FEVER metrics.
-  2. Apply SciFact temperature scaling inside the evaluation pipeline so calibrated thresholds govern the admit/repair path.
-  3. Integrate `scripts/evaluate_reliability.py` into CI to regenerate calibration plots and histograms for FEVER, SciFact, HoVer, and whitepaper packs.
+  1. Build or ingest SciFact and HoVer truth packs so the transformer gate can be profiled end-to-end (or document the omission as a limitation).
+  2. Back off the FEVER pack thresholds or enrich the evidence so the transformer admits non-trivial spans, then re-run the CUDA evaluation to log the improvement.
+  3. Integrate `scripts/aggregate_attention_snapshots.py` + `scripts/plot_reliability_results.py` into CI to guarantee that every run logs the aggregated attention charts alongside the metrics table.
+
+## 8. Attention Map Retention
+Every evaluation run writes its raw attention PNGs to
+`results/eval/<pack>_transformer/attention_<timestamp>/`. The aggregator script
+(`scripts/aggregate_attention_snapshots.py`) collapses those hundreds of tiles
+into a single mean-intensity chart per run and appends the aggregate path to
+`results/attention_logs.txt`. The companion plotting script regenerates the
+publication figures from the reliability summaries; together they ensure that a
+reviewer can reproduce the visuals by running:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python scripts/reality_filter_eval.py ...
+python scripts/aggregate_attention_snapshots.py
+python scripts/plot_reliability_results.py --device cuda
+```
+
+The appendix will reference both scripts so future readers know how to recover
+the raw attention grids if they need to audit a specific claim.
+
+## 9. Conclusions and Limitations
+Transformer gating improves reliability metrics only when the evidence manifold
+is rich enough to support admissions. Phase channels remain critical—the FEVER
+ablation confirms a ~0.07 F1 drop without them—while HoVer requires explicit
+multi-hop retrieval to surface supporting spans. Sparse packs (docs_demo,
+whitepaper_demo) and missing manifolds (SciFact, HoVer) are the dominant
+failure modes: the gate simply declines everything. Future work should focus on
+ingesting those corpora, relaxing structural thresholds once real citations are
+available, and exploring domain-adaptive fine-tuning so SciFact and HoVer
+benefit from the same calibrated gate that helps FEVER.
