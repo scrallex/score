@@ -1,0 +1,146 @@
+{
+  "checkpoint": "models/reliability_hover_multi_hop.pt",
+  "detail_path": "results/eval/hover_dev_multi_hop/eval_detail.jsonl",
+  "subset_size": 4000,
+  "summary": {
+    "attention": {
+      "attention_entropy_mean": 1.8192079648322856,
+      "attention_entropy_std": 0.2537831639156873,
+      "count": 4000.0,
+      "max_attention_mean": 0.17344010005146265,
+      "max_attention_q90": 0.201238651573658,
+      "max_attention_std": 0.09751353075827841
+    },
+    "calibration": {
+      "admit_threshold": 0.1,
+      "f1": 0.6703536115300821,
+      "margin_threshold": -0.2,
+      "precision": 0.5041593143433325,
+      "recall": 1.0
+    },
+    "flat_metrics": {
+      "attention_entropy_mean": 1.8192079648322856,
+      "attention_entropy_std": 0.2537831639156873,
+      "coherence_mean": 0.008671029108867514,
+      "coherence_std": 0.0023152659275286484,
+      "corr_prob_coherence": -0.05172548764412752,
+      "corr_prob_entropy": 0.051725281882073725,
+      "corr_prob_lambda": 0.1107833993373057,
+      "corr_prob_patternability": -0.10652396533076162,
+      "corr_prob_rupture": 0.1107833993373057,
+      "corr_prob_semantic": -0.25141655479438596,
+      "corr_prob_stability": -0.11078361666577717,
+      "count": 4000.0,
+      "entropy_mean": 0.9913289816677571,
+      "entropy_std": 0.0023152654884086563,
+      "lambda_mean": 0.5123291932493448,
+      "lambda_std": 0.005942809911091202,
+      "max_attention_mean": 0.17344010005146265,
+      "max_attention_q90": 0.201238651573658,
+      "max_attention_std": 0.09751353075827841,
+      "mean_probability": 0.5371803737781302,
+      "patternability_mean": 0.4625470804870129,
+      "patternability_std": 0.000963661584831039,
+      "positive_rate": 0.5,
+      "prob_std": 0.0761767536960022,
+      "rupture_mean": 0.5123291932493448,
+      "rupture_std": 0.005942809911091202,
+      "semantic_mean": 0.6372069713622331,
+      "semantic_std": 0.04759531207586812,
+      "stability_mean": 0.4876708186343312,
+      "stability_std": 0.0059428090333786335
+    },
+    "metrics": {
+      "brier": 0.24566443308162456,
+      "ece": 0.03744862433293017,
+      "f1": 0.6703536115300821,
+      "precision": 0.5041593143433325,
+      "recall": 1.0
+    },
+    "positive_rate": 0.5,
+    "probability_histogram": {
+      "density": [
+        0.00825,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.00275,
+        0.14675,
+        0.48625,
+        0.30275,
+        0.04275,
+        0.00025,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.01025
+      ],
+      "edges": [
+        0.0,
+        0.05,
+        0.1,
+        0.15000000000000002,
+        0.2,
+        0.25,
+        0.30000000000000004,
+        0.35000000000000003,
+        0.4,
+        0.45,
+        0.5,
+        0.55,
+        0.6000000000000001,
+        0.65,
+        0.7000000000000001,
+        0.75,
+        0.8,
+        0.8500000000000001,
+        0.9,
+        0.9500000000000001,
+        1.0
+      ]
+    },
+    "structural": {
+      "coherence": {
+        "corr_prob": -0.05172548764412752,
+        "mean": 0.008671029108867514,
+        "std": 0.0023152659275286484
+      },
+      "entropy": {
+        "corr_prob": 0.051725281882073725,
+        "mean": 0.9913289816677571,
+        "std": 0.0023152654884086563
+      },
+      "lambda": {
+        "corr_prob": 0.1107833993373057,
+        "mean": 0.5123291932493448,
+        "std": 0.005942809911091202
+      },
+      "patternability": {
+        "corr_prob": -0.10652396533076162,
+        "mean": 0.4625470804870129,
+        "std": 0.000963661584831039
+      },
+      "rupture": {
+        "corr_prob": 0.1107833993373057,
+        "mean": 0.5123291932493448,
+        "std": 0.005942809911091202
+      },
+      "semantic": {
+        "corr_prob": -0.25141655479438596,
+        "mean": 0.6372069713622331,
+        "std": 0.04759531207586812
+      },
+      "stability": {
+        "corr_prob": -0.11078361666577717,
+        "mean": 0.4876708186343312,
+        "std": 0.0059428090333786335
+      }
+    }
+  }
+}

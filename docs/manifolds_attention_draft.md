@@ -32,15 +32,15 @@
 - **E1 - Final-answer scoring:** GPU retrains on FEVER reach test F1 0.756 with calibrated thresholds (checkpoint `models/reliability_fever_attn_full.pt`); whitepaper_demo remains unchanged because the reliability head is not yet wired into the admission path.
 - **E2 - Margin/overlap calibration:** Calibration sweeps and temperature scaling reduce SciFact ECE from 0.207 to 0.075 (`results/analysis/scifact_temperature_finetune.json`), but we still need to propagate the calibrated thresholds into `reality_filter_eval.py`.
 - **E3 - Phase encoding ablation:** Dropping phase channels cuts FEVER test F1 from 0.756 to 0.690; SciFact remains fragile without them, so the whitepaper will position phase information as a key ablation result.
-- **E4 - Head specialisation analysis:** `docs/figures/attention_summary.png` visualises head entropy and max weights across FEVER, SciFact, and HoVer; HoVer stays diffuse (mean max ~=0.25), motivating multi-hop retrieval.
-- **E5 - Sparsity sweep:** Structured masks are still pending; we hold >=1k rps in the existing demo but need to formalise throughput + admit precision trade-offs.
+- **E4 - Head specialisation analysis:** Multi-hop fine-tuning on HoVer (2 epochs, RTX 3080 Ti) lifts validation F1 to 0.727 and test F1 to 0.662 at calibrated thresholds 0.2 / 0.0 (`results/experiments/hover_multi_hop_trial.json`). The refreshed attention summary (`docs/figures/hover_attention_multi_hop.png`) shows the Transformer concentrating weights on secondary-hop evidence; mean attention entropy drops to 1.82 with 90th percentile max weight 0.20 (`results/experiments/hover_multi_hop_eval_summary.json`).
+- **E5 - Sparsity sweep:** Structured masking over the multi-hop checkpoint (`results/experiments/hover_multi_hop_sparsity.json`) keeps admit precision/recall at 1.0 while throughput ranges 179-184 records/sec as we vary local window {32, 64} and rupture tokens {4, 8}, giving us concrete throughput vs. context-size trade-offs.
 
 ## 6. Integration Plan
 - **Model implementation:** `src/sep_text_manifold/attn_ospace.py` hosts the Transformer backbone, phase fusion, cross-attention, and reliability head.
 - **Training harness:** `scripts/train_reliability_attn.py` ingests eval details, trains with calibration sweeps, and logs admit precision/recall, Brier score, ECE, and attention entropy.
 - **Dataset ingestion:** `scripts/convert_fever_to_eval.py`, `scripts/convert_scifact_to_eval.py`, and `scripts/convert_hover_to_eval.py` hydrate corpora into STM evaluation artefacts with structural metrics and citations.
 - **Service swap:** `scripts/reality_filter_eval.py` now accepts a reliability checkpoint flag, but the whitepaper demo still defaults to heuristics; we need to switch the admit path to the Transformer output before rerunning metrics.
-- **Logging & reports:** Attention maps for FEVER/SciFact/HoVer runs live in `results/eval/fever_attention/`, `results/eval/fever_scifact_attention/`, and related directories; the aggregate figure (`docs/figures/attention_summary.png`) is ready for the whitepaper appendix.
+- **Logging & reports:** Attention artefacts are now summarised into compact figures (`docs/figures/attention_summary.png`, `docs/figures/hover_attention_multi_hop.png`) instead of hundreds of per-claim PNGs; raw HoVer multi-hop eval metrics live in `results/experiments/hover_multi_hop_eval_summary.json` for reproducibility.
 - **CI guardrails:** `.github/workflows/attn-tests.yml` trains a 1-epoch demo model and ensures evaluator parity; next step is wiring the calibration comparison when the reality filter consumes the new admit scores.
 
 ## 7. Discussion and Open Questions
@@ -49,6 +49,6 @@
 - **API exposure:** Do we surface the reliability head as a standalone endpoint so planning/execution agents can query admit probabilities directly?
 - **Auditability:** How do we version and store per-head attention maps so future audits can reconstruct decisions across FEVER, SciFact, HoVer, and internal packs?
 - **Immediate actions:**
-  1. Prototype multi-hop retrieval or expanded evidence memory ahead of the HoVer adaptation run to reduce attention entropy and lift admit mass.
+  1. Extend the HoVer multi-hop trial to mixed FEVER/HoVer curriculum so we can measure cross-pack head reuse without collapsing FEVER metrics.
   2. Apply SciFact temperature scaling inside the evaluation pipeline so calibrated thresholds govern the admit/repair path.
   3. Integrate `scripts/evaluate_reliability.py` into CI to regenerate calibration plots and histograms for FEVER, SciFact, HoVer, and whitepaper packs.
