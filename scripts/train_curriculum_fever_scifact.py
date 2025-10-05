@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 from collections import deque
 from pathlib import Path
 from typing import Deque, Dict, Iterable, Iterator, List, Optional, Sequence, Tuple
@@ -364,30 +363,32 @@ def main() -> None:
     bce_loss = nn.BCEWithLogitsLoss()
     mse_loss = nn.MSELoss()
 
-    scifact_iterator: Iterator[Dict[str, torch.Tensor]] = iter(scifact_train_loader)
+    secondary_iterator: Iterator[Dict[str, torch.Tensor]] = iter(secondary_train_loader)
 
-    def next_scifact_batch() -> Dict[str, torch.Tensor]:
-        nonlocal scifact_iterator
+    def next_secondary_batch() -> Dict[str, torch.Tensor]:
+        nonlocal secondary_iterator
         try:
-            return next(scifact_iterator)
+            return next(secondary_iterator)
         except StopIteration:
-            scifact_iterator = iter(scifact_train_loader)
-            return next(scifact_iterator)
+            secondary_iterator = iter(secondary_train_loader)
+            return next(secondary_iterator)
 
     admit_threshold = 0.5
     margin_threshold = 0.25
 
     history: List[Dict[str, object]] = []
+    max_steps = max(0, args.max_steps)
     for epoch in range(1, args.epochs + 1):
         model.train()
         running: Dict[str, Deque[float]] = {
             "fever_loss": deque(maxlen=100),
             "fever_admit": deque(maxlen=100),
             "fever_margin": deque(maxlen=100),
-            "scifact_loss": deque(maxlen=100),
-            "scifact_admit": deque(maxlen=100),
-            "scifact_margin": deque(maxlen=100),
+            "secondary_loss": deque(maxlen=100),
+            "secondary_admit": deque(maxlen=100),
+            "secondary_margin": deque(maxlen=100),
         }
+        secondary_credit = 0
 
         for step, fever_batch in enumerate(fever_train_loader, start=1):
             optimizer.zero_grad(set_to_none=True)
@@ -398,29 +399,41 @@ def main() -> None:
             running["fever_admit"].append(admit_l)
             running["fever_margin"].append(margin_l)
 
-            if step % ratio_modulus == 0:
-                scifact_batch = next_scifact_batch()
+            secondary_credit += secondary_ratio
+            while secondary_credit >= fever_ratio:
+                secondary_batch = next_secondary_batch()
                 optimizer.zero_grad(set_to_none=True)
-                loss_s, admit_s, margin_s = run_step(model, scifact_batch, config, device, bce_loss, mse_loss)
-                loss_s.backward()
+                loss_secondary, admit_secondary, margin_secondary = run_step(
+                    model,
+                    secondary_batch,
+                    config,
+                    device,
+                    bce_loss,
+                    mse_loss,
+                )
+                loss_secondary.backward()
                 optimizer.step()
-                running["scifact_loss"].append(float(loss_s.item()))
-                running["scifact_admit"].append(admit_s)
-                running["scifact_margin"].append(margin_s)
+                running["secondary_loss"].append(float(loss_secondary.item()))
+                running["secondary_admit"].append(admit_secondary)
+                running["secondary_margin"].append(margin_secondary)
+                secondary_credit -= fever_ratio
 
             if step % 100 == 0:
                 fever_avg = sum(running["fever_loss"]) / max(1, len(running["fever_loss"]))
-                scifact_avg = sum(running["scifact_loss"]) / max(1, len(running["scifact_loss"]))
+                secondary_avg = sum(running["secondary_loss"]) / max(1, len(running["secondary_loss"]))
                 print(
                     json.dumps(
                         {
                             "epoch": epoch,
                             "step": step,
                             "fever_loss": fever_avg,
-                            "scifact_loss": scifact_avg,
+                            f"{secondary_slug}_loss": secondary_avg,
                         }
                     )
                 )
+
+            if max_steps and step >= max_steps:
+                break
 
         fever_val_metrics = evaluate_loader(
             model,
@@ -431,9 +444,9 @@ def main() -> None:
             margin_threshold=margin_threshold,
             ece_bins=args.ece_bins,
         )
-        scifact_val_metrics = evaluate_loader(
+        secondary_val_metrics = evaluate_loader(
             model,
-            scifact_val_loader,
+            secondary_val_loader,
             config,
             device,
             admit_threshold=admit_threshold,
@@ -443,7 +456,8 @@ def main() -> None:
         snapshot = {
             "epoch": epoch,
             "fever_val": fever_val_metrics,
-            "scifact_val": scifact_val_metrics,
+            "secondary_val": secondary_val_metrics,
+            f"{secondary_slug}_val": secondary_val_metrics,
         }
         history.append(snapshot)
         print(json.dumps(snapshot, indent=2))
@@ -453,7 +467,11 @@ def main() -> None:
     admit_grid = parse_grid(args.admit_grid) if args.calibrate else []
     margin_grid = parse_grid(args.margin_grid) if args.calibrate else []
     fever_calibration = calibrate_split(model, fever_val_loader, config, device, admit_grid, margin_grid) if args.calibrate else {}
-    scifact_calibration = calibrate_split(model, scifact_val_loader, config, device, admit_grid, margin_grid) if args.calibrate else {}
+    secondary_calibration = (
+        calibrate_split(model, secondary_val_loader, config, device, admit_grid, margin_grid)
+        if args.calibrate
+        else {}
+    )
 
     fever_test_metrics = evaluate_loader(
         model,
@@ -464,13 +482,13 @@ def main() -> None:
         margin_threshold=fever_calibration.get("margin_threshold", margin_threshold),
         ece_bins=args.ece_bins,
     )
-    scifact_test_metrics = evaluate_loader(
+    secondary_test_metrics = evaluate_loader(
         model,
-        scifact_test_loader,
+        secondary_test_loader,
         config,
         device,
-        admit_threshold=scifact_calibration.get("admit_threshold", admit_threshold),
-        margin_threshold=scifact_calibration.get("margin_threshold", margin_threshold),
+        admit_threshold=secondary_calibration.get("admit_threshold", admit_threshold),
+        margin_threshold=secondary_calibration.get("margin_threshold", margin_threshold),
         ece_bins=args.ece_bins,
     )
 
@@ -478,23 +496,29 @@ def main() -> None:
         "schedule": {
             "ratio": args.ratio,
             "fever_batches_per_epoch": len(fever_train_loader),
-            "scifact_batches_per_epoch": len(scifact_train_loader),
+            "secondary_batches_per_epoch": len(secondary_train_loader),
+            "secondary_label": secondary_label,
+            "max_steps": max_steps,
         },
         "epochs": args.epochs,
         "learning_rate": args.learning_rate,
         "history": history,
         "validation": {
             "fever": history[-1]["fever_val"] if history else {},
-            "scifact": history[-1]["scifact_val"] if history else {},
+            "secondary": history[-1]["secondary_val"] if history else {},
+            secondary_slug: history[-1].get(f"{secondary_slug}_val", {}) if history else {},
         },
         "calibration": {
             "fever": fever_calibration,
-            "scifact": scifact_calibration,
+            "secondary": secondary_calibration,
+            secondary_slug: secondary_calibration,
         },
         "test": {
             "fever": fever_test_metrics,
-            "scifact": scifact_test_metrics,
+            "secondary": secondary_test_metrics,
+            secondary_slug: secondary_test_metrics,
         },
+        "secondary_label": secondary_label,
         "checkpoint": str(args.output_checkpoint) if args.output_checkpoint else None,
     }
 
