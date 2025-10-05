@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 import numpy as np
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence
+from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -24,6 +24,15 @@ from scripts.truth_pack_utils import build_truth_pack_from_texts
 SUPPORTED_LABEL = "SUPPORTED"
 REFUTED_LABEL = "REFUTED"
 UNVERIFIABLE_LABEL = "UNVERIFIABLE"
+
+
+def _normalise(vector: Optional[np.ndarray]) -> Optional[np.ndarray]:
+    if vector is None:
+        return None
+    norm = float(np.linalg.norm(vector))
+    if norm <= 0.0:
+        return None
+    return vector / norm
 
 
 @dataclass
@@ -82,6 +91,18 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=256,
         help="Hash embedding dimensionality when using semantic-method hash (default: 256)",
+    )
+    parser.add_argument(
+        "--neighbor-count",
+        type=int,
+        default=0,
+        help="Number of additional corpus neighbors to attach per claim",
+    )
+    parser.add_argument(
+        "--truth-pack-root",
+        type=Path,
+        default=Path("analysis/truth_packs"),
+        help="Directory where enriched truth packs are written",
     )
     parser.add_argument(
         "--progress",
@@ -170,8 +191,9 @@ def gather_evidence(
     corpus: Dict[int, CorpusEntry],
     extractor: FeatureExtractor,
     question_vec: Optional[np.ndarray],
-) -> List[EvidenceSentence]:
+) -> Tuple[List[EvidenceSentence], Set[Tuple[int, int]]]:
     evidence_sentences: List[EvidenceSentence] = []
+    gold_pairs: Set[Tuple[int, int]] = set()
     evidence_payload = claim.evidence or {}
     for doc_id_str, rationales in evidence_payload.items():
         try:
@@ -202,7 +224,8 @@ def gather_evidence(
                         label=label,
                     )
                 )
-    return evidence_sentences
+                gold_pairs.add((doc_id, sent_idx))
+    return evidence_sentences, gold_pairs
 
 
 def convert_claim(
@@ -210,11 +233,16 @@ def convert_claim(
     corpus: Dict[int, CorpusEntry],
     extractor: FeatureExtractor,
     split: str,
+    *,
+    doc_embeddings: Dict[int, np.ndarray],
+    neighbor_count: int,
+    pack_texts: Dict[str, str],
+    doc_text_lookup: Dict[int, str],
 ) -> Optional[Dict[str, object]]:
     if not claim.claim:
         return None
     question_vec = extractor.vector(claim.claim)
-    evidence_items = gather_evidence(claim, corpus, extractor, question_vec)
+    evidence_items, gold_pairs = gather_evidence(claim, corpus, extractor, question_vec)
     label = classify_label(evidence_items)
 
     claim_metrics = extractor.metric_vector(claim.claim, question_vec)
@@ -241,6 +269,87 @@ def convert_claim(
             info=meta,
         )
         sentences.append(sentence_payload)
+
+    # Add full-abstract context sentences for cited documents
+    record_docs: Set[int] = set(claim.cited_doc_ids)
+    record_docs.update(doc_id for doc_id, _ in gold_pairs)
+    for doc_id in sorted(record_docs):
+        entry = corpus.get(doc_id)
+        if entry is None:
+            continue
+        for idx, sentence in enumerate(entry.abstract):
+            if (doc_id, idx) in gold_pairs:
+                continue
+            metrics = extractor.metric_vector(sentence, question_vec)
+            citation = f"scifact://{doc_id}#{idx}?context=1"
+            meta = {"source": "scifact_context", "doc_id": doc_id, "index": idx}
+            sentences.append(
+                build_sentence(
+                    sentence,
+                    label,
+                    admit=False,
+                    metrics=metrics,
+                    citation=citation,
+                    info=meta,
+                )
+            )
+
+    q_vec = _normalise(question_vec)
+    neighbor_sentences: List[Dict[str, object]] = []
+    if neighbor_count > 0 and q_vec is not None:
+        scored_docs: List[Tuple[float, int]] = []
+        for doc_id, embed in doc_embeddings.items():
+            if doc_id in record_docs:
+                continue
+            score = float(np.dot(q_vec, embed))
+            scored_docs.append((score, doc_id))
+        if scored_docs:
+            scored_docs.sort(key=lambda item: item[0], reverse=True)
+            top_docs = [doc_id for _, doc_id in scored_docs[:neighbor_count]]
+            for doc_id in top_docs:
+                entry = corpus.get(doc_id)
+                if entry is None or not entry.abstract:
+                    continue
+                best_idx = -1
+                best_score = float("-inf")
+                best_sentence = ""
+                for idx, sentence in enumerate(entry.abstract):
+                    vec = _normalise(extractor.vector(sentence))
+                    if vec is None:
+                        continue
+                    score = float(np.dot(q_vec, vec))
+                    if score > best_score:
+                        best_score = score
+                        best_idx = idx
+                        best_sentence = sentence
+                if best_idx < 0:
+                    continue
+                metrics = extractor.metric_vector(best_sentence, question_vec)
+                citation = f"scifact://{doc_id}#{best_idx}?neighbor=1"
+                meta = {"source": "scifact_neighbor", "doc_id": doc_id, "index": best_idx}
+                neighbor_sentences.append(
+                    build_sentence(
+                        best_sentence,
+                        label,
+                        admit=False,
+                        metrics=metrics,
+                        citation=citation,
+                        info=meta,
+                    )
+                )
+                record_docs.add(doc_id)
+
+    sentences.extend(neighbor_sentences)
+
+    # Persist claim text into pack for completeness
+    pack_texts.setdefault(f"claim::{claim.id}", claim.claim)
+    for doc_id in record_docs:
+        text = doc_text_lookup.get(doc_id)
+        if text is None:
+            continue
+        key = f"{doc_id}_{corpus.get(doc_id).title if corpus.get(doc_id) else 'doc'}"
+        if key not in pack_texts:
+            pack_texts[key] = text
 
     record_id = f"SCIFACT_{split}_{claim.id}"
     detail = {
@@ -284,37 +393,47 @@ def main() -> None:
     claims = load_claims(args.claims, args.limit)
     corpus = load_corpus(args.corpus)
 
+    doc_text_lookup: Dict[int, str] = {}
+    pack_texts: Dict[str, str] = {}
+    for entry in corpus.values():
+        text = (entry.title + "\n" + "\n".join(entry.abstract)).strip()
+        doc_text_lookup[entry.doc_id] = text
+        key = f"{entry.doc_id}_{entry.title or 'doc'}"
+        pack_texts[key] = text
+
+    doc_embeddings: Dict[int, np.ndarray] = {}
+    for doc_id, text in doc_text_lookup.items():
+        vector = extractor.vector(text)
+        norm_vec = _normalise(vector)
+        if norm_vec is not None:
+            doc_embeddings[doc_id] = norm_vec
+
     args.output.parent.mkdir(parents=True, exist_ok=True)
     written = 0
-    used_doc_ids: set[int] = set()
     with args.output.open("w") as out:
         for idx, claim in enumerate(claims, start=1):
-            converted = convert_claim(claim, corpus, extractor, args.split)
+            converted = convert_claim(
+                claim,
+                corpus,
+                extractor,
+                args.split,
+                doc_embeddings=doc_embeddings,
+                neighbor_count=args.neighbor_count,
+                pack_texts=pack_texts,
+                doc_text_lookup=doc_text_lookup,
+            )
             if converted is None:
                 continue
             out.write(json.dumps(converted) + "\n")
             written += 1
-            used_doc_ids.update(claim.cited_doc_ids)
-            for key in claim.evidence.keys():
-                try:
-                    used_doc_ids.add(int(key))
-                except (TypeError, ValueError):
-                    continue
             if args.progress and idx % 200 == 0:
                 print(f"processed {idx} claims (written={written})")
 
-    pack_name = f"scifact_{args.split}"
-    texts = {
-        f"{corpus[doc_id].doc_id}_{corpus[doc_id].title or 'doc'}": (
-            (corpus[doc_id].title + "\n" + "\n".join(corpus[doc_id].abstract)).strip()
-        )
-        for doc_id in sorted(used_doc_ids)
-        if doc_id in corpus
-    }
+    pack_name = f"scifact_{args.split}_full"
     manifest_path = build_truth_pack_from_texts(
         pack_name=pack_name,
-        texts=texts,
-        output_root=Path("analysis/truth_packs") / pack_name,
+        texts=pack_texts,
+        output_root=args.truth_pack_root / pack_name,
     )
 
     print(
@@ -325,6 +444,7 @@ def main() -> None:
                 "output": str(args.output),
                 "claims_processed": written,
                 "truth_pack_manifest": str(manifest_path),
+                "neighbor_count": args.neighbor_count,
             },
             indent=2,
         )
