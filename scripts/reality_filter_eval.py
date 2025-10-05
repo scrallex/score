@@ -284,9 +284,12 @@ def extract_token(question: str) -> Optional[str]:
 
 
 def baseline_answer(claim: Dict[str, object]) -> str:
-    question: str = claim.get("question", "")
+    question = str(claim.get("question", "") or "").strip()
     expected: str = claim.get("expected", "UNVERIFIABLE")
-    token = extract_token(question) or question.split()[0]
+    token = extract_token(question)
+    if token is None:
+        parts = question.split()
+        token = parts[0] if parts else "the claim"
     if expected == "SUPPORTED":
         return f"The documentation states that {token} is covered in detail."
     if expected == "REFUTED":

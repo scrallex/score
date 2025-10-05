@@ -18,6 +18,10 @@ results/eval/**/logs/
 # Large evaluation dumps regenerated on demand
 results/eval/**/eval_detail.jsonl
 !results/eval/fever_ci_demo/eval_detail.jsonl
+analysis/truth_packs/scifact_*/
+analysis/truth_packs/hover_*/
+analysis/truth_packs/scifact*/
+analysis/truth_packs/hover*/
 !scripts/analysis/
 !scripts/analysis/*.py
 

@@ -10,3 +10,5 @@
 | HoVer | FEVER adapt | 0.095 | 0.480 | - | - |
 | HoVer | FEVER base | 0.000 | 0.516 | - | - |
 | HoVer | Transformer | 0.000 | 0.516 | 0.000 | 0.526 |
+| SciFact | Transformer (relaxed gate) | - | - | 0.154 | - |
+| HoVer | Transformer (relaxed gate) | - | - | 0.220 | - |

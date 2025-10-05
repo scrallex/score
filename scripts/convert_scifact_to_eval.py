@@ -12,9 +12,14 @@ import numpy as np
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.append(str(REPO_ROOT))
+
 from sep_text_manifold.semantic import EmbeddingConfig, SemanticEmbedder
 
 from eval_feature_utils import FeatureExtractor
+from scripts.truth_pack_utils import build_truth_pack_from_texts
 
 SUPPORTED_LABEL = "SUPPORTED"
 REFUTED_LABEL = "REFUTED"
@@ -281,6 +286,7 @@ def main() -> None:
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     written = 0
+    used_doc_ids: set[int] = set()
     with args.output.open("w") as out:
         for idx, claim in enumerate(claims, start=1):
             converted = convert_claim(claim, corpus, extractor, args.split)
@@ -288,8 +294,28 @@ def main() -> None:
                 continue
             out.write(json.dumps(converted) + "\n")
             written += 1
+            used_doc_ids.update(claim.cited_doc_ids)
+            for key in claim.evidence.keys():
+                try:
+                    used_doc_ids.add(int(key))
+                except (TypeError, ValueError):
+                    continue
             if args.progress and idx % 200 == 0:
                 print(f"processed {idx} claims (written={written})")
+
+    pack_name = f"scifact_{args.split}"
+    texts = {
+        f"{corpus[doc_id].doc_id}_{corpus[doc_id].title or 'doc'}": (
+            (corpus[doc_id].title + "\n" + "\n".join(corpus[doc_id].abstract)).strip()
+        )
+        for doc_id in sorted(used_doc_ids)
+        if doc_id in corpus
+    }
+    manifest_path = build_truth_pack_from_texts(
+        pack_name=pack_name,
+        texts=texts,
+        output_root=Path("analysis/truth_packs") / pack_name,
+    )
 
     print(
         json.dumps(
@@ -298,6 +324,7 @@ def main() -> None:
                 "input_corpus": str(args.corpus),
                 "output": str(args.output),
                 "claims_processed": written,
+                "truth_pack_manifest": str(manifest_path),
             },
             indent=2,
         )

@@ -9,11 +9,13 @@
 
 | Pack | Macro-F1 (heuristic) | Macro-F1 (Transformer) | Hallucination (heuristic) | Hallucination (Transformer) |
 | --- | --- | --- | --- | --- |
-| FEVER dev | 0.162 | 0.166 | 1.000 | 0.872 |
-| docs_demo | 0.115 | 0.193 | 1.000 | 0.958 |
-| whitepaper_demo | 0.356 | 0.115 | 0.167 | 1.000 |
+| FEVER dev | 0.162 | 0.166 | 1.000 | 0.814 |
+| docs_demo | 0.115 | 0.305 | 1.000 | 0.875 |
+| whitepaper_demo | 0.356 | 1.000 | 0.167 | 0.208 |
+| SciFact dev | 0.154 | 0.154 | 0.167 | 1.000 |
+| HoVer dev | 0.220 | 0.220 | 0.041 | 0.039 |
 
-*FEVER transformer metrics pending full re-run; heuristic figures from `results/eval/fever_dev/eval_summary.json`.*
+*Relaxed thresholds: `structural=0.25`, `semantic=0.05`, `lambda=0.6`, `sigma=-0.2`, reliability `(p=0.05, margin=-0.5)` unless otherwise noted.*
 
 ## 2. Primer on Transformer Attention
 - **Scaled dot-product attention (Sec. 3.2.1, Fig. 2, Vaswani et al., 2017):** Queries attend to keys via sqrt(d_k) scaling and softmax weighting, mirroring our O-space lookups where a span retrieves manifold neighbours based on structural similarity.

@@ -12,6 +12,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.append(str(REPO_ROOT))
+
 try:
     from nltk.tokenize import sent_tokenize
 except LookupError as exc:  # pragma: no cover - runtime tokenizer dependency
@@ -27,6 +31,7 @@ except ImportError as exc:  # pragma: no cover - optional dependency
 from sep_text_manifold.semantic import EmbeddingConfig, SemanticEmbedder
 
 from eval_feature_utils import FeatureExtractor
+from scripts.truth_pack_utils import build_truth_pack_from_texts
 
 LABEL_MAP = {
     "SUPPORTED": "SUPPORTED",
@@ -88,6 +93,12 @@ class WikiSentenceStore:
         if 0 <= index < len(sentences):
             return sentences[index]
         return None
+
+    def article_text(self, page: str) -> Optional[str]:
+        sentences = self._fetch_sentences(page)
+        if not sentences:
+            return None
+        return "\n".join(sentences)
 
 
 def parse_args() -> argparse.Namespace:
@@ -181,6 +192,7 @@ def convert_claim(
     store: WikiSentenceStore,
     extractor: FeatureExtractor,
     split: str,
+    corpus_sink: Dict[str, str],
 ) -> Optional[Dict[str, object]]:
     if not record.claim:
         return None
@@ -199,12 +211,15 @@ def convert_claim(
             citation=None,
         )
     )
+    corpus_sink.setdefault(f"claim::{record.uid}", record.claim)
 
     gold_uris: List[str] = []
     for page, idx in record.supporting_facts:
         text = store.sentence(page, idx)
         if text is None:
             text = f"[missing sentence {idx} in page '{page}']"
+        else:
+            corpus_sink[f"{page}#{idx}"] = text
         metrics = extractor.metric_vector(text, question_vec)
         citation = f"hover://{page}#{idx}"
         gold_uris.append(citation)
@@ -263,18 +278,29 @@ def main() -> None:
     args.output.parent.mkdir(parents=True, exist_ok=True)
 
     records_written = 0
-    try:
-        with args.output.open("w", encoding="utf-8") as handle:
-            for idx, claim in enumerate(load_claims(args.hover_json, args.limit), start=1):
-                converted = convert_claim(claim, store, extractor, args.split)
-                if converted is None:
-                    continue
-                handle.write(json.dumps(converted) + "\n")
-                records_written += 1
-                if args.progress and idx % 500 == 0:
-                    print(f"processed {idx} claims (written={records_written})")
-    finally:
-        store.close()
+    pages_used: Dict[str, None] = {}
+    corpus_sentences: Dict[str, str] = {}
+    with args.output.open("w", encoding="utf-8") as handle:
+        for idx, claim in enumerate(load_claims(args.hover_json, args.limit), start=1):
+            converted = convert_claim(claim, store, extractor, args.split, corpus_sentences)
+            if converted is None:
+                continue
+            handle.write(json.dumps(converted) + "\n")
+            records_written += 1
+            for page, _ in claim.supporting_facts:
+                pages_used[page] = None
+            if args.progress and idx % 500 == 0:
+                print(f"processed {idx} claims (written={records_written})")
+
+    text_corpus: Dict[str, str] = dict(corpus_sentences)
+    store.close()
+
+    pack_name = f"hover_{args.split}"
+    manifest_path = build_truth_pack_from_texts(
+        pack_name=pack_name,
+        texts=text_corpus,
+        output_root=Path("analysis/truth_packs") / pack_name,
+    )
 
     summary = {
         "input": str(args.hover_json),
@@ -282,6 +308,7 @@ def main() -> None:
         "output": str(args.output),
         "records": records_written,
         "split": args.split,
+        "truth_pack_manifest": str(manifest_path),
     }
     print(json.dumps(summary, indent=2))
 
