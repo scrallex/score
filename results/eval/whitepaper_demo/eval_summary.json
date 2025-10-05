@@ -1,17 +1,17 @@
 {
-  "macro_f1": 1.0,
+  "macro_f1": 0.1149425287356322,
   "baseline_macro_f1": 0.6049382716049383,
-  "macro_f1_delta": 0.3950617283950617,
+  "macro_f1_delta": -0.4899957428693061,
   "confusion_matrix": {
     "SUPPORTED": {
-      "SUPPORTED": 11,
+      "SUPPORTED": 0,
       "REFUTED": 0,
-      "UNVERIFIABLE": 0
+      "UNVERIFIABLE": 11
     },
     "REFUTED": {
       "SUPPORTED": 0,
-      "REFUTED": 8,
-      "UNVERIFIABLE": 0
+      "REFUTED": 0,
+      "UNVERIFIABLE": 8
     },
     "UNVERIFIABLE": {
       "SUPPORTED": 0,
@@ -39,16 +39,16 @@
   "metrics": {
     "total": 24,
     "hallucination_rate": 1.0,
-    "repair_yield": 0.7916666666666666,
-    "citation_coverage": 0.4583333333333333
+    "repair_yield": 0.0,
+    "citation_coverage": 0.0
   },
   "best_thresholds": {
     "r_min": 1,
-    "lambda_max": 0.55,
+    "lambda_max": 0.12,
     "sigma_min": 0.15,
     "structural_threshold": 0.46,
     "semantic_threshold": 0.25
   },
-  "dev_macro_f1": 1.0,
+  "dev_macro_f1": 0.2062350119904077,
   "sanity_flags_count": 0
 }

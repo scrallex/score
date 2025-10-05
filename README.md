@@ -108,6 +108,8 @@ python scripts/convert_fever_to_eval.py \
   --wiki-pages data/fever/wiki-pages --split train --progress
 ```
 
+The converter now derives every feature from the manifold tooling: each claim and evidence span is encoded with `sep_text_manifold.encode_window` to obtain coherence, stability, entropy, rupture, and λ. We feed those scores through `patternability_score`, count repeated tokens, and measure semantic alignment against the claim via the `SemanticEmbedder`. Hash embeddings are used by default, but you can enable SentenceTransformers with `--semantic-method transformer` (paired with `--semantic-model`) or tune the hash dimensionality using `--semantic-dims`. Recomputing the metrics from raw text keeps the emitted `eval_detail.jsonl` aligned with what the evaluator and reliability model consume at inference time.
+
 Then train the O-space Transformer reliability head.  The harness now supports
 calibration sweeps, richer evidence encodings, and attention-entropy
 regularisation:

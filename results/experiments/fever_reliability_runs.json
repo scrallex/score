@@ -1,0 +1,157 @@
+[
+  {
+    "name": "transformer_base",
+    "checkpoint": "models/reliability_fever_attn_full.pt",
+    "config": {
+      "epochs": 3,
+      "batch_size": 64,
+      "device": "cuda",
+      "disable_cross_attention": false,
+      "disable_phase_channel": false,
+      "evidence_feature_dim": 7
+    },
+    "validation": {
+      "precision": 0.5663716814159292,
+      "recall": 0.9696969696969697,
+      "f1": 0.7150837988826816,
+      "brier": 0.20659847749676466,
+      "ece": 0.19333861834626548
+    },
+    "calibration": {
+      "admit_threshold": 0.5,
+      "margin_threshold": 0.8,
+      "precision": 0.5688888888888889,
+      "recall": 0.9696969696969697,
+      "f1": 0.7170868347338935
+    },
+    "test": {
+      "precision": 0.6228813559322034,
+      "recall": 0.9607843137254902,
+      "f1": 0.7557840616966581,
+      "brier": 0.18287460445166526,
+      "ece": 0.16915488525230038
+    }
+  },
+  {
+    "name": "transformer_no_cross_attention",
+    "checkpoint": "models/reliability_fever_no_cross.pt",
+    "config": {
+      "epochs": 2,
+      "batch_size": 64,
+      "device": "cuda",
+      "disable_cross_attention": true,
+      "disable_phase_channel": false,
+      "evidence_feature_dim": 7
+    },
+    "validation": {
+      "precision": 0.16666666666666666,
+      "recall": 0.007575757575757576,
+      "f1": 0.014492753623188406,
+      "brier": 0.2533150854964199,
+      "ece": 0.18144225096330044
+    },
+    "calibration": {
+      "admit_threshold": 0.1,
+      "margin_threshold": -0.5,
+      "precision": 0.33,
+      "recall": 1.0,
+      "f1": 0.49624060150375937
+    },
+    "test": {
+      "precision": 0.6666666666666666,
+      "recall": 0.026143790849673203,
+      "f1": 0.05031446540880503,
+      "brier": 0.2512521040312901,
+      "ece": 0.133986591771245
+    }
+  },
+  {
+    "name": "transformer_no_phase",
+    "checkpoint": "models/reliability_fever_no_phase.pt",
+    "config": {
+      "epochs": 2,
+      "batch_size": 64,
+      "device": "cuda",
+      "disable_cross_attention": false,
+      "disable_phase_channel": true,
+      "evidence_feature_dim": 7
+    },
+    "validation": {
+      "precision": 0.59375,
+      "recall": 0.5757575757575758,
+      "f1": 0.5846153846153846,
+      "brier": 0.19404296963258055,
+      "ece": 0.14923963432126525
+    },
+    "calibration": {
+      "admit_threshold": 0.1,
+      "margin_threshold": -0.5,
+      "precision": 0.5698324022346368,
+      "recall": 0.7727272727272727,
+      "f1": 0.6559485530546624
+    },
+    "test": {
+      "precision": 0.7388059701492538,
+      "recall": 0.6470588235294118,
+      "f1": 0.6898954703832751,
+      "brier": 0.16709070419658772,
+      "ece": 0.11887428920117275
+    }
+  },
+  {
+    "name": "transformer_feature_dim_16",
+    "checkpoint": "models/reliability_fever_feat16.pt",
+    "config": {
+      "epochs": 2,
+      "batch_size": 64,
+      "device": "cuda",
+      "disable_cross_attention": false,
+      "disable_phase_channel": false,
+      "evidence_feature_dim": 16
+    },
+    "validation": {
+      "precision": 0.4981132075471698,
+      "recall": 1.0,
+      "f1": 0.6649874055415618,
+      "brier": 0.1828057332845376,
+      "ece": 0.10756972165428087
+    },
+    "calibration": {
+      "admit_threshold": 0.1,
+      "margin_threshold": -0.5,
+      "precision": 0.4981132075471698,
+      "recall": 1.0,
+      "f1": 0.6649874055415618
+    },
+    "test": {
+      "precision": 0.5503597122302158,
+      "recall": 1.0,
+      "f1": 0.7099767981438515,
+      "brier": 0.17719541192511076,
+      "ece": 0.07712941727805854
+    }
+  },
+  {
+    "name": "mlp_baseline",
+    "checkpoint": "models/reliability_fever_mlp.pt",
+    "config": {
+      "epochs": 10,
+      "batch_size": 256,
+      "device": "cuda",
+      "architecture": "mlp",
+      "feature_dim": 15
+    },
+    "validation": {
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6666666666666666,
+      "brier": 0.1807861328125
+    },
+    "test": {
+      "precision": 0.5523465703971119,
+      "recall": 1.0,
+      "f1": 0.7116279069767442,
+      "brier": 0.18084365129470825
+    }
+  }
+]

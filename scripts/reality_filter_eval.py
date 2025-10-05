@@ -635,7 +635,8 @@ def evaluate_contexts(
         violation = violates_rules(outcomes, claim.get("rules"))
 
         repair_applied = any(outcome.action == "repair" for outcome in outcomes)
-        final_hallucinated = not has_support
+        final_admitted = any(outcome.admit for outcome in outcomes)
+        final_hallucinated = not final_admitted
 
         if support_hits:
             predicted = "REFUTED" if negative_claim else "SUPPORTED"

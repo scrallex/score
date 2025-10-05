@@ -7,8 +7,14 @@ import argparse
 import dataclasses
 import json
 import random
+import numpy as np
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt = None
+from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 import torch
 from torch import nn
@@ -60,12 +66,19 @@ class WhitespaceTokenizer:
 class EvalDetailDataset(Dataset[Dict[str, object]]):
     """Wrap evaluation detail records for training."""
 
-    def __init__(self, path: Path, tokenizer: Optional[WhitespaceTokenizer] = None) -> None:
+    def __init__(self, path: Path, tokenizer: Optional[WhitespaceTokenizer] = None, *, feature_dim_override: Optional[int] = None) -> None:
         self.path = path
         self.records = self._load_records(path)
+        self.id_to_index: Dict[str, int] = {}
+        self._populate_index()
         self.tokenizer = tokenizer or WhitespaceTokenizer()
         self.metric_keys: Sequence[str] = tuple(METRIC_KEYS)
-        self.feature_dim = len(self.metric_keys)
+        if feature_dim_override is not None and feature_dim_override > 0:
+            if feature_dim_override < len(self.metric_keys):
+                self.metric_keys = self.metric_keys[:feature_dim_override]
+            self.feature_dim = feature_dim_override
+        else:
+            self.feature_dim = len(self.metric_keys)
         self.label_counts: Dict[str, int] = {}
         self._build_vocab()
 
@@ -81,6 +94,14 @@ class EvalDetailDataset(Dataset[Dict[str, object]]):
         if not records:
             raise ValueError(f"No records loaded from {path}")
         return records
+
+    def _populate_index(self) -> None:
+        self.id_to_index.clear()
+        for idx, record in enumerate(self.records):
+            record_id = str(record.get("id") or idx)
+            if record_id in self.id_to_index:
+                raise ValueError(f"Duplicate record id {record_id} in {self.path}")
+            self.id_to_index[record_id] = idx
 
     def _build_vocab(self) -> None:
         for record in self.records:
@@ -98,6 +119,7 @@ class EvalDetailDataset(Dataset[Dict[str, object]]):
 
     def __getitem__(self, idx: int) -> Dict[str, object]:
         record = self.records[idx]
+        record_id = str(record.get("id") or idx)
         question = record.get("question", "")
         final_answer = record.get("final_answer", "")
         baseline = record.get("baseline_answer", "")
@@ -128,6 +150,7 @@ class EvalDetailDataset(Dataset[Dict[str, object]]):
         margin_target = self._derive_margin(record, label_text)
         label = 1.0 if self._is_supported(record, label_text) else 0.0
         return {
+            "record_id": record_id,
             "tokens": tokens,
             "label": label,
             "margin": margin_target,
@@ -139,7 +162,12 @@ class EvalDetailDataset(Dataset[Dict[str, object]]):
         entries: List[Dict[str, object]] = []
 
         def metrics_vector(metrics: Dict[str, object]) -> List[float]:
-            return [float(metrics.get(key, 0.0)) for key in self.metric_keys]
+            values = [float(metrics.get(key, 0.0)) for key in self.metric_keys]
+            if len(values) < self.feature_dim:
+                values.extend([0.0] * (self.feature_dim - len(values)))
+            elif len(values) > self.feature_dim:
+                values = values[: self.feature_dim]
+            return values
 
         for sentence in record.get("sentences", []) or []:
             text = sentence.get("sentence", "")
@@ -208,6 +236,11 @@ class EvalDetailDataset(Dataset[Dict[str, object]]):
 
 
 def collate_batch(batch: Sequence[Dict[str, object]]) -> Dict[str, torch.Tensor]:
+    record_ids = [str(sample.get("record_id")) for sample in batch]
+    evidence_texts = [
+        [str(entry.get("text", "")) for entry in (sample.get("evidence") or [])]
+        for sample in batch
+    ]
     token_tensors = [torch.tensor(sample["tokens"], dtype=torch.long) for sample in batch]
     input_ids = pad_sequence(token_tensors, batch_first=True, padding_value=0)
     attention_mask = (input_ids != 0).long()
@@ -225,7 +258,15 @@ def collate_batch(batch: Sequence[Dict[str, object]]) -> Dict[str, torch.Tensor]
     ]
     default_len = max(len(sample["tokens"]) for sample in batch)
     max_evidence_len = max(1, max(evidence_lengths) if evidence_lengths else default_len, default_len)
-    feature_dim = len(METRIC_KEYS)
+    sample_feature_dim = 0
+    for sample in batch:
+        evidence_entries = sample.get("evidence") or []
+        if evidence_entries:
+            metrics_example = evidence_entries[0].get("metrics") or []
+            sample_feature_dim = len(metrics_example)
+            if sample_feature_dim:
+                break
+    feature_dim = sample_feature_dim if sample_feature_dim else len(METRIC_KEYS)
     evidence_ids = torch.zeros(len(batch), max_evidence_count, max_evidence_len, dtype=torch.long)
     evidence_token_mask = torch.zeros_like(evidence_ids)
     evidence_features = torch.zeros(len(batch), max_evidence_count, feature_dim, dtype=torch.float32)
@@ -237,29 +278,32 @@ def collate_batch(batch: Sequence[Dict[str, object]]) -> Dict[str, torch.Tensor]
                 {
                     "tokens": sample["tokens"],
                     "metrics": [0.0] * feature_dim,
+                    "text": "",
                 }
             ]
+            evidence_texts[batch_idx] = [""]
         for evidence_idx, entry in enumerate(entries[:max_evidence_count]):
             seq = entry["tokens"]
-            metrics = entry.get("metrics") or []
+            metrics_raw = entry.get("metrics") or []
             seq_len = min(len(seq), max_evidence_len)
             if seq_len:
                 evidence_ids[batch_idx, evidence_idx, :seq_len] = torch.tensor(
                     seq[:seq_len], dtype=torch.long
                 )
                 evidence_token_mask[batch_idx, evidence_idx, :seq_len] = 1
-            if metrics:
-                metrics_tensor = torch.tensor(metrics[:feature_dim], dtype=torch.float32)
-                if metrics_tensor.numel() < feature_dim:
-                    pad = torch.zeros(feature_dim - metrics_tensor.numel(), dtype=torch.float32)
-                    metrics_tensor = torch.cat([metrics_tensor, pad])
-            else:
-                metrics_tensor = torch.zeros(feature_dim, dtype=torch.float32)
+            metrics_list = list(metrics_raw)
+            if len(metrics_list) < feature_dim:
+                metrics_list += [0.0] * (feature_dim - len(metrics_list))
+            elif len(metrics_list) > feature_dim:
+                metrics_list = metrics_list[:feature_dim]
+            metrics_tensor = torch.tensor(metrics_list, dtype=torch.float32)
             evidence_features[batch_idx, evidence_idx] = metrics_tensor
 
     evidence_mask = (evidence_token_mask.sum(dim=-1) > 0).long()
 
     return {
+        "record_ids": record_ids,
+        "evidence_texts": evidence_texts,
         "input_ids": input_ids,
         "attention_mask": attention_mask,
         "labels": labels,
@@ -272,30 +316,130 @@ def collate_batch(batch: Sequence[Dict[str, object]]) -> Dict[str, torch.Tensor]
     }
 
 
-def train_val_loaders(
+def read_split_file(path: Path) -> List[str]:
+    ids: List[str] = []
+    with path.open() as handle:
+        for line in handle:
+            token = line.strip()
+            if not token or token.startswith('#'):
+                continue
+            ids.append(token)
+    if not ids:
+        raise ValueError(f"Split file {path} is empty")
+    return ids
+
+
+def map_ids_to_indices(
+    dataset: EvalDetailDataset,
+    ids: Sequence[str],
+    source: Path,
+) -> List[int]:
+    indices: List[int] = []
+    seen: Set[str] = set()
+    missing: List[str] = []
+    for record_id in ids:
+        if record_id in seen:
+            raise ValueError(f"Duplicate record id '{record_id}' in {source}")
+        seen.add(record_id)
+        idx = dataset.id_to_index.get(record_id)
+        if idx is None:
+            missing.append(record_id)
+        else:
+            indices.append(idx)
+    if missing:
+        preview = ', '.join(missing[:5])
+        suffix = ' ...' if len(missing) > 5 else ''
+        raise KeyError(f"{source} references unknown ids: {preview}{suffix}")
+    return indices
+
+
+def ensure_disjoint(splits: Dict[str, Sequence[int]]) -> None:
+    names = list(splits.keys())
+    for idx, name_a in enumerate(names):
+        set_a = set(splits[name_a])
+        for name_b in names[idx + 1:]:
+            set_b = set(splits[name_b])
+            if not set_b:
+                continue
+            overlap = set_a & set_b
+            if overlap:
+                sample = ', '.join(str(item) for item in list(overlap)[:5])
+                raise ValueError(
+                    f"Splits '{name_a}' and '{name_b}' overlap on {len(overlap)} records (e.g. {sample})"
+                )
+
+
+def prepare_loaders(
     path: Path,
     batch_size: int,
     val_ratio: float,
     seed: int,
-) -> Tuple[EvalDetailDataset, DataLoader[Dict[str, torch.Tensor]], DataLoader[Dict[str, torch.Tensor]]]:
-    dataset = EvalDetailDataset(path)
-    indices = list(range(len(dataset)))
-    rng = random.Random(seed)
-    rng.shuffle(indices)
-    if len(indices) <= 1 or val_ratio <= 0.0:
-        train_subset = Subset(dataset, indices)
-        val_subset = Subset(dataset, [])
+    train_index: Optional[Path],
+    val_index: Optional[Path],
+    test_index: Optional[Path],
+    feature_dim_override: Optional[int],
+) -> Tuple[EvalDetailDataset, DataLoader[Dict[str, torch.Tensor]], DataLoader[Dict[str, torch.Tensor]], DataLoader[Dict[str, torch.Tensor]]]:
+    dataset = EvalDetailDataset(path, feature_dim_override=feature_dim_override)
+    using_indices = any(split is not None for split in (train_index, val_index, test_index))
+
+    if using_indices:
+        if train_index is None:
+            raise ValueError("--train-index must be provided when using split files")
+        train_ids = read_split_file(train_index)
+        train_indices = map_ids_to_indices(dataset, train_ids, train_index)
+        if not train_indices:
+            raise ValueError("Training split is empty")
+        val_indices: List[int] = []
+        test_indices: List[int] = []
+        if val_index is not None:
+            val_ids = read_split_file(val_index)
+            val_indices = map_ids_to_indices(dataset, val_ids, val_index)
+        if test_index is not None:
+            test_ids = read_split_file(test_index)
+            test_indices = map_ids_to_indices(dataset, test_ids, test_index)
+        ensure_disjoint({"train": train_indices, "validation": val_indices, "test": test_indices})
     else:
-        val_size = max(1, int(len(indices) * val_ratio))
-        if val_size >= len(indices):
-            val_size = len(indices) - 1
-        val_indices = indices[:val_size]
-        train_indices = indices[val_size:]
-        train_subset = Subset(dataset, train_indices)
-        val_subset = Subset(dataset, val_indices)
+        indices = list(range(len(dataset)))
+        rng = random.Random(seed)
+        rng.shuffle(indices)
+        if len(indices) <= 1 or val_ratio <= 0.0:
+            train_indices = indices
+            val_indices = []
+        else:
+            val_size = max(1, int(len(indices) * val_ratio))
+            if val_size >= len(indices):
+                val_size = len(indices) - 1
+            val_indices = indices[:val_size]
+            train_indices = indices[val_size:]
+        test_indices = []
+
+    train_subset = Subset(dataset, train_indices)
+    if len(train_subset) == 0:
+        raise ValueError("Training subset contains no examples")
+    val_subset = Subset(dataset, val_indices)
+    test_subset = Subset(dataset, test_indices)
+
     train_loader = DataLoader(train_subset, batch_size=batch_size, shuffle=True, collate_fn=collate_batch)
     val_loader = DataLoader(val_subset, batch_size=batch_size, shuffle=False, collate_fn=collate_batch)
-    return dataset, train_loader, val_loader
+    test_loader = DataLoader(test_subset, batch_size=batch_size, shuffle=False, collate_fn=collate_batch)
+
+    print(
+        json.dumps(
+            {
+                "detail_path": str(path),
+                "split_sizes": {
+                    "train": len(train_subset),
+                    "validation": len(val_subset),
+                    "test": len(test_subset),
+                },
+                "using_indices": using_indices,
+            },
+            indent=2,
+        )
+    )
+    return dataset, train_loader, val_loader, test_loader
+
+
 
 
 def parse_args() -> argparse.Namespace:
@@ -304,9 +448,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--learning-rate", type=float, default=3e-4)
+    parser.add_argument("--train-index", type=Path, help="Newline-delimited record ids for the training split")
+    parser.add_argument("--val-index", type=Path, help="Newline-delimited record ids for the validation split")
+    parser.add_argument("--test-index", type=Path, help="Newline-delimited record ids for the held-out test split")
+    parser.add_argument("--evidence-feature-dim", type=int, help="Override evidence feature dimensionality (pad/truncate metrics)")
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--dry-run", action="store_true", help="Load data and run a single forward pass only")
-    parser.add_argument("--val-ratio", type=float, default=0.2, help="Fraction of data used for validation")
+    parser.add_argument("--val-ratio", type=float, default=0.2, help="Fraction of data used for validation when split files are not provided")
     parser.add_argument("--seed", type=int, default=7, help="Random seed for train/val split")
     parser.add_argument("--admit-threshold", type=float, default=0.5, help="Decision threshold for admit probability")
     parser.add_argument("--margin-threshold", type=float, default=0.25, help="Decision threshold for support margin")
@@ -320,6 +468,11 @@ def parse_args() -> argparse.Namespace:
         "--output-checkpoint",
         type=Path,
         help="Path to write the trained reliability checkpoint (config, vocab, state_dict)",
+    )
+    parser.add_argument(
+        "--load-checkpoint",
+        type=Path,
+        help="Optional checkpoint to initialise weights or run evaluation-only mode",
     )
     parser.add_argument(
         "--disable-phase-channel",
@@ -353,6 +506,17 @@ def parse_args() -> argparse.Namespace:
         "--calibrate-thresholds",
         action="store_true",
         help="Sweep admit/margin thresholds on the validation set to maximise F1",
+    )
+    parser.add_argument(
+        "--attention-output-dir",
+        type=Path,
+        help="Directory for saving attention heatmaps during evaluation",
+    )
+    parser.add_argument(
+        "--attention-limit",
+        type=int,
+        default=200,
+        help="Maximum number of attention maps to save (0 = no limit)",
     )
     parser.add_argument(
         "--admit-grid",
@@ -441,25 +605,61 @@ def save_checkpoint(
 
 def train() -> None:
     args = parse_args()
-    dataset, train_loader, val_loader = train_val_loaders(
-        args.detail_path, args.batch_size, args.val_ratio, args.seed
+    dataset, train_loader, val_loader, test_loader = prepare_loaders(
+        args.detail_path,
+        args.batch_size,
+        args.val_ratio,
+        args.seed,
+        args.train_index,
+        args.val_index,
+        args.test_index,
+        args.evidence_feature_dim,
     )
 
     device = torch.device(args.device)
 
+    attention_output_dir = Path(args.attention_output_dir) if args.attention_output_dir else None
+    if attention_output_dir is not None:
+        attention_output_dir.mkdir(parents=True, exist_ok=True)
+        if plt is None:
+            print('[train_reliability_attn] matplotlib not available; attention heatmaps will not be saved.')
+            attention_output_dir = None
+    attention_limit = args.attention_limit
+    attention_logged = 0
+    attention_warning_emitted = False
+
     if args.ece_bins <= 0:
         raise ValueError("--ece-bins must be a positive integer")
 
-    config = OspaceTransformerConfig(
-        vocab_size=dataset.tokenizer.vocab_size,
-        use_phase_channel=not args.disable_phase_channel,
-        use_cross_attention=not args.disable_cross_attention,
-        max_evidence_len=args.max_evidence_len,
-        evidence_encoder_layers=args.evidence_encoder_layers,
-        evidence_encoder_heads=args.evidence_encoder_heads,
-        evidence_feature_dim=dataset.feature_dim,
-    )
+    checkpoint_data = None
+    if args.load_checkpoint is not None:
+        checkpoint_data = torch.load(args.load_checkpoint, map_location=device)
+        config_payload = checkpoint_data.get('config')
+        if isinstance(config_payload, dict):
+            config = OspaceTransformerConfig(**config_payload)
+        elif isinstance(config_payload, OspaceTransformerConfig):
+            config = config_payload
+        else:
+            raise ValueError('Checkpoint missing configuration payload.')
+    else:
+        config = OspaceTransformerConfig(
+            vocab_size=dataset.tokenizer.vocab_size,
+            use_phase_channel=not args.disable_phase_channel,
+            use_cross_attention=not args.disable_cross_attention,
+            max_evidence_len=args.max_evidence_len,
+            evidence_encoder_layers=args.evidence_encoder_layers,
+            evidence_encoder_heads=args.evidence_encoder_heads,
+            evidence_feature_dim=dataset.feature_dim,
+        )
     model = OspaceTransformer(config).to(device)
+    if checkpoint_data is not None:
+        state_dict = checkpoint_data.get('state_dict')
+        if not isinstance(state_dict, dict):
+            raise ValueError('Checkpoint missing state_dict.')
+        model.load_state_dict(state_dict)
+        vocab_payload = checkpoint_data.get('tokenizer_vocab')
+        if isinstance(vocab_payload, dict):
+            dataset.tokenizer.vocab = {str(k): int(v) for k, v in vocab_payload.items()}
 
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate)
     bce_loss = nn.BCEWithLogitsLoss()
@@ -482,6 +682,7 @@ def train() -> None:
     def evaluate(
         loader: DataLoader[Dict[str, torch.Tensor]]
     ) -> Tuple[Dict[str, float], Dict[str, List[float]]]:
+        nonlocal attention_logged, attention_warning_emitted
         if len(loader.dataset) == 0:
             metrics = {
                 "loss": float("nan"),
@@ -505,6 +706,39 @@ def train() -> None:
 
         for batch in loader:
             output = run_model(model, batch, device, config)
+
+            if attention_output_dir is not None and plt is not None and output.evidence_attention is not None:
+                weights = output.evidence_attention.detach().cpu().numpy()
+                evidence_lists = batch.get("evidence_texts", [])
+                for sample_idx, record_id in enumerate(batch.get("record_ids", [])):
+                    if attention_limit > 0 and attention_logged >= attention_limit:
+                        break
+                    vec = weights[sample_idx, 0]
+                    texts = evidence_lists[sample_idx] if sample_idx < len(evidence_lists) else []
+                    fig, ax = plt.subplots(figsize=(max(4, len(vec) * 0.4), 1.6))
+                    ax.imshow(vec[np.newaxis, :], aspect='auto', cmap='viridis')
+                    ax.set_yticks([])
+                    positions = list(range(len(vec)))
+                    ax.set_xticks(positions)
+                    labels = []
+                    for pos in positions:
+                        if pos < len(texts):
+                            raw = texts[pos]
+                            label_text = raw[:40] + ('…' if len(raw) > 40 else '')
+                        else:
+                            label_text = ''
+                        labels.append(label_text)
+                    ax.set_xticklabels(labels, rotation=45, ha='right', fontsize=6)
+                    ax.set_title(f"{record_id} attention")
+                    plt.tight_layout()
+                    out_path = attention_output_dir / f"{record_id}.png"
+                    fig.savefig(out_path)
+                    plt.close(fig)
+                    attention_logged += 1
+            elif attention_output_dir is not None and plt is None and not attention_warning_emitted:
+                print('[train_reliability_attn] matplotlib unavailable; skipping attention heatmaps.')
+                attention_warning_emitted = True
+
             label_tensor = batch["labels"].to(device)
             margin_tensor = batch["margins"].to(device)
 
@@ -568,9 +802,30 @@ def train() -> None:
         )
         return
 
+    if args.epochs <= 0:
+        val_metrics, val_predictions = evaluate(val_loader)
+        print(json.dumps({"validation": val_metrics}, indent=2))
+        if args.calibrate_thresholds and val_predictions["labels"]:
+            admit_grid = parse_grid(args.admit_grid)
+            margin_grid = parse_grid(args.margin_grid)
+            calibration = sweep_thresholds(
+                val_predictions["probs"],
+                val_predictions["margins"],
+                val_predictions["labels"],
+                admit_grid,
+                margin_grid,
+            )
+            print(json.dumps({"calibration": calibration, "admit_grid": admit_grid, "margin_grid": margin_grid}, indent=2))
+        elif args.calibrate_thresholds:
+            print("[train_reliability_attn] Skipping calibration sweep (no validation data).")
+        test_metrics_summary, _ = evaluate(test_loader)
+        print(json.dumps({"test": test_metrics_summary}, indent=2))
+        return
+
     final_val_metrics: Optional[Dict[str, float]] = None
     last_val_predictions: Dict[str, List[float]] = {"probs": [], "labels": [], "margins": []}
     calibration_summary: Optional[Dict[str, float]] = None
+    test_metrics_summary: Optional[Dict[str, float]] = None
     for epoch in range(1, args.epochs + 1):
         model.train()
         running_loss = 0.0
@@ -637,10 +892,20 @@ def train() -> None:
     elif args.calibrate_thresholds:
         print("[train_reliability_attn] Skipping calibration sweep (no validation data).")
 
+    if len(test_loader.dataset) > 0:
+        test_metrics_summary, _ = evaluate(test_loader)
+        print(json.dumps({"test_metrics": test_metrics_summary}, indent=2))
+    else:
+        print("[train_reliability_attn] Test split empty; skipping evaluation.")
+
     if args.output_checkpoint:
-        metrics = final_val_metrics or {}
+        metrics: Dict[str, object] = {}
+        if final_val_metrics is not None:
+            metrics["validation"] = final_val_metrics
+        if test_metrics_summary is not None:
+            metrics["test"] = test_metrics_summary
         if calibration_summary is not None:
-            metrics = {**metrics, "calibration": calibration_summary}
+            metrics["calibration"] = calibration_summary
         save_checkpoint(
             args.output_checkpoint,
             model=model,

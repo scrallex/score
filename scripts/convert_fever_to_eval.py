@@ -5,10 +5,13 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
+
+from sep_text_manifold.semantic import EmbeddingConfig, SemanticEmbedder
+from eval_feature_utils import FeatureExtractor
 
 
 LABEL_MAP = {
@@ -17,35 +20,7 @@ LABEL_MAP = {
     "NOT ENOUGH INFO": "UNVERIFIABLE",
 }
 
-METRIC_PROFILE: Dict[str, Dict[str, float]] = {
-    "SUPPORTED": {
-        "patternability": 0.62,
-        "semantic": 0.95,
-        "coherence": 0.58,
-        "stability": 0.67,
-        "entropy": 0.24,
-        "rupture": 0.18,
-        "lambda": 0.22,
-    },
-    "REFUTED": {
-        "patternability": 0.48,
-        "semantic": 0.05,
-        "coherence": 0.33,
-        "stability": 0.31,
-        "entropy": 0.72,
-        "rupture": 0.46,
-        "lambda": 0.61,
-    },
-    "UNVERIFIABLE": {
-        "patternability": 0.24,
-        "semantic": 0.0,
-        "coherence": 0.18,
-        "stability": 0.12,
-        "entropy": 0.94,
-        "rupture": 0.53,
-        "lambda": 0.87,
-    },
-}
+
 
 
 def parse_args() -> argparse.Namespace:
@@ -72,6 +47,24 @@ def parse_args() -> argparse.Namespace:
         "--include-predicted",
         action="store_true",
         help="Use predicted_evidence when gold evidence is missing",
+    )
+    parser.add_argument(
+        "--semantic-method",
+        choices=["auto", "hash", "transformer"],
+        default="auto",
+        help="Embedding method for semantic similarity (default: auto)",
+    )
+    parser.add_argument(
+        "--semantic-model",
+        type=str,
+        default="all-MiniLM-L6-v2",
+        help="Transformer model name when using semantic-method auto/transformer",
+    )
+    parser.add_argument(
+        "--semantic-dims",
+        type=int,
+        default=256,
+        help="Hash embedding dimensionality when using semantic-method hash (default: 256)",
     )
     parser.add_argument(
         "--progress",
@@ -197,12 +190,6 @@ def parse_wiki_sentences(text: str) -> List[str]:
     return [item[1] for item in sentences]
 
 
-def metrics_for(label: str, *, scale: float = 1.0) -> Dict[str, float]:
-    base = METRIC_PROFILE[label]
-    return {
-        key: round(value * scale, 6)
-        for key, value in base.items()
-    } | {"repetitions": 0}
 
 
 def evidence_from_record(
@@ -210,11 +197,12 @@ def evidence_from_record(
     store: Optional[WikiEvidenceStore],
     *,
     include_predicted: bool,
-    label: str,
+    extractor: FeatureExtractor,
+    question_vector: Optional[np.ndarray],
 ) -> List[Evidence]:
     collected: Dict[Tuple[str, int], Evidence] = {}
 
-    def add_from(raw: Optional[object], *, scale: float) -> None:
+    def add_from(raw: Optional[object]) -> None:
         if not isinstance(raw, list):
             return
         for evidence_set in raw:
@@ -235,15 +223,14 @@ def evidence_from_record(
                 if not text:
                     text = f"{page or 'unknown'} (sentence {sentence_idx})"
                 citation = f"wiki://{page}#{sentence_idx}" if page else f"wiki://unknown#{sentence_idx}"
-                metrics = metrics_for(label, scale=scale)
+                metrics = extractor.metric_vector(text, question_vector)
                 collected[key] = Evidence(text=text, citation=citation, metrics=metrics)
 
-    add_from(record.get("evidence"), scale=0.95)
+    add_from(record.get("evidence"))
     if include_predicted:
-        add_from(record.get("predicted_evidence"), scale=0.6)
+        add_from(record.get("predicted_evidence"))
 
     return list(collected.values())
-
 
 def build_sentence(text: str, label: str, *, admit: bool, metrics: Dict[str, float], citation: Optional[str]) -> Dict[str, object]:
     decisions = {
@@ -272,6 +259,7 @@ def convert_record(
     store: Optional[WikiEvidenceStore],
     split: str,
     include_predicted: bool,
+    extractor: FeatureExtractor,
 ) -> Optional[Dict[str, object]]:
     label_raw = str(record.get("label") or "").upper()
     mapped = LABEL_MAP.get(label_raw)
@@ -281,14 +269,17 @@ def convert_record(
     if not claim:
         return None
 
+    question_vector = extractor.vector(claim)
+
     evidence_items = evidence_from_record(
         record,
         store,
         include_predicted=include_predicted,
-        label=mapped,
+        extractor=extractor,
+        question_vector=question_vector,
     )
     gold_uris = [item.citation for item in evidence_items]
-    claim_metrics = metrics_for(mapped, scale=0.85 if mapped == "SUPPORTED" else 0.4)
+    claim_metrics = extractor.metric_vector(claim, question_vector)
     claim_sentence = build_sentence(
         claim,
         mapped,
@@ -346,6 +337,20 @@ def main() -> None:
         )
         store = WikiEvidenceStore(args.wiki_pages, required_pages)
 
+    embedder_config = EmbeddingConfig(
+        method=args.semantic_method,
+        model_name=args.semantic_model,
+        dims=args.semantic_dims,
+    )
+    try:
+        semantic_embedder = SemanticEmbedder(embedder_config)
+    except RuntimeError as exc:
+        if args.semantic_method == "transformer":
+            raise
+        print(f"[convert_fever_to_eval] Falling back to hash embeddings: {exc}", file=sys.stderr)
+        semantic_embedder = SemanticEmbedder(EmbeddingConfig(method="hash", dims=args.semantic_dims))
+    extractor = FeatureExtractor(embedder=semantic_embedder)
+
     args.output.parent.mkdir(parents=True, exist_ok=True)
     written = 0
     missing_label = 0
@@ -357,6 +362,7 @@ def main() -> None:
                 store=store,
                 split=args.split,
                 include_predicted=args.include_predicted,
+                extractor=extractor,
             )
             if converted is None:
                 missing_label += 1
