@@ -158,17 +158,23 @@ Full metrics and checkpoints captured in `results/experiments/fever_reliability_
 
 ### SciFact transfer
 
-- Evaluated the FEVER-trained model on SciFact (809 train, 150 val, 150 test) using `scripts/convert_scifact_to_eval.py`.
-- Model currently predicts "reject" for all claims (**val/test F1 = 0.0**, Brier 0.44 / 0.39). Heatmaps for 50 examples saved in `results/eval/scifact_attention/`.
-- SciFact metrics recorded in `results/experiments/scifact_generalisation.json`.
+- Base transfer (FEVER checkpoint → SciFact) still collapses (**val/test F1 = 0.0**, Brier 0.44 / 0.39). Artifact preserved at `results/experiments/scifact_generalisation.json`; attention behaviour now summarised in `docs/figures/attention_summary.png`.
+- Fine-tuning the FEVER checkpoint on SciFact for 5 epochs (LR=5e-5, batch=32) restores **val F1 0.578** and **test F1 0.519** with calibrated thresholds (`results/experiments/scifact_finetune.json`, checkpoint `models/reliability_fever_scifact_ft.pt`).
+- Temperature scaling with `scripts/calibrate_temperature.py` (best T=3.0) reduces SciFact test Brier from 0.242 → 0.208 and ECE from 0.207 → 0.075 (`results/analysis/scifact_temperature_finetune.json`).
+- Mixing FEVER + SciFact during retraining improves SciFact recall (test F1 0.614 after recalibration) but drops FEVER test F1 to ~0.508; see `models/reliability_fever_scifact_mix.pt` and `results/experiments/scifact_mix_eval.json` / `fever_mix_eval.json` for the trade-off.
 
-### Attention visualisations
+### HoVer ingestion & evaluation
 
-- FEVER validation/test attention plots saved to `results/eval/fever_attention/`.
-- SciFact attention plots saved to `results/eval/scifact_attention/` (limit 50 per split).
+- `scripts/convert_hover_to_eval.py` converts HoVer's 18k/4k train/dev claims into STM `eval_detail` files using `wiki_wo_links.db` + NLTK sentence segmentation. Outputs live under `results/eval/hover_train/` and `results/eval/hover_dev/` with deterministic splits in `data/splits/hover_dev_{train,val,test}_ids.txt`.
+- The FEVER model rejects every HoVer claim (**val/test F1 = 0.0**, Brier ≈0.52) and allocates diffuse attention (mean max weight ≈0.25). Metrics recorded in `results/experiments/hover_eval_from_fever.json` and rolled into the attention summary figure.
+
+### Attention visualisations & feature correlations
+
+- Attention-weighted feature summaries for FEVER, SciFact (pre/post fine-tune), and HoVer are stored in `results/analysis/attention_metrics.json`. FEVER heads concentrate ~66% attention mass on a single evidence sentence (90th percentile = 1.0) and correlate admit probability with higher rupture/λ, whereas HoVer spreads attention (mean max weight ≈0.25) and shows little signal.
+- Aggregated attention statistics chart: `docs/figures/attention_summary.png` (derived from `results/analysis/attention_metrics.json`). Highlight for whitepaper appendix.
 
 ### Next steps
 
-1. Wire HoVer ingestion (`scripts/convert_hover_to_eval.py`) so the Transformer can be evaluated on multi-hop claims. The release requires sentence-level lookup from `wiki_wo_links.db`.
-2. Track why SciFact transfer collapses—consider fine-tuning on SciFact or adding domain adaptation.
-3. Fold the new metrics and attention plots into the whitepaper experiment section.
+1. Fine-tune on HoVer (multi-hop) or augment the memory with retrieved hops to see if cross-attention can capture multi-document support; compare against the diffuse baseline logged in `hover_eval_from_fever.json`.
+2. Quantify the FEVER ↔ SciFact domain-mix trade-off (e.g. curriculum or weighted sampling) so we can report a stable cross-domain recipe rather than a single compromise checkpoint.
+3. Fold the new calibration curves, attention statistics, and SciFact recovery story into the whitepaper narrative; circulate an internal summary deck to solicit feedback on the manifold + attention framing before publishing.

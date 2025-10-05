@@ -110,6 +110,27 @@ python scripts/convert_fever_to_eval.py \
 
 The converter now derives every feature from the manifold tooling: each claim and evidence span is encoded with `sep_text_manifold.encode_window` to obtain coherence, stability, entropy, rupture, and λ. We feed those scores through `patternability_score`, count repeated tokens, and measure semantic alignment against the claim via the `SemanticEmbedder`. Hash embeddings are used by default, but you can enable SentenceTransformers with `--semantic-method transformer` (paired with `--semantic-model`) or tune the hash dimensionality using `--semantic-dims`. Recomputing the metrics from raw text keeps the emitted `eval_detail.jsonl` aligned with what the evaluator and reliability model consume at inference time.
 
+SciFact and HoVer ingestion follow the same pattern:
+
+```bash
+# SciFact (claims + corpus JSONL shipped with the dataset)
+python scripts/convert_scifact_to_eval.py \
+  data/scifact/claims_train.jsonl data/scifact/corpus.jsonl \
+  results/eval/scifact_train/eval_detail.jsonl \
+  --split train --semantic-method hash --progress
+
+# HoVer (multi-hop evidence pulled from wiki_wo_links.db)
+python scripts/convert_hover_to_eval.py \
+  external/hover/data/hover/hover_train_release_v1.1.json \
+  external/hover/data/wiki_wo_links.db \
+  results/eval/hover_train/eval_detail.jsonl \
+  --split train --semantic-method hash --progress
+```
+
+The HoVer converter requires the NLTK punkt tokenizer (`pip install nltk && python -m nltk.downloader punkt punkt_tab`) to reproduce the dataset's sentence segmentation.
+
+SciFact's `NOT_SUPPORTED` label and HoVer's `NOT_SUPPORTED` flag are mapped to STM's `UNVERIFIABLE` bucket so the reliability head keeps the same admit target (supported vs everything else) across corpora. All three converters now emit consistent structural metrics (`patternability`, `semantic`, `coherence`, `stability`, `entropy`, `rupture`, `lambda`) plus the raw evidence citations so attention maps can be tied back to gold sentences.
+
 Then train the O-space Transformer reliability head.  The harness now supports
 calibration sweeps, richer evidence encodings, and attention-entropy
 regularisation:
@@ -134,6 +155,31 @@ During evaluation the reliability wrapper now feeds full evidence sentences and
 their structural metrics into the Transformer; each repaired span records the
 model's admit probability and support margin in the `reliability_trace` field of
 `eval_detail.jsonl`, making calibration diagnostics easy to audit.
+
+### Calibrating admit probabilities
+
+Two calibration steps are now baked into the workflow:
+
+1. **Threshold sweeps** – pass `--calibrate-thresholds` to
+   `train_reliability_attn.py` to grid-search admit and margin thresholds on the
+   validation split. The best setting is stored alongside the checkpoint under
+   the `calibration` key (see `results/experiments/scifact_finetune.json`).
+2. **Temperature scaling** – once a checkpoint is trained, run
+   `scripts/calibrate_temperature.py` to fit a scalar temperature on the
+   validation logits and re-evaluate on the test split. For example:
+
+   ```bash
+   CUDA_VISIBLE_DEVICES=0 python scripts/calibrate_temperature.py \
+     results/eval/scifact_train_dev/eval_detail.jsonl \
+     models/reliability_fever_scifact_ft.pt \
+     --val-split data/splits/scifact_val_ids.txt \
+     --test-split data/splits/scifact_test_ids.txt \
+     --output results/analysis/scifact_temperature_finetune.json
+   ```
+
+   The script reports Brier score, Expected Calibration Error, and precision/recall for each candidate temperature, and writes the chosen value to the JSON summary so deployments can reuse the same scaling factor.
+
+Temperature scaling plus dataset-specific thresholds brought the FEVER head down to an ECE of ~0.084 (from 0.173) and the fine-tuned SciFact head to ~0.075 (from 0.207) while keeping F1 unchanged. See `results/analysis/fever_temperature.json` and `results/analysis/scifact_temperature_finetune.json` for the full calibration curves.
 
 ## Reproducing the PlanBench++ and CodeTrace experiments
 

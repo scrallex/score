@@ -1,0 +1,37 @@
+{
+  "model": "reliability_fever_scifact_ft",
+  "checkpoint": "models/reliability_fever_scifact_ft.pt",
+  "base_checkpoint": "models/reliability_fever_attn_full.pt",
+  "dataset": "SciFact",
+  "train_split": "data/splits/scifact_train_ids.txt",
+  "val_split": "data/splits/scifact_val_ids.txt",
+  "test_split": "data/splits/scifact_test_ids.txt",
+  "training": {
+    "epochs": 5,
+    "batch_size": 32,
+    "learning_rate": 5e-05
+  },
+  "validation": {
+    "precision": 0.5967741935483871,
+    "recall": 0.5606060606060606,
+    "f1": 0.578125,
+    "brier": 0.24517701426100216,
+    "ece": 0.15513063779307967
+  },
+  "calibration": {
+    "admit_threshold": 0.05,
+    "margin_threshold": -0.5,
+    "precision": 0.5514018691588785,
+    "recall": 0.8939393939393939,
+    "f1": 0.6820809248554912
+  },
+  "test": {
+    "precision": 0.56,
+    "recall": 0.4827586206896552,
+    "f1": 0.5185185185185185,
+    "brier": 0.23885775219567834,
+    "ece": 0.19522607848333698
+  },
+  "attention_dir": "docs/figures/attention_summary.png",
+  "attention_samples": 50
+}

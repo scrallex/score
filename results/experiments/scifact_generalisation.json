@@ -23,6 +23,6 @@
     "brier": 0.38664461755854407,
     "ece": 0.3866390791726474
   },
-  "attention_dir": "results/eval/scifact_attention",
+  "attention_dir": "docs/figures/attention_summary.png",
   "attention_samples": 50
 }
