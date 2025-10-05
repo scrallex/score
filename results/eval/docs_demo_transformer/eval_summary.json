@@ -1,0 +1,54 @@
+{
+  "macro_f1": 0.1931216931216931,
+  "baseline_macro_f1": 0.5701357466063348,
+  "macro_f1_delta": -0.3770140534846417,
+  "confusion_matrix": {
+    "SUPPORTED": {
+      "SUPPORTED": 0,
+      "REFUTED": 0,
+      "UNVERIFIABLE": 11
+    },
+    "REFUTED": {
+      "SUPPORTED": 0,
+      "REFUTED": 1,
+      "UNVERIFIABLE": 7
+    },
+    "UNVERIFIABLE": {
+      "SUPPORTED": 0,
+      "REFUTED": 0,
+      "UNVERIFIABLE": 5
+    }
+  },
+  "baseline_confusion": {
+    "SUPPORTED": {
+      "SUPPORTED": 10,
+      "REFUTED": 1,
+      "UNVERIFIABLE": 0
+    },
+    "REFUTED": {
+      "SUPPORTED": 0,
+      "REFUTED": 8,
+      "UNVERIFIABLE": 0
+    },
+    "UNVERIFIABLE": {
+      "SUPPORTED": 5,
+      "REFUTED": 0,
+      "UNVERIFIABLE": 0
+    }
+  },
+  "metrics": {
+    "total": 24,
+    "hallucination_rate": 0.9583333333333334,
+    "repair_yield": 0.041666666666666664,
+    "citation_coverage": 0.0
+  },
+  "best_thresholds": {
+    "r_min": 1,
+    "lambda_max": 0.12,
+    "sigma_min": 0.15,
+    "structural_threshold": 0.46,
+    "semantic_threshold": 0.25
+  },
+  "dev_macro_f1": 0.2434337762804916,
+  "sanity_flags_count": 0
+}

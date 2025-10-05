@@ -7,6 +7,7 @@ import argparse
 import json
 import random
 import re
+from functools import lru_cache
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
@@ -50,6 +51,8 @@ METRIC_KEYS = (
     "rupture",
     "lambda",
 )
+
+CALIBRATION_PATH = Path("results/analysis/calibration_summary.json")
 
 
 @dataclass(frozen=True)
@@ -97,6 +100,50 @@ class EvalResult:
     metrics: Dict[str, float]
     detail_records: List[Dict[str, object]]
     sanity_flags: List[Dict[str, object]]
+
+
+@lru_cache(maxsize=1)
+def _load_calibration_summary(path: Path = CALIBRATION_PATH) -> Dict[str, Dict[str, object]]:
+    if not path.exists():
+        return {}
+    try:
+        with path.open("r", encoding="utf-8") as fh:
+            data = json.load(fh)
+    except Exception:
+        return {}
+    if not isinstance(data, dict):
+        return {}
+    return data
+
+
+def default_calibration_thresholds(pack_id: Optional[str]) -> Optional[Tuple[float, float]]:
+    summary = _load_calibration_summary()
+    if not summary:
+        return None
+    pack_key = None
+    if pack_id:
+        lowered = pack_id.lower()
+        if "scifact" in lowered:
+            pack_key = "scifact_val_curriculum"
+        elif "hover" in lowered:
+            pack_key = "hover_val_fever_adapt"
+        elif "fever" in lowered:
+            pack_key = "fever_val_curriculum"
+        else:
+            pack_key = "fever_val_curriculum"
+    else:
+        pack_key = "fever_val_curriculum"
+    record = summary.get(pack_key)
+    if not isinstance(record, dict):
+        return None
+    calibration = record.get("calibration")
+    if not isinstance(calibration, dict):
+        return None
+    admit = calibration.get("admit_threshold")
+    margin = calibration.get("margin_threshold")
+    if isinstance(admit, (int, float)) and isinstance(margin, (int, float)):
+        return float(admit), float(margin)
+    return None
 
 
 class ReliabilityModelWrapper:
@@ -409,6 +456,8 @@ def attempt_token_support(
     engine: TruthPackEngine,
     outcomes: List[SentenceOutcome],
     reliability: Optional[ReliabilityModelWrapper] = None,
+    *,
+    allow_heuristic: bool = False,
 ) -> Optional[SentenceOutcome]:
     if context.token is None:
         return None
@@ -458,7 +507,7 @@ def attempt_token_support(
                     support_outcome.evaluation = support_outcome.evaluation
                 else:
                     continue
-            else:
+            elif allow_heuristic:
                 gold_uris = context.claim.get("gold_uris", []) or []
                 margin = float(support_eval.semantic_similarity)
                 required_margin = max(TOKEN_SUPPORT_MIN_MARGIN, thresholds.semantic_threshold * 0.5)
@@ -482,6 +531,8 @@ def attempt_token_support(
                     support_outcome.reliability = reliability_meta
                 else:
                     continue
+            else:
+                continue
         support_outcome.sentence = candidate
         support_outcome.repair_span = candidate
         support_outcome.action = "repair"
@@ -643,6 +694,7 @@ def evaluate_contexts(
     *,
     collect_detail: bool,
     reliability_model: Optional[ReliabilityModelWrapper] = None,
+    heuristic_fallback: bool = False,
 ) -> EvalResult:
     detail_records: List[Dict[str, object]] = []
     sanity_flags: List[Dict[str, object]] = []
@@ -679,7 +731,14 @@ def evaluate_contexts(
                 )
             outcomes.append(outcome)
 
-        token_support = attempt_token_support(context, thresholds, engine, outcomes, reliability_model)
+        token_support = attempt_token_support(
+            context,
+            thresholds,
+            engine,
+            outcomes,
+            reliability_model,
+            allow_heuristic=heuristic_fallback,
+        )
         support_hits = supported_outcomes(outcomes, gold_uris, thresholds)
         has_support = bool(support_hits)
         if has_support and not negative_claim:
@@ -836,6 +895,7 @@ def best_thresholds(
     engine: TruthPackEngine,
     semantic_threshold: float,
     reliability_model: Optional[ReliabilityModelWrapper],
+    heuristic_fallback: bool,
 ) -> Tuple[Thresholds, EvalResult]:
     best: Optional[Thresholds] = None
     best_result: Optional[EvalResult] = None
@@ -855,6 +915,7 @@ def best_thresholds(
                     engine,
                     collect_detail=False,
                     reliability_model=reliability_model,
+                    heuristic_fallback=heuristic_fallback,
                 )
                 if best_result is None or result.macro_f1 > best_result.macro_f1:
                     best = thresholds
@@ -889,11 +950,40 @@ def main() -> None:
     parser.add_argument("--sigma-min", type=float, default=0.28)
     parser.add_argument("--split-seed", type=int, default=7)
     parser.add_argument("--dev-ratio", type=float, default=0.8)
-    parser.add_argument("--reliability-model", type=Path, help="Optional path to reliability model checkpoint")
-    parser.add_argument("--reliability-device", type=str, help="Device for reliability model (cpu/cuda)")
-    parser.add_argument("--reliability-threshold", type=float, default=0.5, help="Probability threshold for admissions when using the reliability model")
-    parser.add_argument("--reliability-margin", type=float, default=0.25, help="Support margin threshold for the reliability model")
-    parser.add_argument("--reliability-max-evidence", type=int, default=16, help="Maximum evidence items passed to the reliability model")
+    parser.add_argument(
+        "--disable-reliability",
+        action="store_true",
+        help="Disable the Transformer reliability gate and fall back to heuristic token-support admissions.",
+    )
+    parser.add_argument(
+        "--reliability-model",
+        type=Path,
+        help="Path to Transformer reliability checkpoint (defaults to models/reliability_fever_attn_full.pt if available)",
+    )
+    parser.add_argument(
+        "--reliability-device",
+        type=str,
+        default=None,
+        help="Device for the reliability model (cpu/cuda). Defaults to the first available CUDA device.",
+    )
+    parser.add_argument(
+        "--reliability-threshold",
+        type=float,
+        default=None,
+        help="Admission probability threshold for the Transformer reliability gate (defaults to calibrated value).",
+    )
+    parser.add_argument(
+        "--reliability-margin",
+        type=float,
+        default=None,
+        help="Support margin threshold for the Transformer reliability gate (defaults to calibrated value).",
+    )
+    parser.add_argument(
+        "--reliability-max-evidence",
+        type=int,
+        default=16,
+        help="Maximum evidence items passed to the reliability model",
+    )
     args = parser.parse_args()
 
     manifest = args.manifest.resolve()
@@ -901,28 +991,68 @@ def main() -> None:
     manifest_data = json.loads(manifest.read_text())
     seeds = manifest_data.get("seeds") or manifest_data.get("seed_families", {}).get("factual", [])
 
+    pack_id = args.pack_id or manifest_data.get("pack_id") or manifest_data.get("name") or manifest.stem
+
+    calibration_defaults = default_calibration_thresholds(pack_id)
+    reliability_threshold = args.reliability_threshold
+    reliability_margin = args.reliability_margin
+    if calibration_defaults is not None:
+        admit_default, margin_default = calibration_defaults
+        if reliability_threshold is None:
+            reliability_threshold = admit_default
+        if reliability_margin is None:
+            reliability_margin = margin_default
+    else:
+        if reliability_threshold is None:
+            reliability_threshold = 0.5
+        if reliability_margin is None:
+            reliability_margin = 0.25
+
+    heuristic_fallback = args.disable_reliability
+
     reliability_model: Optional[ReliabilityModelWrapper]
     reliability_model = None
-    if args.reliability_model is not None:
-        device = args.reliability_device
-        if device is None:
-            device = "cuda" if torch is not None and hasattr(torch, "cuda") and torch.cuda.is_available() else "cpu"
-        try:
-            reliability_model = ReliabilityModelWrapper(
-                args.reliability_model,
-                device=device,
-                admit_threshold=args.reliability_threshold,
-                margin_threshold=args.reliability_margin,
-                max_evidence=args.reliability_max_evidence,
+    checkpoint_path: Optional[Path] = None
+    if not args.disable_reliability:
+        checkpoint_path = args.reliability_model
+        if checkpoint_path is None:
+            default_checkpoint = Path("models/reliability_fever_attn_full.pt")
+            if default_checkpoint.exists():
+                checkpoint_path = default_checkpoint
+        if checkpoint_path is None:
+            print("[reality_filter_eval] No reliability checkpoint found; running without Transformer gate.")
+        else:
+            requested_device = args.reliability_device
+            auto_device = (
+                "cuda"
+                if torch is not None and hasattr(torch, "cuda") and torch.cuda.is_available()
+                else "cpu"
             )
-            print(
-                f"[reality_filter_eval] Loaded reliability model from {args.reliability_model} on {device}"
-            )
-        except Exception as exc:  # pragma: no cover - defensive logging
-            print(
-                f"[reality_filter_eval] Failed to load reliability model ({exc}). Falling back to heuristics."
-            )
-            reliability_model = None
+            device = requested_device or auto_device
+            if isinstance(device, str) and device.startswith("cuda"):
+                if torch is None or not hasattr(torch, "cuda") or not torch.cuda.is_available():
+                    print(
+                        "[reality_filter_eval] Requested CUDA device unavailable; falling back to CPU for reliability gate."
+                    )
+                    device = "cpu"
+            try:
+                reliability_model = ReliabilityModelWrapper(
+                    checkpoint_path,
+                    device=device,
+                    admit_threshold=float(reliability_threshold),
+                    margin_threshold=float(reliability_margin),
+                    max_evidence=args.reliability_max_evidence,
+                )
+                print(
+                    f"[reality_filter_eval] Loaded reliability model from {checkpoint_path} on {device}"
+                )
+            except Exception as exc:  # pragma: no cover - defensive logging
+                print(
+                    f"[reality_filter_eval] Failed to load reliability model ({exc}). Proceeding without Transformer gate."
+                )
+                reliability_model = None
+    else:
+        print("[reality_filter_eval] Transformer reliability gate disabled by flag; using heuristic token support.")
 
     engine = TruthPackEngine.from_manifest(
         manifest,
@@ -942,6 +1072,7 @@ def main() -> None:
         engine,
         args.semantic_threshold,
         reliability_model,
+        heuristic_fallback=heuristic_fallback,
     )
     test_result = evaluate_contexts(
         test_contexts,
@@ -949,9 +1080,9 @@ def main() -> None:
         engine,
         collect_detail=True,
         reliability_model=reliability_model,
+        heuristic_fallback=heuristic_fallback,
     )
 
-    pack_id = args.pack_id or manifest_data.get("pack_id") or manifest_data.get("name") or manifest.stem
     output_dir = args.output_dir / pack_id
     detail_path = output_dir / "eval_detail.jsonl"
     summary_path = output_dir / "eval_summary.json"

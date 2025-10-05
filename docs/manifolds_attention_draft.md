@@ -1,10 +1,19 @@
 # O-Space Reliability Meets Transformer Attention
 
 ## 1. Introduction: Problem Framing
-- Whitepaper demo runs still rely on the heuristic reality filter: macro-F1 sits at 0.115 with hallucination rate pinned at 1.0 (`results/eval/whitepaper_demo/eval_summary.json`), even though the report summary shows 3 approved spans out of 5 (`results/report/whitepaper_demo.md`).
-- Threshold sweeps collapse to zero coverage because the heuristic admit gate deactivates every span once the structural margin falls below 0.46, leaving us with no calibrated operating point (`results/eval/whitepaper_demo/best_thresholds.json`).
-- URI hits continue to bypass structural checks: zero-margin links emit ``SUPPORTED`` in the baseline answers while the repaired answers refuse to admit, highlighting the brittleness of the current token-support override.
+- The Transformer gate now drives `scripts/reality_filter_eval.py`; on whitepaper_demo it currently admits no spans (macro-F1 0.115, hallucination rate 1.0; `results/eval/whitepaper_demo_transformer/eval_summary.json`), reinforcing that the pack lacks supporting citations.
+- Docs_demo shows a modest lift (macro-F1 0.193 vs. 0.115 heuristic) yet still hallucinates 95.8% of answers (`results/eval/docs_demo_transformer/eval_summary.json`), underscoring the need for denser evidence rather than more aggressive gating.
+- Threshold sweeps now source calibrated admit/margin defaults from `results/analysis/calibration_summary.json`, but evidence scarcity still collapses whitepaper_demo to zero coverage even when the Transformer gate is active.
+- URI hits continue to bypass structural checks: zero-margin links emit ``SUPPORTED`` in the baseline answers while the repaired answers refuse to admit, highlighting the brittleness of the previous token-support override.
 - The goal is to replace the rule set with an attention-backed admit policy that learns when structural evidence in O-space is present, so we can gate both generated answers and market spans on measurable support.
+
+| Pack | Macro-F1 (heuristic) | Macro-F1 (Transformer) | Hallucination (heuristic) | Hallucination (Transformer) |
+| --- | --- | --- | --- | --- |
+| FEVER dev | 0.162 | – | 1.000 | – |
+| docs_demo | 0.115 | 0.193 | 1.000 | 0.958 |
+| whitepaper_demo | 0.356 | 0.115 | 0.167 | 1.000 |
+
+*FEVER transformer metrics pending full re-run; heuristic figures from `results/eval/fever_dev/eval_summary.json`.*
 
 ## 2. Primer on Transformer Attention
 - **Scaled dot-product attention (Sec. 3.2.1, Fig. 2, Vaswani et al., 2017):** Queries attend to keys via sqrt(d_k) scaling and softmax weighting, mirroring our O-space lookups where a span retrieves manifold neighbours based on structural similarity.
@@ -28,7 +37,7 @@
 6. **Calibration hooks:** Admit/margin thresholds and optional temperature scaling are baked into `scripts/train_reliability_attn.py` so the model emits calibrated probabilities.
 
 ## 5. Experimental Programme
-- **E0 - Dataset bootstrapping:** FEVER, SciFact, and HoVer converters now emit STM-compatible `eval_detail.jsonl` files with structural metrics (`scripts/convert_*_to_eval.py`). Coverage audits still show whitepaper_demo lacks evidence density, explaining the zero-coverage sweep.
+- **E0 - Dataset bootstrapping:** FEVER ([fever.ai](https://fever.ai/)), SciFact ([researchgate.net](https://www.researchgate.net/publication/343901998_SciFact)), and HoVer ([arxiv.org/abs/2011.00685](https://arxiv.org/abs/2011.00685)) converters now emit STM-compatible `eval_detail.jsonl` files with structural metrics (`scripts/convert_*_to_eval.py`). Coverage audits still show whitepaper_demo lacks evidence density, explaining the zero-coverage sweep.
 - **E1 - Final-answer scoring:** GPU retrains on FEVER reach test F1 0.756 with calibrated thresholds (checkpoint `models/reliability_fever_attn_full.pt`); whitepaper_demo remains unchanged because the reliability head is not yet wired into the admission path.
 - **E2 - Margin/overlap calibration:** Calibration sweeps and temperature scaling reduce SciFact ECE from 0.207 to 0.075 (`results/analysis/scifact_temperature_finetune.json`), but we still need to propagate the calibrated thresholds into `reality_filter_eval.py`.
 - **E3 - Phase encoding ablation:** Dropping phase channels cuts FEVER test F1 from 0.756 to 0.690; SciFact remains fragile without them, so the whitepaper will position phase information as a key ablation result.
@@ -39,8 +48,8 @@
 - **Model implementation:** `src/sep_text_manifold/attn_ospace.py` hosts the Transformer backbone, phase fusion, cross-attention, and reliability head.
 - **Training harness:** `scripts/train_reliability_attn.py` ingests eval details, trains with calibration sweeps, and logs admit precision/recall, Brier score, ECE, and attention entropy.
 - **Dataset ingestion:** `scripts/convert_fever_to_eval.py`, `scripts/convert_scifact_to_eval.py`, and `scripts/convert_hover_to_eval.py` hydrate corpora into STM evaluation artefacts with structural metrics and citations.
-- **Service swap:** `scripts/reality_filter_eval.py` now accepts a reliability checkpoint flag, but the whitepaper demo still defaults to heuristics; we need to switch the admit path to the Transformer output before rerunning metrics.
-- **Logging & reports:** Attention artefacts are now summarised into compact figures (`docs/figures/attention_summary.png`, `docs/figures/hover_attention_multi_hop.png`) instead of hundreds of per-claim PNGs; raw HoVer multi-hop eval metrics live in `results/experiments/hover_multi_hop_eval_summary.json` for reproducibility.
+- **Service swap:** `scripts/reality_filter_eval.py` now defaults to the Transformer gate (with `--disable-reliability` as an escape hatch); the outstanding work is rerunning FEVER/SciFact/HoVer packs on GPU hardware and wiring the refreshed metrics into the demos.
+- **Logging & reports:** Attention artefacts are now timestamped (`results/eval/<pack>_transformer/attention_<timestamp>/`) and indexed in `results/attention_logs.txt`. After aggregation we collapse the per-claim heatmaps into mean-intensity figures (e.g. `docs/figures/attention_docs_demo_transformer_*.png`), then prune the raw PNGs so the repo stays lightweight. We still publish aggregate figures (`docs/figures/attention_summary.png`, `docs/figures/hover_attention_multi_hop.png`), while `scripts/plot_reliability_results.py` regenerates the comparison plots and writes the Markdown metrics table alongside `results/experiments/hover_multi_hop_eval_summary.json` for reproducibility.
 - **CI guardrails:** `.github/workflows/attn-tests.yml` trains a 1-epoch demo model and ensures evaluator parity; next step is wiring the calibration comparison when the reality filter consumes the new admit scores.
 
 ## 7. Discussion and Open Questions

@@ -156,6 +156,24 @@ their structural metrics into the Transformer; each repaired span records the
 model's admit probability and support margin in the `reliability_trace` field of
 `eval_detail.jsonl`, making calibration diagnostics easy to audit.
 
+### Transformer-gated evaluation
+
+`scripts/reality_filter_eval.py` now loads the Transformer reliability head by
+default whenever `models/reliability_fever_attn_full.pt` (or a user-specified
+checkpoint) is available. Calibrated admit and margin thresholds are pulled from
+`results/analysis/calibration_summary.json`, so the CLI no longer needs manual
+tuning for FEVER, SciFact, or HoVer packs. Use `--disable-reliability` to fall
+back to the legacy token-support heuristic, or pass `--reliability-device cpu`
+when a GPU is unavailable. Each invocation writes Transformer-gated detail and
+summary artefacts under `results/eval/<pack>_transformer/`, keeping the original
+heuristic outputs untouched for comparison. When `--attention-output-dir` is
+provided, the trainer appends a UTC timestamp to the directory and logs the
+canonical path in `results/attention_logs.txt`, making it easy to locate the
+exact attention maps that fed a figure or report. Run
+`scripts/aggregate_attention_snapshots.py` to collapse those raw PNG sets into a
+single mean-intensity chart per run, update the log with the aggregated figure,
+and prune the bulky per-claim heatmaps before committing.
+
 ### Calibrating admit probabilities
 
 Two calibration steps are now baked into the workflow:
@@ -178,6 +196,11 @@ Two calibration steps are now baked into the workflow:
    ```
 
    The script reports Brier score, Expected Calibration Error, and precision/recall for each candidate temperature, and writes the chosen value to the JSON summary so deployments can reuse the same scaling factor.
+
+`scripts/plot_reliability_results.py` stitches these summaries together: it
+draws the FEVER configuration comparison, plots SciFact precision/recall against
+margin thresholds (with and without temperature scaling), and emits a Markdown
+table of val/test F1 and Brier scores under `results/tables/metrics_summary.md`.
 
 Temperature scaling plus dataset-specific thresholds brought the FEVER head down to an ECE of ~0.084 (from 0.173) and the fine-tuned SciFact head to ~0.075 (from 0.207) while keeping F1 unchanged. See `results/analysis/fever_temperature.json` and `results/analysis/scifact_temperature_finetune.json` for the full calibration curves.
 

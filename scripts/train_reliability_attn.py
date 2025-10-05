@@ -7,6 +7,7 @@ import argparse
 import dataclasses
 import json
 import random
+from datetime import UTC, datetime
 import numpy as np
 from pathlib import Path
 
@@ -42,6 +43,14 @@ LABEL_TO_MARGIN: Dict[str, float] = {
     "REFUTED": -1.0,
     "UNVERIFIABLE": 0.0,
 }
+
+ATTENTION_LOG_PATH = Path("results/attention_logs.txt")
+
+
+def _record_attention_directory(base_dir: Path, final_dir: Path, *, timestamp: str) -> None:
+    ATTENTION_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with ATTENTION_LOG_PATH.open("a", encoding="utf-8") as handle:
+        handle.write(f"{timestamp}\t{base_dir}\t{final_dir}\n")
 
 
 class WhitespaceTokenizer:
@@ -618,12 +627,18 @@ def train() -> None:
 
     device = torch.device(args.device)
 
-    attention_output_dir = Path(args.attention_output_dir) if args.attention_output_dir else None
-    if attention_output_dir is not None:
-        attention_output_dir.mkdir(parents=True, exist_ok=True)
+    attention_output_dir = None
+    if args.attention_output_dir:
+        base_attention_dir = Path(args.attention_output_dir)
+        timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%S")
+        versioned_dir = base_attention_dir.with_name(f"{base_attention_dir.name}_{timestamp}")
+        versioned_dir.mkdir(parents=True, exist_ok=True)
         if plt is None:
             print('[train_reliability_attn] matplotlib not available; attention heatmaps will not be saved.')
-            attention_output_dir = None
+        else:
+            attention_output_dir = versioned_dir
+            _record_attention_directory(base_attention_dir, versioned_dir, timestamp=timestamp)
+            print(f"[train_reliability_attn] attention heatmaps directory: {versioned_dir}")
     attention_limit = args.attention_limit
     attention_logged = 0
     attention_warning_emitted = False
