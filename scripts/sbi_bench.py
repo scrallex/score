@@ -22,7 +22,12 @@ def parse_args() -> argparse.Namespace:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     def add_common(p: argparse.ArgumentParser) -> None:
-        p.add_argument("--pack", type=Path, default=Path("analysis/truth_packs/fever_train_full_final/manifest.json"))
+        p.add_argument(
+            "--pack",
+            type=Path,
+            default=Path("analysis/truth_packs/example/manifest.json"),
+            help="Path to the truth-pack manifest used for lookups.",
+        )
         p.add_argument("--out", type=Path, required=True)
 
     membership = subparsers.add_parser("membership", help="Benchmark exact membership lookups.")

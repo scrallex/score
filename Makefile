@@ -3,6 +3,7 @@
 .PHONY: demo-payload demo-up demo-down
 .PHONY: planbench-all planbench-scale codetrace-report
 .PHONY: semantic-guardrail-demo final-report
+.PHONY: sbi-bench serve-sri
 
 PLANBENCH_COUNT ?= 300
 PLANBENCH_TARGETS ?= logistics blocksworld mystery_bw
@@ -192,6 +193,24 @@ BENCH_REQUESTS ?= 2000
 UVICORN_WORKERS ?= 6
 BENCH_OUTPUT ?= results/bench_seen_$(CONCURRENCY).txt
 
+SBI_PACK ?= analysis/truth_packs/example/manifest.json
+SBI_RESULTS_DIR ?= results/sbi
+SBI_MEMBERSHIP_OUT ?= $(SBI_RESULTS_DIR)/membership_summary.json
+SBI_STRUCT_OUT ?= $(SBI_RESULTS_DIR)/struct_summary.json
+SBI_SEM_OUT ?= $(SBI_RESULTS_DIR)/sem_summary.json
+SBI_CONTEXT_OUT ?= $(SBI_RESULTS_DIR)/contexts_summary.json
+SBI_AGGREGATED_OUT ?= $(SBI_RESULTS_DIR)/bench_latest.json
+SBI_POS_QUERIES ?= data/sbi/queries_exact_pos.jsonl
+SBI_NEG_QUERIES ?= data/sbi/queries_exact_neg.jsonl
+SBI_STRUCT_QUERIES ?= data/sbi/queries_struct_twin.jsonl
+SBI_SEM_QUERIES ?= data/sbi/queries_sem_twin.jsonl
+SBI_CONTEXT_QUERIES ?= data/sbi/queries_contexts.jsonl
+
+SRI_APP ?= scripts.reality_filter_service:app
+SRI_HOST ?= 0.0.0.0
+SRI_PORT ?= 8000
+SRI_UVICORN ?= uvicorn
+
 pack:
 	PYTHONPATH=src .venv/bin/python scripts/reality_filter_pack.py $(PACK_SRC) \
 	  --output-root $(PACK_PATH) \
@@ -237,6 +256,46 @@ bench-seen:
 	  --concurrency $(CONCURRENCY) \
 	  --hash-embeddings | tee $(BENCH_OUTPUT)
 	@cp $(BENCH_OUTPUT) results/bench_seen_latest.txt
+
+sbi-bench:
+	@mkdir -p $(SBI_RESULTS_DIR)
+	PYTHONPATH=src python scripts/sbi_bench.py membership \
+	  --pack $(SBI_PACK) \
+	  --queries $(SBI_POS_QUERIES) $(SBI_NEG_QUERIES) \
+	  --out $(SBI_MEMBERSHIP_OUT)
+	PYTHONPATH=src python scripts/sbi_bench.py structural \
+	  --pack $(SBI_PACK) \
+	  --queries $(SBI_STRUCT_QUERIES) --k 10 \
+	  --out $(SBI_STRUCT_OUT)
+	PYTHONPATH=src python scripts/sbi_bench.py semantic \
+	  --pack $(SBI_PACK) \
+	  --queries $(SBI_SEM_QUERIES) --k 10 \
+	  --out $(SBI_SEM_OUT)
+	PYTHONPATH=src python scripts/sbi_bench.py contexts \
+	  --pack $(SBI_PACK) \
+	  --queries $(SBI_CONTEXT_QUERIES) --k 10 \
+	  --out $(SBI_CONTEXT_OUT)
+	python - <<'PY'
+from pathlib import Path
+import json
+
+membership = Path("$(SBI_MEMBERSHIP_OUT)")
+structural = Path("$(SBI_STRUCT_OUT)")
+semantic = Path("$(SBI_SEM_OUT)")
+contexts = Path("$(SBI_CONTEXT_OUT)")
+payload = {
+    "membership": json.loads(membership.read_text()) if membership.exists() else {},
+    "structural": json.loads(structural.read_text()) if structural.exists() else {},
+    "semantic": json.loads(semantic.read_text()) if semantic.exists() else {},
+    "contexts": json.loads(contexts.read_text()) if contexts.exists() else {},
+}
+target = Path("$(SBI_AGGREGATED_OUT)")
+target.write_text(json.dumps(payload, indent=2, sort_keys=True))
+print(f"[sbi-bench] wrote {target}")
+PY
+
+serve-sri:
+	PYTHONPATH=src $(SRI_UVICORN) $(SRI_APP) --host $(SRI_HOST) --port $(SRI_PORT) --log-level warning
 
 codetrace-report:
 	PYTHONPATH=src .venv/bin/python demo/coding/run_comparison.py

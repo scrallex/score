@@ -37,7 +37,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--manifest",
         type=Path,
-        default=Path("analysis/truth_packs/fever_train_full_final/manifest.json"),
+        default=Path("analysis/truth_packs/example/manifest.json"),
         help="Truth-pack manifest to source spans from.",
     )
     parser.add_argument(
@@ -48,8 +48,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--dev-jsonl",
         type=Path,
-        default=Path("data/fever/dev.jsonl"),
-        help="FEVER dev JSONL for negative queries.",
+        default=Path("data/corpus_example/claims.jsonl"),
+        help="JSONL corpus of free-form claims used to sample negatives.",
     )
     parser.add_argument(
         "--output-dir",

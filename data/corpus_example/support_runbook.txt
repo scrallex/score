@@ -1,0 +1,1 @@
+The support rotation monitors the /seen route for latency regressions and verifies that /sbi answers include linkable receipts. Every incident ticket must identify the manifest build used to serve the responses. Rolling back to a previous pack requires rebuilding the bloom filter and reindexing contexts, both of which are automated via the sbi-bench target in the Makefile.

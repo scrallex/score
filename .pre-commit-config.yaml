@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: forbid-fever-outside-archive
+        name: forbid FEVER references outside archive
+        entry: python -c "import pathlib,re,sys; pattern=re.compile(r'fever', re.IGNORECASE); offenders=[];\nfiles=[pathlib.Path(f) for f in sys.argv[1:] if pathlib.Path(f).exists()];\nfor path in files:\n    posix=path.as_posix();\n    if posix.startswith('archive/'):\n        continue;\n    try:\n        text=path.read_text(encoding='utf-8', errors='ignore');\n    except Exception:\n        continue;\n    if pattern.search(text):\n        offenders.append(posix);\nif offenders:\n    print('Forbidden FEVER references detected outside archive:');\n    [print(' -', item) for item in offenders];\n    sys.exit(1)"
+        language: system
+        pass_filenames: true
+        types: [text]

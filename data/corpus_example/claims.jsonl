@@ -1,0 +1,5 @@
+{"claim": "The SRI pipeline caches answers from an external benchmark dataset."}
+{"claim": "Benchmarking requires a proprietary training corpus."}
+{"claim": "Only administrators can rebuild the truth pack."}
+{"claim": "Span receipts never record the manifest identifier."}
+{"claim": "The reliability gate is hard-coded to admit every span."}

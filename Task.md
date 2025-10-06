@@ -29,7 +29,7 @@ The goal of this whitepaper is to merge our O-space reliability gating work with
 5. **Structured sparsity:** Employ restricted self-attention (local window plus global rupture tokens) to preserve throughput (target ≥1k rps) while retaining O(1) access to critical anchors.
 
 ## 5. Experimental Programme
-- **E0 – Dataset bootstrapping:** Convert FEVER and SciFact JSONL corpora into STM `eval_detail` artefacts using the new ingestion tooling, double-check label mappings, and quantify evidence coverage before model training.
+- **E0 – Dataset bootstrapping:** Build the neutral example pack from `data/corpus_example/` with `scripts/reality_filter_pack.py` so the SRI quick start mirrors the repository defaults.
 - **E1 – Final-answer scoring:** Train/evaluate on repaired answers; report macro-F1, admit precision/recall, calibration error. Expect hallucination rate to drop versus heuristic pipeline.
 - **E2 – Margin/overlap calibration:** Impose dual thresholds on admit probability and attention mass over evidence; produce reliability diagrams to confirm zero-margin URI hits no longer slip through.
 - **E3 – Phase encoding ablation:** Compare models with/without extra phase channels; track long-lag recurrence recall and head specialisation metrics.
@@ -39,7 +39,7 @@ The goal of this whitepaper is to merge our O-space reliability gating work with
 ## 6. Integration Plan
 - **Model implementation:** Add `src/sep_text_manifold/attn_ospace.py` containing the Transformer backbone, evidence cross-attention, and reliability head.
 - **Training harness:** Create `scripts/train_reliability_attn.py` to ingest evaluation JSONL, train the model, and log precision/recall, calibration error, and attention entropy.
-- **Dataset ingestion:** Provide `scripts/convert_fever_to_eval.py` to hydrate FEVER/SciFact into STM-compatible evaluation detail files (evidence sentences + hazard metrics + citation URIs).
+- **Dataset ingestion:** Point contributors to `archive/datasets/fever/` for the deprecated converters and keep new documentation focused on the SRI/SBI flow.
 - **Service swap:** Modify `scripts/reality_filter_eval.py` to consume the trained reliability head output instead of heuristic token-support overrides; thresholds become calibrated probabilities.
 - **Logging & reports:** Persist per-head attention maps under `results/eval/<pack>/attention_heads/` and surface them in the report markdown to show which evidence drove each admit.
 - **CI guardrails:** Extend tests to compare confusion matrices and calibration metrics between detail outputs and summaries; fail if divergence exceeds tolerated bounds.
@@ -61,9 +61,9 @@ This outline sets the structure for the whitepaper and the accompanying implemen
 - **CI update:** `.github/workflows/attn-tests.yml` now trains a 1-epoch demo model and runs the evaluator against it, in addition to the reliability unit tests.
 
 ## Experiment log (2025-10-05)
-- **FEVER ingestion tooling:** `scripts/convert_fever_to_eval.py` converts FEVER claims plus wiki evidence into STM `eval_detail` records with mapped metrics and citations; supports `--limit`, `--include-predicted`, and wiki snapshot hydration.
+- **Legacy ingestion tooling:** `archive/datasets/fever/convert.py` and its siblings remain runnable for archival reproductions but should not resurface in docs, automation, or quick-start snippets.
 - **Reliability pipeline refresh:** `scripts/train_reliability_attn.py` now emits calibration sweeps (`--calibrate-thresholds`), Expected Calibration Error, and richer evidence encodings; `scripts/reality_filter_eval.py` records transformer probabilities/margins per repaired span.
-- **FEVER reliability (RTX 3080 Ti, 3 epochs, batch 64):** Baseline GPU run hits val precision/recall/F1 of 1.0 with negligible Brier/ECE, matching the prior CPU outcome; checkpoint saved to `models/reliability_fever_base.pt` and full logs at `results/eval/fever_train/logs/gpu_base.log`. Phase-channel ablation remains near-perfect, while disabling cross-attention collapses val F1 to ≈0.036 (precision ≈0.71, recall ≈0.02) — see aggregated metrics in `results/eval/fever_train/eval_summary_gpu.json`.
+- **Reliability gate (optional):** Any classifier heads calibrated against FEVER-era checkpoints should be referenced as legacy assets; future tuning should document corpus-neutral sweeps in `results/sbi/REPORT.md` (or a dedicated appendix).
 
 ## Experiment log (2025-10-06)
 - **HoVer multi-hop retrieval trial:** Augmented train/dev eval_detail files with top-2 TF-IDF hops and fine-tuned the reliability head for 2 epochs on the RTX 3080 Ti (batch 32, LR 5e-5, `attention_entropy_weight=1e-3`). Validation F1 reached 0.727, test F1 0.662 at calibrated thresholds 0.2 / 0.0; checkpoint stored at `models/reliability_hover_multi_hop.pt` with metrics in `results/experiments/hover_multi_hop_trial.json` and calibration plot at `results/eval/hover_dev_multi_hop/calibration_hover_multi_hop.png`.
@@ -71,6 +71,6 @@ This outline sets the structure for the whitepaper and the accompanying implemen
 - **Structured sparsity sweep:** Replayed the multi-hop checkpoint with local window {32, 64} and rupture tokens {4, 8}; precision/recall remained 1.0 while throughput held between 179-184 rec/s (`results/experiments/hover_multi_hop_sparsity.json`).
 
 ## Immediate Actions
-1. Extend the HoVer multi-hop trial into a mixed FEVER/HoVer curriculum to measure cross-pack head reuse without regressing FEVER metrics.
+1. Extend the HoVer multi-hop trial only if it can be demonstrated without reintroducing FEVER dependencies; otherwise keep the curriculum scripts quarantined in `archive/datasets/fever/`.
 2. Apply temperature scaling to the SciFact curriculum checkpoint (follow `docs/calibration_checklist.md`) to rein in over-confident admits and lock calibrated thresholds.
-3. Integrate `scripts/evaluate_reliability.py` into CI to regenerate calibration plots and probability histograms automatically for FEVER, SciFact, HoVer, and whitepaper checkpoints.
+3. Integrate `scripts/evaluate_reliability.py` into CI once a corpus-neutral calibration path exists (the FEVER/SciFact figures are now archived).

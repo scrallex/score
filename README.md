@@ -96,148 +96,66 @@ PY
 
 For details on the commands and available options run `stm --help`.
 
-### Training the reliability Transformer
+### Span Receipts pipeline (SRI/SBI)
 
-If you install the `attn` extra, start by converting a public fact-verification
-corpus (FEVER or SciFact) into STM's evaluation format:
+The default workflow now centres on a neutral corpus shipped under `data/corpus_example/`. It demonstrates how to stand up the SRI truth-pack, generate benchmark queries, and serve the `/seen` + `/sbi` routes without touching the legacy FEVER stack (which lives in `archive/datasets/fever/`).
 
-```bash
-# FEVER example (needs the wiki snapshot alongside the JSONL split)
-python scripts/convert_fever_to_eval.py \
-  data/fever/train.jsonl results/eval/fever_train/eval_detail.jsonl \
-  --wiki-pages data/fever/wiki-pages --split train --progress
-```
-
-The converter now derives every feature from the manifold tooling: each claim and evidence span is encoded with `sep_text_manifold.encode_window` to obtain coherence, stability, entropy, rupture, and λ. We feed those scores through `patternability_score`, count repeated tokens, and measure semantic alignment against the claim via the `SemanticEmbedder`. Hash embeddings are used by default, but you can enable SentenceTransformers with `--semantic-method transformer` (paired with `--semantic-model`) or tune the hash dimensionality using `--semantic-dims`. Recomputing the metrics from raw text keeps the emitted `eval_detail.jsonl` aligned with what the evaluator and reliability model consume at inference time.
-
-SciFact and HoVer ingestion follow the same pattern:
-
-```bash
-# SciFact (claims + corpus JSONL shipped with the dataset)
-python scripts/convert_scifact_to_eval.py \
-  data/scifact/claims_train.jsonl data/scifact/corpus.jsonl \
-  results/eval/scifact_train/eval_detail.jsonl \
-  --split train --semantic-method hash --progress
-
-# HoVer (multi-hop evidence pulled from wiki_wo_links.db)
-python scripts/convert_hover_to_eval.py \
-  external/hover/data/hover/hover_train_release_v1.1.json \
-  external/hover/data/wiki_wo_links.db \
-  results/eval/hover_train/eval_detail.jsonl \
-  --split train --semantic-method hash --progress
-```
-
-The HoVer converter requires the NLTK punkt tokenizer (`pip install nltk && python -m nltk.downloader punkt punkt_tab`) to reproduce the dataset's sentence segmentation.
-
-SciFact's `NOT_SUPPORTED` label and HoVer's `NOT_SUPPORTED` flag are mapped to STM's `UNVERIFIABLE` bucket so the reliability head keeps the same admit target (supported vs everything else) across corpora. All three converters now emit consistent structural metrics (`patternability`, `semantic`, `coherence`, `stability`, `entropy`, `rupture`, `lambda`) plus the raw evidence citations so attention maps can be tied back to gold sentences.
-
-Then train the O-space Transformer reliability head.  The harness now supports
-calibration sweeps, richer evidence encodings, and attention-entropy
-regularisation:
-
-```bash
-PYTHONPATH=src python scripts/train_reliability_attn.py \
-  results/eval/fever_train/eval_detail.jsonl \
-  --epochs 5 --batch-size 32 --device cuda \
-  --calibrate-thresholds --admit-threshold 0.5 --margin-threshold 0.25 \
-  --output-checkpoint models/reliability_fever.pt
-```
-
-The trainer logs admit precision/recall, macro-F1, Brier score, Expected
-Calibration Error, and attention entropy for the validation split.  Use
-`--dry-run` to execute a single forward pass and `--disable-phase-channel` or
-`--disable-cross-attention` when running ablations.  The saved checkpoint packs
-the model weights, configuration (including evidence encoder settings), and
-tokeniser vocabulary so it can be loaded via
-`reality_filter_eval.py --reliability-model`.
-
-During evaluation the reliability wrapper now feeds full evidence sentences and
-their structural metrics into the Transformer; each repaired span records the
-model's admit probability and support margin in the `reliability_trace` field of
-`eval_detail.jsonl`, making calibration diagnostics easy to audit.
-
-### Transformer-gated evaluation
-
-`scripts/reality_filter_eval.py` now loads the Transformer reliability head by
-default whenever `models/reliability_fever_attn_full.pt` (or a user-specified
-checkpoint) is available. Calibrated admit and margin thresholds are pulled from
-`results/analysis/calibration_summary.json`, so the CLI no longer needs manual
-tuning for FEVER, SciFact, or HoVer packs. Use `--disable-reliability` to fall
-back to the legacy token-support heuristic, or pass `--reliability-device cpu`
-when a GPU is unavailable. Each invocation writes Transformer-gated detail and
-summary artefacts under `results/eval/<pack>_transformer/`, keeping the original
-heuristic outputs untouched for comparison. When `--attention-output-dir` is
-provided, the trainer appends a UTC timestamp to the directory and logs the
-canonical path in `results/attention_logs.txt`, making it easy to locate the
-exact attention maps that fed a figure or report. Run
-`scripts/aggregate_attention_snapshots.py` to collapse those raw PNG sets into a
-single mean-intensity chart per run, update the log with the aggregated figure,
-and prune the bulky per-claim heatmaps before committing.
-
-### Calibrating admit probabilities
-
-Two calibration steps are now baked into the workflow:
-
-1. **Threshold sweeps** – pass `--calibrate-thresholds` to
-   `train_reliability_attn.py` to grid-search admit and margin thresholds on the
-   validation split. The best setting is stored alongside the checkpoint under
-   the `calibration` key (see `results/experiments/scifact_finetune.json`).
-2. **Temperature scaling** – once a checkpoint is trained, run
-   `scripts/calibrate_temperature.py` to fit a scalar temperature on the
-   validation logits and re-evaluate on the test split. For example:
+1. **Build a truth-pack** sourced from the example corpus:
 
    ```bash
-   CUDA_VISIBLE_DEVICES=0 python scripts/calibrate_temperature.py \
-     results/eval/scifact_train_dev/eval_detail.jsonl \
-     models/reliability_fever_scifact_ft.pt \
-     --val-split data/splits/scifact_val_ids.txt \
-     --test-split data/splits/scifact_test_ids.txt \
-     --output results/analysis/scifact_temperature_finetune.json
+   PYTHONPATH=src python scripts/reality_filter_pack.py data/corpus_example \
+     --output-root analysis/truth_packs/example \
+     --name example_pack --extensions txt \
+     --drop-numeric --min-token-len 3 --min-occurrences 1 --semantic-min-occ 1
    ```
 
-   The script reports Brier score, Expected Calibration Error, and precision/recall for each candidate temperature, and writes the chosen value to the JSON summary so deployments can reuse the same scaling factor.
+   The command writes a manifest, bloom filter, and context shards under `analysis/truth_packs/example/`. Adjust the corpus path or CLI options to change the material you ingest.
 
-`scripts/plot_reliability_results.py` stitches these summaries together: it
-draws the FEVER configuration comparison, plots SciFact precision/recall against
-margin thresholds (with and without temperature scaling), and emits a Markdown
-table of val/test F1 and Brier scores under `results/tables/metrics_summary.md`.
+2. **Prepare SBI query sets** (membership positives/negatives, structural and semantic twins, and context ranking prompts):
 
-Temperature scaling plus dataset-specific thresholds brought the FEVER head down to an ECE of ~0.084 (from 0.173) and the fine-tuned SciFact head to ~0.075 (from 0.207) while keeping F1 unchanged. See `results/analysis/fever_temperature.json` and `results/analysis/scifact_temperature_finetune.json` for the full calibration curves.
+   ```bash
+   PYTHONPATH=src python scripts/sbi_build_queries.py \
+     --manifest analysis/truth_packs/example/manifest.json \
+     --output-dir data/sbi --rebuild
+   ```
 
-### Span Receipts Index Benchmarks
+   The helper caches span inventories under `analysis/truth_packs/example/sbi/` so subsequent runs only recompute when the pack changes.
 
-The SBI experiment suite packages reproducible queries, lookup artefacts, and
-JSON summaries under `data/sbi/`, `analysis/truth_packs/<pack>/sbi/`, and
-`results/sbi/`. Regenerate the query sets and membership bloom via:
+3. **Run the four SBI benchmarks** to capture lookup latency and retrieval quality. Each invocation writes a JSON summary under `results/sbi/` and can be copied directly into `results/sbi/REPORT.md`:
 
-```bash
-PYTHONPATH=src python scripts/sbi_build_queries.py --manifest analysis/truth_packs/fever_train_full_final/manifest.json
-```
+   ```bash
+   PYTHONPATH=src python scripts/sbi_bench.py membership \
+     --pack analysis/truth_packs/example/manifest.json \
+     --queries data/sbi/queries_exact_pos.jsonl data/sbi/queries_exact_neg.jsonl \
+     --out results/sbi/membership_summary.json
 
-Run the benchmark tasks (membership, structural, semantic, context ranking)
-with:
+   PYTHONPATH=src python scripts/sbi_bench.py structural \
+     --pack analysis/truth_packs/example/manifest.json \
+     --queries data/sbi/queries_struct_twin.jsonl --k 10 \
+     --out results/sbi/struct_summary.json
 
-```bash
-PYTHONPATH=src python scripts/sbi_bench.py membership --pack analysis/truth_packs/fever_train_full_final/manifest.json \
-  --queries data/sbi/queries_exact_pos.jsonl data/sbi/queries_exact_neg.jsonl \
-  --out results/sbi/membership_summary.json
+   PYTHONPATH=src python scripts/sbi_bench.py semantic \
+     --pack analysis/truth_packs/example/manifest.json \
+     --queries data/sbi/queries_sem_twin.jsonl --k 10 \
+     --out results/sbi/sem_summary.json
 
-PYTHONPATH=src python scripts/sbi_bench.py structural --pack analysis/truth_packs/fever_train_full_final/manifest.json \
-  --queries data/sbi/queries_struct_twin.jsonl --k 10 \
-  --out results/sbi/struct_summary.json
+   PYTHONPATH=src python scripts/sbi_bench.py contexts \
+     --pack analysis/truth_packs/example/manifest.json \
+     --queries data/sbi/queries_contexts.jsonl --k 10 \
+     --out results/sbi/contexts_summary.json
+   ```
 
-PYTHONPATH=src python scripts/sbi_bench.py semantic --pack analysis/truth_packs/fever_train_full_final/manifest.json \
-  --queries data/sbi/queries_sem_twin.jsonl --k 10 \
-  --out results/sbi/sem_summary.json
+4. **Serve the API** once the pack and index artifacts are ready:
 
-PYTHONPATH=src python scripts/sbi_bench.py contexts --pack analysis/truth_packs/fever_train_full_final/manifest.json \
-  --queries data/sbi/queries_contexts.jsonl --k 10 \
-  --out results/sbi/contexts_summary.json
-```
+   ```bash
+   make serve-sri
+   ```
 
-Populate `results/sbi/REPORT.md` with the numbers from the JSON outputs, then
-run the `/seen` gate latency and calibration commands listed in that template to
-complete section (E) of the experiment plan.
+   The command boots `scripts.reality_filter_service:app` under uvicorn with the environment configured for both `/seen` and `/sbi` endpoints. Pair it with a second terminal running `make sbi-bench` to validate lookups against the deployed manifest.
+
+`results/sbi/REPORT.md` acts as the canonical template for reporting membership accuracy, twin quality, context ranking fidelity, and gate latency. Once you regenerate the JSON summaries, drop the new numbers into the template and capture any calibration notes (for example, admit thresholds) as a short appendix.
+
+> **Need the FEVER pipeline?** All dataset-specific converters and curriculum tooling now live under `archive/datasets/fever/`. The scripts are runnable via `python -m archive.datasets.fever.convert` (and friends) but are no longer part of the supported SRI flow.
 
 ## Reproducing the PlanBench++ and CodeTrace experiments
 
