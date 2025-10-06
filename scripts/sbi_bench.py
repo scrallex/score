@@ -279,12 +279,12 @@ def contexts_bench(args: argparse.Namespace) -> Dict[str, object]:
             correctness.append(is_hit)
             if is_hit and first_rank is None:
                 first_rank = idx
-        recall_sum += hits / max(1, len(gt_all))
+        recall_sum += min(1.0, hits / max(1, len(gt_all)))
         if first_rank is not None:
             mrr_sum += 1.0 / first_rank
         ndcg_sum += ndcg_score(relevances)
 
-    if reinforcements and len(set(reinforcements)) > 1:
+    if reinforcements and len(set(reinforcements)) > 1 and len(set(correctness)) > 1:
         corr, _ = spearmanr(reinforcements, correctness)
         correlation = float(corr)
     else:

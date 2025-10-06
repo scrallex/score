@@ -1,0 +1,12 @@
+{
+  "query_count": 5000,
+  "latency": {
+    "mean_ms": 0.0030992932000000004,
+    "p50_ms": 0.003014,
+    "p90_ms": 0.0034031000000000005
+  },
+  "recall_mean": 1.0,
+  "mrr": 1.0,
+  "ndcg": 1.0,
+  "reinforcement_correlation": 0.0
+}

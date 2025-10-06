@@ -204,6 +204,41 @@ table of val/test F1 and Brier scores under `results/tables/metrics_summary.md`.
 
 Temperature scaling plus dataset-specific thresholds brought the FEVER head down to an ECE of ~0.084 (from 0.173) and the fine-tuned SciFact head to ~0.075 (from 0.207) while keeping F1 unchanged. See `results/analysis/fever_temperature.json` and `results/analysis/scifact_temperature_finetune.json` for the full calibration curves.
 
+### Span Receipts Index Benchmarks
+
+The SBI experiment suite packages reproducible queries, lookup artefacts, and
+JSON summaries under `data/sbi/`, `analysis/truth_packs/<pack>/sbi/`, and
+`results/sbi/`. Regenerate the query sets and membership bloom via:
+
+```bash
+PYTHONPATH=src python scripts/sbi_build_queries.py --manifest analysis/truth_packs/fever_train_full_final/manifest.json
+```
+
+Run the benchmark tasks (membership, structural, semantic, context ranking)
+with:
+
+```bash
+PYTHONPATH=src python scripts/sbi_bench.py membership --pack analysis/truth_packs/fever_train_full_final/manifest.json \
+  --queries data/sbi/queries_exact_pos.jsonl data/sbi/queries_exact_neg.jsonl \
+  --out results/sbi/membership_summary.json
+
+PYTHONPATH=src python scripts/sbi_bench.py structural --pack analysis/truth_packs/fever_train_full_final/manifest.json \
+  --queries data/sbi/queries_struct_twin.jsonl --k 10 \
+  --out results/sbi/struct_summary.json
+
+PYTHONPATH=src python scripts/sbi_bench.py semantic --pack analysis/truth_packs/fever_train_full_final/manifest.json \
+  --queries data/sbi/queries_sem_twin.jsonl --k 10 \
+  --out results/sbi/sem_summary.json
+
+PYTHONPATH=src python scripts/sbi_bench.py contexts --pack analysis/truth_packs/fever_train_full_final/manifest.json \
+  --queries data/sbi/queries_contexts.jsonl --k 10 \
+  --out results/sbi/contexts_summary.json
+```
+
+Populate `results/sbi/REPORT.md` with the numbers from the JSON outputs, then
+run the `/seen` gate latency and calibration commands listed in that template to
+complete section (E) of the experiment plan.
+
 ## Reproducing the PlanBench++ and CodeTrace experiments
 
 The repository now ships with end-to-end harnesses for the planning and coding
