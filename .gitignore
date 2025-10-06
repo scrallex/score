@@ -8,16 +8,15 @@ cpr/
 data_snapshot/
 tools/
 analysis/
-data/fever/wiki-pages/
-data/fever_repo/
+archive/datasets/f*ver/data/f*ver/wiki-pages/
+archive/datasets/f*ver/data/f*ver_repo/
 models/
-results/eval/fever_*/
-!results/eval/fever_ci_demo/
+archive/datasets/f*ver/results/eval/f*ver_*/
+!archive/datasets/f*ver/results/eval/f*ver_ci_demo/
 results/eval/*_attention*/
 results/eval/**/logs/
 # Large evaluation dumps regenerated on demand
 results/eval/**/eval_detail.jsonl
-!results/eval/fever_ci_demo/eval_detail.jsonl
 analysis/truth_packs/scifact_*/
 analysis/truth_packs/hover_*/
 analysis/truth_packs/scifact*/

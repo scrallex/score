@@ -261,7 +261,7 @@ def build_span_aggregates(manifest_path: Path) -> Dict[str, SpanAggregate]:
             for citation in citations:
                 entry.citations[citation] += 1
 
-            uri = f"fever://{record.record_id}#{span_type}"
+            uri = f"pack://{record.record_id}#{span_type}"
             domain = citations[0] if citations else record.record_id
             timebin = "na"
 

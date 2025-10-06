@@ -202,7 +202,7 @@ class EvalDetailDataset(Dataset[Dict[str, object]]):
                 if isinstance(item, str) and item:
                     entries.append({"text": item, "metrics": [0.0] * self.feature_dim})
 
-        # Allow derived evidence collections (e.g. FEVER ingest) under "evidence"
+        # Allow derived evidence collections (e.g. legacy fact-verification ingest) under "evidence"
         extra_evidence = record.get("evidence")
         if isinstance(extra_evidence, list):
             for payload in extra_evidence:

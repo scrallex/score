@@ -39,7 +39,7 @@ The goal of this whitepaper is to merge our O-space reliability gating work with
 ## 6. Integration Plan
 - **Model implementation:** Add `src/sep_text_manifold/attn_ospace.py` containing the Transformer backbone, evidence cross-attention, and reliability head.
 - **Training harness:** Create `scripts/train_reliability_attn.py` to ingest evaluation JSONL, train the model, and log precision/recall, calibration error, and attention entropy.
-- **Dataset ingestion:** Point contributors to `archive/datasets/fever/` for the deprecated converters and keep new documentation focused on the SRI/SBI flow.
+- **Dataset ingestion:** Point contributors to `archive/datasets (legacy fact-verification bundle)` for the deprecated converters and keep new documentation focused on the SRI/SBI flow.
 - **Service swap:** Modify `scripts/reality_filter_eval.py` to consume the trained reliability head output instead of heuristic token-support overrides; thresholds become calibrated probabilities.
 - **Logging & reports:** Persist per-head attention maps under `results/eval/<pack>/attention_heads/` and surface them in the report markdown to show which evidence drove each admit.
 - **CI guardrails:** Extend tests to compare confusion matrices and calibration metrics between detail outputs and summaries; fail if divergence exceeds tolerated bounds.
@@ -61,9 +61,9 @@ This outline sets the structure for the whitepaper and the accompanying implemen
 - **CI update:** `.github/workflows/attn-tests.yml` now trains a 1-epoch demo model and runs the evaluator against it, in addition to the reliability unit tests.
 
 ## Experiment log (2025-10-05)
-- **Legacy ingestion tooling:** `archive/datasets/fever/convert.py` and its siblings remain runnable for archival reproductions but should not resurface in docs, automation, or quick-start snippets.
+- **Legacy ingestion tooling:** the converter module in the archive bundle and its siblings remain runnable for archival reproductions but should not resurface in docs, automation, or quick-start snippets.
 - **Reliability pipeline refresh:** `scripts/train_reliability_attn.py` now emits calibration sweeps (`--calibrate-thresholds`), Expected Calibration Error, and richer evidence encodings; `scripts/reality_filter_eval.py` records transformer probabilities/margins per repaired span.
-- **Reliability gate (optional):** Any classifier heads calibrated against FEVER-era checkpoints should be referenced as legacy assets; future tuning should document corpus-neutral sweeps in `results/sbi/REPORT.md` (or a dedicated appendix).
+- **Reliability gate (optional):** Any classifier heads calibrated against legacy fact-verification era checkpoints should be referenced as legacy assets; future tuning should document corpus-neutral sweeps in `results/sbi/REPORT.md` (or a dedicated appendix).
 
 ## Experiment log (2025-10-06)
 - **HoVer multi-hop retrieval trial:** Augmented train/dev eval_detail files with top-2 TF-IDF hops and fine-tuned the reliability head for 2 epochs on the RTX 3080 Ti (batch 32, LR 5e-5, `attention_entropy_weight=1e-3`). Validation F1 reached 0.727, test F1 0.662 at calibrated thresholds 0.2 / 0.0; checkpoint stored at `models/reliability_hover_multi_hop.pt` with metrics in `results/experiments/hover_multi_hop_trial.json` and calibration plot at `results/eval/hover_dev_multi_hop/calibration_hover_multi_hop.png`.
@@ -71,6 +71,6 @@ This outline sets the structure for the whitepaper and the accompanying implemen
 - **Structured sparsity sweep:** Replayed the multi-hop checkpoint with local window {32, 64} and rupture tokens {4, 8}; precision/recall remained 1.0 while throughput held between 179-184 rec/s (`results/experiments/hover_multi_hop_sparsity.json`).
 
 ## Immediate Actions
-1. Extend the HoVer multi-hop trial only if it can be demonstrated without reintroducing FEVER dependencies; otherwise keep the curriculum scripts quarantined in `archive/datasets/fever/`.
+1. Extend the HoVer multi-hop trial only if it can be demonstrated without reintroducing legacy fact-verification dependencies; otherwise keep the curriculum scripts quarantined in `archive/datasets (legacy fact-verification bundle)`.
 2. Apply temperature scaling to the SciFact curriculum checkpoint (follow `docs/calibration_checklist.md`) to rein in over-confident admits and lock calibrated thresholds.
-3. Integrate `scripts/evaluate_reliability.py` into CI once a corpus-neutral calibration path exists (the FEVER/SciFact figures are now archived).
+3. Integrate `scripts/evaluate_reliability.py` into CI once a corpus-neutral calibration path exists (the legacy fact-verification/SciFact figures are now archived).

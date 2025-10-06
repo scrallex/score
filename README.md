@@ -98,7 +98,7 @@ For details on the commands and available options run `stm --help`.
 
 ### Span Receipts pipeline (SRI/SBI)
 
-The default workflow now centres on a neutral corpus shipped under `data/corpus_example/`. It demonstrates how to stand up the SRI truth-pack, generate benchmark queries, and serve the `/seen` + `/sbi` routes without touching the legacy FEVER stack (which lives in `archive/datasets/fever/`).
+The default workflow now centres on a neutral corpus shipped under `data/corpus_example/`. It demonstrates how to stand up the SRI truth-pack, generate benchmark queries, and serve the `/seen` + `/sbi` routes without touching the legacy fact-verification stack preserved in the archive tree.
 
 1. **Build a truth-pack** sourced from the example corpus:
 
@@ -155,7 +155,7 @@ The default workflow now centres on a neutral corpus shipped under `data/corpus_
 
 `results/sbi/REPORT.md` acts as the canonical template for reporting membership accuracy, twin quality, context ranking fidelity, and gate latency. Once you regenerate the JSON summaries, drop the new numbers into the template and capture any calibration notes (for example, admit thresholds) as a short appendix.
 
-> **Need the FEVER pipeline?** All dataset-specific converters and curriculum tooling now live under `archive/datasets/fever/`. The scripts are runnable via `python -m archive.datasets.fever.convert` (and friends) but are no longer part of the supported SRI flow.
+> **Need the legacy fact-verification pipeline?** All dataset-specific converters and curriculum tooling now live under the archive tree under `archive/datasets`. The scripts remain runnable from the archive package but are no longer part of the supported SRI flow.
 
 ## Reproducing the PlanBench++ and CodeTrace experiments
 

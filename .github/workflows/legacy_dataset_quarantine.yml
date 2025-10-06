@@ -1,0 +1,35 @@
+name: legacy-dataset-quarantine
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure legacy dataset references stay quarantined
+        run: |
+          python - <<'PY'
+          import pathlib
+          import re
+          pattern = re.compile("fe" "ver", re.IGNORECASE)
+          offenders = []
+          for path in pathlib.Path('.').rglob('*'):
+              if path.is_dir():
+                  continue
+              posix = path.as_posix()
+              if posix.startswith('archive/') or posix.startswith('.git/'):
+                  continue
+              try:
+                  text = path.read_text(encoding='utf-8', errors='ignore')
+              except Exception:
+                  continue
+              if pattern.search(text):
+                  offenders.append(posix)
+          if offenders:
+              joined = '\n'.join(offenders)
+              raise SystemExit(f"Legacy dataset references found outside archive:\n{joined}")
+          PY

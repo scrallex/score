@@ -120,20 +120,11 @@ def default_calibration_thresholds(pack_id: Optional[str]) -> Optional[Tuple[flo
     summary = _load_calibration_summary()
     if not summary:
         return None
-    pack_key = None
-    if pack_id:
-        lowered = pack_id.lower()
-        if "scifact" in lowered:
-            pack_key = "scifact_val_curriculum"
-        elif "hover" in lowered:
-            pack_key = "hover_val_fever_adapt"
-        elif "fever" in lowered:
-            pack_key = "fever_val_curriculum"
-        else:
-            pack_key = "fever_val_curriculum"
-    else:
-        pack_key = "fever_val_curriculum"
-    record = summary.get(pack_key)
+    if not pack_id:
+        return None
+    lowered = pack_id.lower()
+    pack_key = Path(pack_id).stem if Path(pack_id).suffix else lowered
+    record = summary.get(pack_key) or summary.get(lowered)
     if not isinstance(record, dict):
         return None
     calibration = record.get("calibration")
@@ -966,7 +957,7 @@ def main() -> None:
     parser.add_argument(
         "--reliability-model",
         type=Path,
-        help="Path to Transformer reliability checkpoint (defaults to models/reliability_fever_attn_full.pt if available)",
+        help="Optional path to a Transformer reliability checkpoint for gating decisions.",
     )
     parser.add_argument(
         "--reliability-device",
@@ -1023,10 +1014,8 @@ def main() -> None:
     checkpoint_path: Optional[Path] = None
     if not args.disable_reliability:
         checkpoint_path = args.reliability_model
-        if checkpoint_path is None:
-            default_checkpoint = Path("models/reliability_fever_attn_full.pt")
-            if default_checkpoint.exists():
-                checkpoint_path = default_checkpoint
+        if checkpoint_path is not None and not checkpoint_path.exists():
+            raise FileNotFoundError(f"Reliability checkpoint not found: {checkpoint_path}")
         if checkpoint_path is None:
             print("[reality_filter_eval] No reliability checkpoint found; running without Transformer gate.")
         else:

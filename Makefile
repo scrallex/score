@@ -275,24 +275,24 @@ sbi-bench:
 	  --pack $(SBI_PACK) \
 	  --queries $(SBI_CONTEXT_QUERIES) --k 10 \
 	  --out $(SBI_CONTEXT_OUT)
-	python - <<'PY'
-from pathlib import Path
-import json
+	python - <<-'PY'
+	from pathlib import Path
+	import json
 
-membership = Path("$(SBI_MEMBERSHIP_OUT)")
-structural = Path("$(SBI_STRUCT_OUT)")
-semantic = Path("$(SBI_SEM_OUT)")
-contexts = Path("$(SBI_CONTEXT_OUT)")
-payload = {
-    "membership": json.loads(membership.read_text()) if membership.exists() else {},
-    "structural": json.loads(structural.read_text()) if structural.exists() else {},
-    "semantic": json.loads(semantic.read_text()) if semantic.exists() else {},
-    "contexts": json.loads(contexts.read_text()) if contexts.exists() else {},
-}
-target = Path("$(SBI_AGGREGATED_OUT)")
-target.write_text(json.dumps(payload, indent=2, sort_keys=True))
-print(f"[sbi-bench] wrote {target}")
-PY
+	membership = Path("$(SBI_MEMBERSHIP_OUT)")
+	structural = Path("$(SBI_STRUCT_OUT)")
+	semantic = Path("$(SBI_SEM_OUT)")
+	contexts = Path("$(SBI_CONTEXT_OUT)")
+	payload = {
+	    "membership": json.loads(membership.read_text()) if membership.exists() else {},
+	    "structural": json.loads(structural.read_text()) if structural.exists() else {},
+	    "semantic": json.loads(semantic.read_text()) if semantic.exists() else {},
+	    "contexts": json.loads(contexts.read_text()) if contexts.exists() else {},
+	}
+	target = Path("$(SBI_AGGREGATED_OUT)")
+	target.write_text(json.dumps(payload, indent=2, sort_keys=True))
+	print(f"[sbi-bench] wrote {target}")
+	PY
 
 serve-sri:
 	PYTHONPATH=src $(SRI_UVICORN) $(SRI_APP) --host $(SRI_HOST) --port $(SRI_PORT) --log-level warning
