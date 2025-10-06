@@ -517,6 +517,34 @@ def parse_args() -> argparse.Namespace:
         help="Sweep admit/margin thresholds on the validation set to maximise F1",
     )
     parser.add_argument(
+        "--auto-class-weights",
+        action="store_true",
+        help="Set admit-loss class weights to inverse label frequency on the training split",
+    )
+    parser.add_argument(
+        "--positive-loss-weight",
+        type=float,
+        default=1.0,
+        help="Per-sample weight applied to positive (SUPPORTED) labels in the admit loss",
+    )
+    parser.add_argument(
+        "--negative-loss-weight",
+        type=float,
+        default=1.0,
+        help="Per-sample weight applied to negative labels in the admit loss",
+    )
+    parser.add_argument(
+        "--focal-gamma",
+        type=float,
+        default=0.0,
+        help="If >0, enable focal admit loss with the given focusing parameter",
+    )
+    parser.add_argument(
+        "--focal-alpha",
+        type=float,
+        help="Alpha weighting for focal loss (defaults to 0.5 when focal loss enabled)",
+    )
+    parser.add_argument(
         "--attention-output-dir",
         type=Path,
         help="Directory for saving attention heatmaps during evaluation",
@@ -612,6 +640,18 @@ def save_checkpoint(
     torch.save(payload, path)
 
 
+def _class_counts(dataset: EvalDetailDataset, subset: Subset[Dict[str, object]]) -> Tuple[int, int]:
+    indices = subset.indices if isinstance(subset, Subset) else list(range(len(dataset)))
+    positives = 0
+    for idx in indices:
+        record = dataset.records[idx]
+        label_text = dataset._label_text(record)
+        if dataset._is_supported(record, label_text):
+            positives += 1
+    negatives = len(indices) - positives
+    return positives, negatives
+
+
 def train() -> None:
     args = parse_args()
     dataset, train_loader, val_loader, test_loader = prepare_loaders(
@@ -680,11 +720,66 @@ def train() -> None:
     bce_loss = nn.BCEWithLogitsLoss()
     mse_loss = nn.MSELoss()
 
+    train_subset = train_loader.dataset
+    if isinstance(train_subset, Subset):
+        pos_count, neg_count = _class_counts(dataset, train_subset)
+    else:
+        pos_count, neg_count = _class_counts(dataset, Subset(dataset, list(range(len(dataset)))))
+
+    total_count = pos_count + neg_count
+    if total_count == 0:
+        raise ValueError("Training data contains no records for class weight computation")
+
+    if args.auto_class_weights:
+        # Balanced re-weighting: N / (2 * count)
+        pos_weight_value = total_count / (2 * max(1, pos_count))
+        neg_weight_value = total_count / (2 * max(1, neg_count))
+    else:
+        pos_weight_value = args.positive_loss_weight
+        neg_weight_value = args.negative_loss_weight
+
+    focal_gamma = max(0.0, float(args.focal_gamma))
+    focal_alpha = args.focal_alpha if args.focal_alpha is not None else (0.5 if focal_gamma > 0.0 else None)
+
+    print(
+        json.dumps(
+            {
+                "class_balance": {
+                    "positives": pos_count,
+                    "negatives": neg_count,
+                    "total": total_count,
+                    "positive_weight": pos_weight_value,
+                    "negative_weight": neg_weight_value,
+                    "focal_gamma": focal_gamma,
+                    "focal_alpha": focal_alpha,
+                }
+            }
+        )
+    )
+
+    positive_weight_tensor = torch.tensor(pos_weight_value, dtype=torch.float32, device=device)
+    negative_weight_tensor = torch.tensor(neg_weight_value, dtype=torch.float32, device=device)
+
+    def admit_loss_fn(logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+        base_loss = torch.nn.functional.binary_cross_entropy_with_logits(logits, labels, reduction="none")
+        sample_weights = positive_weight_tensor * labels + negative_weight_tensor * (1.0 - labels)
+        if focal_gamma > 0.0:
+            probs = torch.sigmoid(logits)
+            pt = probs * labels + (1.0 - probs) * (1.0 - labels)
+            focal_weights = (1.0 - pt).clamp(min=1e-6) ** focal_gamma
+            if focal_alpha is not None:
+                alpha_term = focal_alpha * labels + (1.0 - focal_alpha) * (1.0 - labels)
+            else:
+                alpha_term = torch.ones_like(labels)
+            sample_weights = sample_weights * focal_weights * alpha_term
+        weighted = base_loss * sample_weights
+        return weighted.mean()
+
     def run_step(batch: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, float, float, float]:
         labels = batch["labels"].to(device)
         margins = batch["margins"].to(device)
         output = run_model(model, batch, device, config)
-        admit_loss = bce_loss(output.admit_logits, labels)
+        admit_loss = admit_loss_fn(output.admit_logits, labels)
         margin_loss = mse_loss(output.support_margin, margins)
         attention_reg = 0.0
         if args.attention_entropy_weight > 0.0 and output.evidence_attention is not None:
@@ -757,7 +852,7 @@ def train() -> None:
             label_tensor = batch["labels"].to(device)
             margin_tensor = batch["margins"].to(device)
 
-            admit_loss_val = bce_loss(output.admit_logits, label_tensor).item()
+            admit_loss_val = float(admit_loss_fn(output.admit_logits, label_tensor).item())
             margin_loss_val = mse_loss(output.support_margin, margin_tensor).item()
             attention_reg = 0.0
             if args.attention_entropy_weight > 0.0 and output.evidence_attention is not None:
