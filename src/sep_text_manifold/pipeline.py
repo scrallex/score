@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, asdict
 from pathlib import Path
+from concurrent.futures import ProcessPoolExecutor
 from typing import Any, Dict, Iterable, List, Optional
 
 from .ingest import ingest_directory
@@ -12,6 +13,15 @@ from .themes import build_theme_graph, compute_graph_metrics, detect_themes
 from .binary_log import BinaryLogWriter, ManifoldRecord
 from .dilution import compute_dilution_metrics
 
+
+
+
+def _extract_file_payload(entry: tuple[str, str, str]) -> tuple[str, str, int, bytes, List[StringOccurrence]]:
+    """Helper for parallel string extraction during ingestion."""
+    file_id, path, text = entry
+    occurrences = extract_strings(text, file_id)
+    data_bytes = text.encode("utf-8")
+    return file_id, path, len(text), data_bytes, occurrences
 
 @dataclass
 class AnalysisSettings:
@@ -28,6 +38,7 @@ class AnalysisSettings:
     graph_max_degree: Optional[int]
     theme_min_size: int
     log_file: Optional[str]
+    workers: int
 
 
 @dataclass
@@ -97,6 +108,7 @@ class AnalysisResult:
         )
 
 
+
 def analyse_directory(
     directory: str,
     *,
@@ -113,22 +125,41 @@ def analyse_directory(
     graph_max_degree: Optional[int] = None,
     theme_min_size: int = 1,
     log_file: Optional[str] = None,
+    workers: int = 1,
 ) -> AnalysisResult:
     root = Path(directory)
     if not root.is_dir():
         raise ValueError(f"{directory} is not a directory")
+
+    ext_list: Optional[List[str]] = list(extensions) if extensions is not None else None
+    entries = list(ingest_directory(str(root), extensions=ext_list))
+
+    try:
+        worker_count = int(workers)
+    except (TypeError, ValueError):
+        worker_count = 1
+    worker_count = max(1, worker_count)
+
+    processed: List[tuple[str, str, int, bytes, List[StringOccurrence]]] = []
+    if worker_count == 1:
+        for entry in entries:
+            processed.append(_extract_file_payload(entry))
+    else:
+        chunksize = max(1, len(entries) // (worker_count * 4)) if entries else 1
+        with ProcessPoolExecutor(max_workers=worker_count) as pool:
+            for item in pool.map(_extract_file_payload, entries, chunksize=chunksize):
+                processed.append(item)
+
     tokenised_occurrences: List[StringOccurrence] = []
     files: List[FileDigest] = []
     corpus_bytes = bytearray()
     current_offset = 0
-    ext_list: Optional[List[str]] = list(extensions) if extensions is not None else None
-    for file_id, path, text in ingest_directory(str(root), extensions=ext_list):
-        occs = extract_strings(text, file_id)
+
+    for file_id, path, char_count, data_bytes, occs in processed:
         for occ in occs:
             occ.byte_start += current_offset
             occ.byte_end += current_offset
         tokenised_occurrences.extend(occs)
-        data_bytes = text.encode("utf-8")
         corpus_bytes.extend(data_bytes)
         corpus_bytes.append(0)
         if verbose:
@@ -141,16 +172,18 @@ def analyse_directory(
                 file_id=file_id,
                 path=path,
                 byte_count=len(data_bytes),
-                char_count=len(text),
+                char_count=char_count,
                 token_count=len(occs),
             )
         )
         current_offset += len(data_bytes) + 1
+
     if verbose:
         print(f"[stm] building manifold ({len(corpus_bytes)} bytes)", flush=True)
     signals = build_manifold(bytes(corpus_bytes), window_bytes=window_bytes, stride=stride)
     if verbose:
         print(f"[stm] manifold windows: {len(signals)}", flush=True)
+
     if log_file:
         if verbose:
             print(f"[stm] writing manifold log to {log_file}", flush=True)
@@ -181,6 +214,7 @@ def analyse_directory(
                     sig_e=sig_e,
                 )
                 writer.append(record)
+
     if verbose:
         print("[stm] aggregating string metrics", flush=True)
     string_profiles = aggregate_string_metrics(
@@ -195,6 +229,7 @@ def analyse_directory(
     )
     if verbose:
         print(f"[stm] strings with profiles: {len(string_profiles)}", flush=True)
+
     string_scores: Dict[str, Dict[str, Any]] = {}
     for s, profile in string_profiles.items():
         metrics = profile.get("metrics", {})
@@ -213,6 +248,7 @@ def analyse_directory(
         for field, value in metrics.items():
             entry[field] = value
         string_scores[s] = entry
+
     if verbose:
         print("[stm] computing theme graph", flush=True)
     occurrence_counts = {s: prof.get("occurrences", 0) for s, prof in string_profiles.items()}
@@ -232,6 +268,7 @@ def analyse_directory(
     ]
     if verbose:
         print(f"[stm] themes detected: {len(themes)}", flush=True)
+
     for s, entry in string_scores.items():
         gm = graph_metrics.get(s, {})
         c_score = connector_score(
@@ -289,6 +326,7 @@ def analyse_directory(
         graph_max_degree=graph_max_degree,
         theme_min_size=theme_min_size,
         log_file=log_file,
+        workers=worker_count,
     )
     return AnalysisResult(
         settings=settings,

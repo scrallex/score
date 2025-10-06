@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import pickle
 import sys
 from dataclasses import dataclass, asdict
@@ -119,6 +120,7 @@ def ingest_pack(
     drop_numeric: bool,
     min_occurrences: int,
     extensions: Optional[Sequence[str]],
+    workers: int,
 ) -> tuple[dict, dict]:
     result = analyse_directory(
         str(pack_path),
@@ -129,6 +131,7 @@ def ingest_pack(
         min_token_length=min_token_len,
         drop_numeric=drop_numeric,
         min_occurrences=min_occurrences,
+        workers=workers,
     )
     summary = result.summary(top=25)
     state = result.to_state(include_signals=True, include_occurrences=True, include_profiles=False)
@@ -370,6 +373,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--min-token-len", type=int, default=3)
     parser.add_argument("--drop-numeric", action="store_true", help="Drop purely numeric tokens during ingest")
     parser.add_argument("--min-occurrences", type=int, default=1, help="Minimum occurrences to retain strings during ingest")
+    parser.add_argument("--ingest-workers", type=int, default=max(1, (os.cpu_count() or 1) // 2), help="Concurrent workers for STM ingestion")
     parser.add_argument("--seeds", nargs="+", help="Semantic seeds for bridge analysis")
     parser.add_argument("--novelty-seeds", nargs="*", help="Seeds representing novelty/unsupported language")
     parser.add_argument("--embedding-method", choices=["auto", "transformer", "hash"], default="transformer")
@@ -400,6 +404,7 @@ def main() -> None:
         drop_numeric=args.drop_numeric,
         min_occurrences=args.min_occurrences,
         extensions=args.extensions,
+        workers=args.ingest_workers,
     )
 
     state_path = output_root / "manifold_state.json"

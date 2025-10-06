@@ -50,6 +50,7 @@ def build_truth_pack_from_texts(
     stride: int = 1024,
     min_token_len: int = 3,
     min_occurrences: int = 1,
+    workers: int = 1,
 ) -> Path:
     """Ingest the provided documents and write a truth-pack manifest."""
 
@@ -77,6 +78,7 @@ def build_truth_pack_from_texts(
             drop_numeric=False,
             min_occurrences=min_occurrences,
             extensions=list(extensions),
+            workers=workers,
         )
 
     output_root.mkdir(parents=True, exist_ok=True)
