@@ -13,6 +13,8 @@ archive/datasets/f*ver/data/f*ver_repo/
 models/
 archive/datasets/f*ver/results/eval/f*ver_*/
 !archive/datasets/f*ver/results/eval/f*ver_ci_demo/
+external/hover/
+external/scifact/
 results/eval/*_attention*/
 results/eval/**/logs/
 # Large evaluation dumps regenerated on demand
