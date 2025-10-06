@@ -15,8 +15,12 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 try:
     import networkx as nx
+    from networkx.algorithms.approximation import (
+        betweenness_centrality as approximate_betweenness_centrality,
+    )
 except ImportError:  # pragma: no cover
     nx = None  # type: ignore
+    approximate_betweenness_centrality = None  # type: ignore
 
 
 def build_theme_graph(
@@ -158,27 +162,89 @@ def detect_themes(graph: "Graph") -> List[Set[str]]:
         return []
 
 
-def compute_graph_metrics(graph: "Graph") -> Dict[str, Dict[str, float]]:
-    """Compute simple centrality measures for each node in the graph.
+def compute_graph_metrics(
+    graph: "Graph",
+    *,
+    mode: str = "full",
+    betweenness_sample: Optional[int] = None,
+    max_full_nodes: Optional[int] = None,
+    random_seed: int = 42,
+) -> Dict[str, Dict[str, float]]:
+    """Compute centrality metrics for each node in the theme graph.
 
-    The returned dictionary can be passed to the connector score.
-    If networkx is not available, this function returns zeros for all
-    metrics.
+    Parameters
+    ----------
+    graph:
+        The theme graph (either a NetworkX graph or adjacency dict).
+    mode:
+        One of ``"full"`` (exact betweenness), ``"fast"`` (sampled/
+        approximate betweenness) or ``"off"`` (skip betweenness and
+        bridging scores).
+    betweenness_sample:
+        Optional explicit sample size for the approximate betweenness
+        computation when ``mode`` is not ``"full"`` or when the graph
+        exceeds ``max_full_nodes``.
+    max_full_nodes:
+        Optional limit on the number of nodes allowed for the exact
+        betweenness run.  If the graph is larger, the function falls
+        back to the approximate routine even when ``mode="full"``.
+    random_seed:
+        Seed forwarded to the approximate routine for reproducibility.
+
+    Returns
+    -------
+    Dict[str, Dict[str, float]]
+        Centrality metrics keyed by node identifier.  When NetworkX is
+        unavailable the function returns zeroed placeholders so the
+        downstream pipeline can proceed.
     """
+
     metrics: Dict[str, Dict[str, float]] = {}
+    # Fast exit when metrics are explicitly disabled.
+    if mode.lower() == "off":
+        if isinstance(graph, dict):
+            node_list = list(graph.keys())
+        elif nx is not None and isinstance(graph, nx.Graph):
+            node_list = list(graph.nodes())
+        else:
+            node_list = []
+        denominator = max(1, len(node_list) - 1)
+        for node in node_list:
+            degree = len(graph[node]) if isinstance(graph, dict) else graph.degree(node)
+            metrics[node] = {
+                "betweenness": 0.0,
+                "bridging": 0.0,
+                "theme_entropy_neighbors": 0.0,
+                "redundant_degree": degree / denominator if denominator else 0.0,
+            }
+        return metrics
+
     if nx is not None and isinstance(graph, nx.Graph):
-        # Normalised betweenness centrality
-        bet = nx.betweenness_centrality(graph, normalized=True)
-        # Use bridging centrality approximation: edges bridging clusters have
-        # high betweenness; reuse betweenness for bridging for now.
-        bridging = bet
-        # Compute degree entropy for neighbours of each node
+        node_count = graph.number_of_nodes()
+        run_exact = mode.lower() == "full"
+        if run_exact and max_full_nodes is not None and node_count > max_full_nodes:
+            run_exact = False
+
+        if run_exact and betweenness_sample is None:
+            betweenness = nx.betweenness_centrality(graph, normalized=True)
+        else:
+            if approximate_betweenness_centrality is None:
+                # Approximation helper missing; fall back to zeros to keep the pipeline moving.
+                betweenness = {node: 0.0 for node in graph.nodes()}
+            else:
+                samples = betweenness_sample
+                if samples is None:
+                    samples = max(32, min(1024, node_count // 20 or 1))
+                betweenness = approximate_betweenness_centrality(
+                    graph,
+                    k=min(samples, node_count),
+                    normalized=True,
+                    seed=random_seed,
+                )
+
+        bridging = betweenness
         for node in graph.nodes():
             neighbours = list(graph.neighbors(node))
-            # Compute theme entropy of neighbours: uniform if all
-            # neighbours belong to different communities.  Since we
-            # don’t have community assignments here, approximate with
-            # inverse degree
             degs = [graph.degree(v) for v in neighbours]
             total = sum(degs)
             if not neighbours or total == 0:
@@ -189,27 +255,27 @@ def compute_graph_metrics(graph: "Graph") -> Dict[str, Dict[str, float]]:
                     p = d / total
                     if p > 0:
                         entropy -= p * math.log2(p)
-                # Normalise by log2(len(neighbours))
                 if len(neighbours) > 1:
                     entropy /= math.log2(len(neighbours))
                 else:
                     entropy = 0.0
             metrics[node] = {
-                "betweenness": bet.get(node, 0.0),
-                "bridging": bridging.get(node, 0.0),
+                "betweenness": float(betweenness.get(node, 0.0)),
+                "bridging": float(bridging.get(node, 0.0)),
                 "theme_entropy_neighbors": entropy,
-                "redundant_degree": graph.degree(node) / max(1, len(graph.nodes()) - 1),
+                "redundant_degree": graph.degree(node) / max(1, node_count - 1),
             }
         return metrics
-    else:
-        # Fallback: return zeros based on adjacency dictionary
-        if isinstance(graph, dict):
-            for node, neighbours in graph.items():
-                degree = len(neighbours)
-                metrics[node] = {
-                    "betweenness": 0.0,
-                    "bridging": 0.0,
-                    "theme_entropy_neighbors": 0.0,
-                    "redundant_degree": degree / max(1, len(graph) - 1),
-                }
-        return metrics
+
+    # Fallback path when NetworkX is unavailable or a plain adjacency dict is provided.
+    if isinstance(graph, dict):
+        node_count = len(graph)
+        for node, neighbours in graph.items():
+            degree = len(neighbours)
+            metrics[node] = {
+                "betweenness": 0.0,
+                "bridging": 0.0,
+                "theme_entropy_neighbors": 0.0,
+                "redundant_degree": degree / max(1, node_count - 1),
+            }
+    return metrics

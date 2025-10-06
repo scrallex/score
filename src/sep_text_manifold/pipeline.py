@@ -39,6 +39,9 @@ class AnalysisSettings:
     theme_min_size: int
     log_file: Optional[str]
     workers: int
+    graph_metric_mode: str
+    betweenness_sample: Optional[int]
+    max_full_betweenness_nodes: Optional[int]
 
 
 @dataclass
@@ -126,6 +129,9 @@ def analyse_directory(
     theme_min_size: int = 1,
     log_file: Optional[str] = None,
     workers: int = 1,
+    graph_metric_mode: str = "full",
+    betweenness_sample: Optional[int] = None,
+    max_full_betweenness_nodes: Optional[int] = None,
 ) -> AnalysisResult:
     root = Path(directory)
     if not root.is_dir():
@@ -260,7 +266,12 @@ def analyse_directory(
         occurrence_counts=occurrence_counts,
         total_windows=len(signals),
     )
-    graph_metrics = compute_graph_metrics(graph)
+    graph_metrics = compute_graph_metrics(
+        graph,
+        mode=graph_metric_mode,
+        betweenness_sample=betweenness_sample,
+        max_full_nodes=max_full_betweenness_nodes,
+    )
     themes = [
         sorted(list(t))
         for t in detect_themes(graph)
@@ -327,6 +338,9 @@ def analyse_directory(
         theme_min_size=theme_min_size,
         log_file=log_file,
         workers=worker_count,
+        graph_metric_mode=graph_metric_mode,
+        betweenness_sample=betweenness_sample,
+        max_full_betweenness_nodes=max_full_betweenness_nodes,
     )
     return AnalysisResult(
         settings=settings,

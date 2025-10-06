@@ -121,6 +121,9 @@ def ingest_pack(
     min_occurrences: int,
     extensions: Optional[Sequence[str]],
     workers: int,
+    graph_metric_mode: str,
+    betweenness_sample: Optional[int],
+    max_full_betweenness_nodes: Optional[int],
 ) -> tuple[dict, dict]:
     result = analyse_directory(
         str(pack_path),
@@ -132,6 +135,9 @@ def ingest_pack(
         drop_numeric=drop_numeric,
         min_occurrences=min_occurrences,
         workers=workers,
+        graph_metric_mode=graph_metric_mode,
+        betweenness_sample=betweenness_sample,
+        max_full_betweenness_nodes=max_full_betweenness_nodes,
     )
     summary = result.summary(top=25)
     state = result.to_state(include_signals=True, include_occurrences=True, include_profiles=False)
@@ -381,6 +387,24 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--hash-dims", type=int, default=256)
     parser.add_argument("--semantic-min-occ", type=int, default=2, help="Minimum occurrences for semantic bridge plots")
     parser.add_argument("--manifest", type=Path, help="Optional path for manifest JSON (defaults to output-root/manifest.json)")
+    parser.add_argument(
+        "--graph-metrics",
+        choices=["off", "fast", "full"],
+        default="fast",
+        help="Control theme graph metric workload (default: fast)",
+    )
+    parser.add_argument(
+        "--betweenness-sample",
+        type=int,
+        default=None,
+        help="Sample size for approximate betweenness centrality",
+    )
+    parser.add_argument(
+        "--betweenness-full-limit",
+        type=int,
+        default=2000,
+        help="Maximum node count allowed before falling back to approximation",
+    )
     return parser.parse_args()
 
 
@@ -405,6 +429,9 @@ def main() -> None:
         min_occurrences=args.min_occurrences,
         extensions=args.extensions,
         workers=args.ingest_workers,
+        graph_metric_mode=args.graph_metrics,
+        betweenness_sample=args.betweenness_sample,
+        max_full_betweenness_nodes=args.betweenness_full_limit,
     )
 
     state_path = output_root / "manifold_state.json"

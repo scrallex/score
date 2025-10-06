@@ -51,6 +51,9 @@ def build_truth_pack_from_texts(
     min_token_len: int = 3,
     min_occurrences: int = 1,
     workers: int = 1,
+    graph_metric_mode: str = "full",
+    betweenness_sample: Optional[int] = None,
+    max_full_betweenness_nodes: Optional[int] = None,
 ) -> Path:
     """Ingest the provided documents and write a truth-pack manifest."""
 
@@ -79,6 +82,9 @@ def build_truth_pack_from_texts(
             min_occurrences=min_occurrences,
             extensions=list(extensions),
             workers=workers,
+            graph_metric_mode=graph_metric_mode,
+            betweenness_sample=betweenness_sample,
+            max_full_betweenness_nodes=max_full_betweenness_nodes,
         )
 
     output_root.mkdir(parents=True, exist_ok=True)
