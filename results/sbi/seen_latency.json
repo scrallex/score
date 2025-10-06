@@ -1,0 +1,9 @@
+{
+  "total_requests": 2000,
+  "successful": 2000,
+  "errors": 0,
+  "elapsed_sec": 1.662920104994555,
+  "throughput_rps": 1202.7036019307427,
+  "latency_ms_p50": 12.065575996530242,
+  "latency_ms_p90": 14.09506930212956
+}
