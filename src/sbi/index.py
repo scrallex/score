@@ -11,6 +11,8 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 import hnswlib
+from collections import defaultdict
+
 from sentence_transformers import SentenceTransformer
 
 from .span_corpus import load_span_inventory
@@ -56,7 +58,12 @@ class SpanReceiptsIndex:
         self.spans: Dict[str, SpanAggregate] = load_span_inventory(self.span_inventory_path)
         self._span_order: List[str] = list(self.spans.keys())
         self._q = q
-        self._struct_index = self._build_struct_index(q)
+        self._span_norm: Dict[str, str] = {}
+        self._length_buckets: Dict[int, List[str]] = defaultdict(list)
+        self._prefix_index: Dict[str, List[str]] = defaultdict(list)
+        self._suffix_index: Dict[str, List[str]] = defaultdict(list)
+        self._token_index: Dict[str, List[str]] = defaultdict(list)
+        self._build_struct_lookup()
         self._bloom, self._bloom_meta = self._load_bloom()
 
         self._embedder: Optional[SentenceTransformer] = None
@@ -76,25 +83,31 @@ class SpanReceiptsIndex:
         return len(self.spans)
 
     # ------------------------------------------------------------------
-    def _build_struct_index(self, q: int) -> Dict[str, Dict[str, int]]:
-        postings: Dict[str, Dict[str, int]] = {}
-        for span_id, span in self.spans.items():
-            grams = self._qgrams(span.text, q)
-            for gram in grams:
-                bucket = postings.setdefault(gram, {})
-                bucket[span_id] = bucket.get(span_id, 0) + 1
-        return postings
-
     @staticmethod
     def _qgrams(text: str, q: int) -> List[str]:
         normalised = " " + " ".join(text.lower().split()) + " "
-        grams: List[str] = []
         if len(normalised) < q:
-            grams.append(normalised)
-            return grams
-        for idx in range(len(normalised) - q + 1):
-            grams.append(normalised[idx : idx + q])
-        return grams
+            return [normalised]
+        return [normalised[idx : idx + q] for idx in range(len(normalised) - q + 1)]
+
+    @staticmethod
+    def _normalise(text: str) -> str:
+        return " ".join(text.lower().strip().split())
+
+    def _build_struct_lookup(self) -> None:
+        for span_id, span in self.spans.items():
+            norm = self._normalise(span.text)
+            self._span_norm[span_id] = norm
+            length = len(norm)
+            self._length_buckets[length].append(span_id)
+            if not norm:
+                continue
+            prefix = norm[:6]
+            suffix = norm[-6:]
+            token = norm.split(" ", 1)[0]
+            self._prefix_index[prefix].append(span_id)
+            self._suffix_index[suffix].append(span_id)
+            self._token_index[token].append(span_id)
 
     # ------------------------------------------------------------------
     def _load_bloom(self) -> Tuple[object, Dict[str, object]]:
@@ -128,21 +141,46 @@ class SpanReceiptsIndex:
         text: str,
         *,
         top_k: int,
-        candidate_multiplier: int = 5,
+        candidate_multiplier: int = 2,
     ) -> List[StructuralMatch]:
-        grams = self._qgrams(text, self._q)
-        scores: Dict[str, int] = {}
-        for gram in grams:
-            postings = self._struct_index.get(gram)
-            if not postings:
-                continue
-            for span_id, freq in postings.items():
-                scores[span_id] = scores.get(span_id, 0) + freq
-        if not scores:
+        norm = self._normalise(text)
+        if not norm:
             return []
-        sorted_ids = sorted(scores.items(), key=lambda item: (item[1], item[0]), reverse=True)
-        limit = max(top_k * candidate_multiplier, top_k)
-        candidates = sorted_ids[:limit]
+
+        length = len(norm)
+        candidate_ids: set[str] = set()
+        prefix = norm[:6]
+        suffix = norm[-6:]
+        token = norm.split(" ", 1)[0]
+        candidate_ids.update(self._prefix_index.get(prefix, ()))
+        candidate_ids.update(self._suffix_index.get(suffix, ()))
+        candidate_ids.update(self._token_index.get(token, ()))
+
+        length_candidates: set[str] = set()
+        for delta in range(-3, 4):
+            bucket = self._length_buckets.get(length + delta)
+            if bucket:
+                length_candidates.update(bucket)
+
+        if candidate_ids:
+            candidate_ids &= length_candidates if length_candidates else candidate_ids
+        else:
+            candidate_ids = length_candidates
+
+        if not candidate_ids:
+            candidate_ids = set(self._span_order)
+
+        limit = max(top_k * 2, top_k)
+        query_grams = set(self._qgrams(norm, self._q))
+        scored: List[Tuple[str, int]] = []
+        for span_id in candidate_ids:
+            span_norm = self._span_norm.get(span_id)
+            if span_norm is None:
+                continue
+            gram_overlap = len(query_grams & set(self._qgrams(span_norm, self._q)))
+            scored.append((span_id, gram_overlap))
+        scored.sort(key=lambda item: (item[1], item[0]), reverse=True)
+        candidates = scored[:limit]
         matches: List[StructuralMatch] = []
         for span_id, score in candidates:
             span = self.spans.get(span_id)
