@@ -1,0 +1,30 @@
+{
+  "positives": 10000,
+  "negatives": 10000,
+  "true_positive": 10000,
+  "false_positive": 0,
+  "true_negative": 10000,
+  "false_negative": 0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "false_positive_rate": 0.0,
+  "lookup_latency_tp": {
+    "mean_ms": 0.0255994362,
+    "p50_ms": 0.025292,
+    "p90_ms": 0.026417
+  },
+  "lookup_latency_tn": {
+    "mean_ms": 0.0172300654,
+    "p50_ms": 0.016977,
+    "p90_ms": 0.018112
+  },
+  "bloom": {
+    "error_rate_target": 1e-05,
+    "false_positive_rate": 0.0,
+    "false_negative_rate": 0.0,
+    "tp": 10000,
+    "tn": 10000,
+    "fp": 0,
+    "fn": 0
+  }
+}
