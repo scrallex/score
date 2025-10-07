@@ -44,6 +44,33 @@ be ported or wrapped from the existing SEP repositories.  See
 `docs/integration_with_sep.md` for details on where to pull the core
 implementation from.
 
+## Byte Stream QFH Experiments
+
+The `bin/byte_stream_manifold` CLI runs the QFH/SRI pipeline over arbitrary
+byte payloads. It accepts files, live file descriptors (including sockets), or
+stdin, converts bytes into bitstreams, computes sliding-window metrics, and
+emits JSON or CSV reports with signature repetition histograms.
+
+```bash
+# Analyse an executable with a 256-bit window and 64-bit stride
+cmake --build build && \
+  bin/byte_stream_manifold \
+    --input /bin/ls \
+    --window-bits 256 --step-bits 64 \
+    --format json --pretty \
+    --output analysis/byte_runs/ls_qfh.json
+
+# Stream random noise from /dev/urandom, cap to 32 KiB, output CSV
+head -c 32768 /dev/urandom | \
+  bin/byte_stream_manifold --step-bytes 16 --format csv > analysis/byte_runs/random.csv
+```
+
+Tune QFH weights with `--entropy-weight`, `--coherence-weight`, and
+`--collapse-threshold`, or restrict repetition memory via
+`--repetition-lookback`. The JSON summary reports aggregate coherence, entropy,
+and hazard λ along with the repetition histogram to compare synthetic patterns
+against random baselines.
+
 ## Quick start
 
 To use this project you will need Python 3.10 or higher.  Create a
