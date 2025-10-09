@@ -1,5 +1,7 @@
 app
 core
+reality_filter
+sbi
 sep_quantum
 sep_text_manifold
 stm_adapters

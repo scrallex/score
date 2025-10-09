@@ -3,8 +3,16 @@ pyproject.toml
 setup.py
 cpp/sep_quantum.cpp
 cpp/sep_core/core/qfh.cpp
+src/reality_filter/__init__.py
+src/reality_filter/engine.py
+src/reality_filter/repair.py
+src/reality_filter/sources.py
+src/sbi/__init__.py
+src/sbi/index.py
+src/sbi/span_corpus.py
 src/sep_text_manifold/__init__.py
 src/sep_text_manifold/api.py
+src/sep_text_manifold/attn_ospace.py
 src/sep_text_manifold/binary_log.py
 src/sep_text_manifold/cli.py
 src/sep_text_manifold/cli_lead.py
@@ -73,6 +81,8 @@ tests/test_pipeline.py
 tests/test_propose.py
 tests/test_qfh_native.py
 tests/test_real_world_adapter.py
+tests/test_reality_filter_eval_metrics.py
+tests/test_reality_filter_report.py
 tests/test_semantic.py
 tests/test_similar.py
 tests/test_stm_backtest.py

@@ -9,10 +9,13 @@ Description-Content-Type: text/markdown
 Requires-Dist: fastapi>=0.110.0
 Requires-Dist: pydantic>=2.0
 Requires-Dist: uvicorn>=0.27.0
+Requires-Dist: gunicorn>=21.2.0
+Requires-Dist: orjson>=3.9.15
 Requires-Dist: python-multipart>=0.0.9
 Requires-Dist: websockets>=12.0
 Requires-Dist: networkx>=3.0
 Requires-Dist: numpy>=1.23
+Requires-Dist: pandas>=1.5
 Requires-Dist: PyYAML>=6.0
 Requires-Dist: requests>=2.31
 Requires-Dist: reportlab>=3.6
@@ -28,18 +31,35 @@ Provides-Extra: stream
 Requires-Dist: kafka-python>=2.0; extra == "stream"
 Provides-Extra: onsets
 Requires-Dist: cdflib>=1.0; extra == "onsets"
+Provides-Extra: attn
+Requires-Dist: torch>=2.1.0; extra == "attn"
 
 # Sep Text Manifold (STM)
 
-The **Sep Text Manifold (STM)** project is a starting point for building a
-system that analyses large volumes of text data using the quantum‑inspired
-analysis developed in the SEP Engine.  It takes directories of arbitrary
-textual files, translates them into a stream of bits, and computes
-informational metrics (coherence, stability, entropy and rupture) over
-sliding windows of the data.  These metrics are then aggregated back
-onto the words and phrases that appear in the text, allowing you to
-identify high‑quality patterns, connectors between topics and overall
-themes in the corpus.
+STM is a coherence engine: it builds structural manifolds over any corpus and
+checks generated answers against them so every line carries its receipts. By
+fusing structural rhythm (patternability/coherence/hazard) with semantic
+intent, STM blocks hallucinated spans, repairs them from nearest twins, and
+returns citations for what survives.
+
+**Quick win:** `make semantic-guardrail-demo`
+
+This command rebuilds the documentation truth-pack, runs the evaluation set, and
+opens the **Caseboard**: raw LLM answer on the left, per-sentence decision log in
+the middle (repeat/hazard/semantic badges with twin citations), and the repaired
+answer on the right with numbered receipts. The top rail shows hallucination
+rate, repair yield, citation coverage, and latency percentiles for the run.
+
+Head to `docs/INDEX.md` for a guided tour of whitepapers, runbooks, design
+notes, and evaluation assets.
+
+### Reality Filter Toolkit
+
+- Build a truth-pack manifold: `make pack PACK=docs_demo`
+- Stream spans (sim or LLM) through the reality filter: `make stream PACK=docs_demo -- SPANS=demo/truth_pack/sample_spans.json`
+- Benchmark the `/seen` service: `PYTHONPATH=src .venv/bin/python scripts/benchmark_seen.py --manifest analysis/truth_packs/docs_demo/manifest.json`
+- Run the FastAPI shim locally: `UVLOOP=1 gunicorn scripts.reality_filter_service:app -k uvicorn.workers.UvicornWorker -w 2 --bind 0.0.0.0:8000 --keep-alive 5`
+- Generate sweeps/permutation/report artefacts: `make sweep PACK=docs_demo`, `make permutation PACK=docs_demo`, `make report PACK=docs_demo`
 
 ## Structural Intelligence Demo (mxbikes.xyz)
 
@@ -60,6 +80,33 @@ be ported or wrapped from the existing SEP repositories.  See
 `docs/integration_with_sep.md` for details on where to pull the core
 implementation from.
 
+## Byte Stream QFH Experiments
+
+The `bin/byte_stream_manifold` CLI runs the QFH/SRI pipeline over arbitrary
+byte payloads. It accepts files, live file descriptors (including sockets), or
+stdin, converts bytes into bitstreams, computes sliding-window metrics, and
+emits JSON or CSV reports with signature repetition histograms.
+
+```bash
+# Analyse an executable with a 256-bit window and 64-bit stride
+cmake --build build && \
+  bin/byte_stream_manifold \
+    --input /bin/ls \
+    --window-bits 256 --step-bits 64 \
+    --format json --pretty \
+    --output analysis/byte_runs/ls_qfh.json
+
+# Stream random noise from /dev/urandom, cap to 32 KiB, output CSV
+head -c 32768 /dev/urandom | \
+  bin/byte_stream_manifold --step-bytes 16 --format csv > analysis/byte_runs/random.csv
+```
+
+Tune QFH weights with `--entropy-weight`, `--coherence-weight`, and
+`--collapse-threshold`, or restrict repetition memory via
+`--repetition-lookback`. The JSON summary reports aggregate coherence, entropy,
+and hazard λ along with the repetition histogram to compare synthetic patterns
+against random baselines.
+
 ## Quick start
 
 To use this project you will need Python 3.10 or higher.  Create a
@@ -71,6 +118,8 @@ source .venv/bin/activate
 pip install -e .
 # Build the optional native QFH/QBSA bindings (requires a C++20 toolchain and TBB)
 pip install -e .[native]
+# Install the optional Transformer-based reliability model (requires PyTorch)
+pip install -e .[attn]
 ```
 
 Once installed you can ingest a corpus and perform an initial analysis
@@ -109,6 +158,67 @@ PY
 ```
 
 For details on the commands and available options run `stm --help`.
+
+### Span Receipts pipeline (SRI/SBI)
+
+The default workflow now centres on a neutral corpus shipped under `data/corpus_example/`. It demonstrates how to stand up the SRI truth-pack, generate benchmark queries, and serve the `/seen` + `/sbi` routes without touching the legacy fact-verification stack preserved in the archive tree.
+
+1. **Build a truth-pack** sourced from the example corpus:
+
+   ```bash
+   PYTHONPATH=src python scripts/reality_filter_pack.py data/corpus_example \
+     --output-root analysis/truth_packs/example \
+     --name example_pack --extensions txt \
+     --drop-numeric --min-token-len 3 --min-occurrences 1 --semantic-min-occ 1
+   ```
+
+   The command writes a manifest, bloom filter, and context shards under `analysis/truth_packs/example/`. Adjust the corpus path or CLI options to change the material you ingest.
+
+2. **Prepare SBI query sets** (membership positives/negatives, structural and semantic twins, and context ranking prompts):
+
+   ```bash
+   PYTHONPATH=src python scripts/sbi_build_queries.py \
+     --manifest analysis/truth_packs/example/manifest.json \
+     --output-dir data/sbi --rebuild
+   ```
+
+   The helper caches span inventories under `analysis/truth_packs/example/sbi/` so subsequent runs only recompute when the pack changes.
+
+3. **Run the four SBI benchmarks** to capture lookup latency and retrieval quality. Each invocation writes a JSON summary under `results/sbi/` and can be copied directly into `results/sbi/REPORT.md`:
+
+   ```bash
+   PYTHONPATH=src python scripts/sbi_bench.py membership \
+     --pack analysis/truth_packs/example/manifest.json \
+     --queries data/sbi/queries_exact_pos.jsonl data/sbi/queries_exact_neg.jsonl \
+     --out results/sbi/membership_summary.json
+
+   PYTHONPATH=src python scripts/sbi_bench.py structural \
+     --pack analysis/truth_packs/example/manifest.json \
+     --queries data/sbi/queries_struct_twin.jsonl --k 10 \
+     --out results/sbi/struct_summary.json
+
+   PYTHONPATH=src python scripts/sbi_bench.py semantic \
+     --pack analysis/truth_packs/example/manifest.json \
+     --queries data/sbi/queries_sem_twin.jsonl --k 10 \
+     --out results/sbi/sem_summary.json
+
+   PYTHONPATH=src python scripts/sbi_bench.py contexts \
+     --pack analysis/truth_packs/example/manifest.json \
+     --queries data/sbi/queries_contexts.jsonl --k 10 \
+     --out results/sbi/contexts_summary.json
+   ```
+
+4. **Serve the API** once the pack and index artifacts are ready:
+
+   ```bash
+   make serve-sri
+   ```
+
+   The command boots `scripts.reality_filter_service:app` under uvicorn with the environment configured for both `/seen` and `/sbi` endpoints. Pair it with a second terminal running `make sbi-bench` to validate lookups against the deployed manifest.
+
+`results/sbi/REPORT.md` acts as the canonical template for reporting membership accuracy, twin quality, context ranking fidelity, and gate latency. Once you regenerate the JSON summaries, drop the new numbers into the template and capture any calibration notes (for example, admit thresholds) as a short appendix.
+
+> **Need the legacy fact-verification pipeline?** All dataset-specific converters and curriculum tooling now live under the archive tree under `archive/datasets`. The scripts remain runnable from the archive package but are no longer part of the supported SRI flow.
 
 ## Reproducing the PlanBench++ and CodeTrace experiments
 
