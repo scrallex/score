@@ -38,7 +38,7 @@ The notebook’s `compute_bits` function derives these flags and drops the first
    - Open at the previous close.
    - Close one unit higher if the bit is `1`, otherwise one unit lower.
    - Set `high`/`low` to bracket the open/close by ±0.05.
-   - Increase volume monotonically to keep the QFH kernel’s volume filters permissive.
+   - Increase volume monotonically to keep the manifold kernel’s volume filters permissive.
 
 The notebook’s `bits_to_candles` helper writes the resulting list to `analysis/weather/<STATION>_<DATE>.candles.json`. In production you can feed actual station metrics as `open/high/low/close` values instead of synthetic ones as long as the bit logic remains encoded in the candle features.
 
@@ -50,7 +50,7 @@ With the candle JSON in place:
 bin/manifold_generator --input analysis/weather/KATT_2025-10-01.candles.json   --output analysis/weather/KATT_2025-10-01.manifold.json
 ```
 
-`manifold_generator` automatically loads the native QFH/QBSA kernel (`src/core/manifold_builder.cpp`) and produces up to 512 signals with coherence, entropy, rupture, and hazard λ. The notebook executes this command via `subprocess.run` and surfaces stdout/stderr for debugging.
+`manifold_generator` automatically loads the native manifold kernel (`src/core/manifold_builder.cpp`) and produces up to 512 signals with coherence, entropy, rupture, and hazard λ. The notebook executes this command via `subprocess.run` and surfaces stdout/stderr for debugging.
 
 ## 6. Inspecting λ and rupture
 

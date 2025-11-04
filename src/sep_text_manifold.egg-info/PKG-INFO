@@ -75,7 +75,7 @@ and Context Refinery summaries, and ships with an nginx config wired for
 This repository is intended as a **framework** – it contains skeleton
 modules, command line entry points and API scaffolding.  You can run
 basic ingestion and analysis out of the box, but the heavy lifting (the
-QFH/QBSA algorithms, manifold build logic and advanced scoring) should
+structural manifold algorithms, manifold build logic and advanced scoring) should
 be ported or wrapped from the existing SEP repositories.  See
 `docs/integration_with_sep.md` for details on where to pull the core
 implementation from.
@@ -116,7 +116,7 @@ virtual environment and install the package in editable mode:
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
-# Build the optional native QFH/QBSA bindings (requires a C++20 toolchain and TBB)
+# Build the optional native structural manifold bindings (requires a C++20 toolchain and TBB)
 pip install -e .[native]
 # Install the optional Transformer-based reliability model (requires PyTorch)
 pip install -e .[attn]
@@ -290,7 +290,7 @@ python scripts/calibrate_router.py \
 When the native bindings are installed, add `--use-native-quantum` to
 `scripts/planbench_to_stm.py`, `scripts/enrich_features.py`, and
 `scripts/experiments/build_causal_domain.py` to ensure the manifolds are built
-with the QFH/QBSA kernel rather than the simplified fallback.
+with the structural manifold kernel rather than the simplified fallback.
 
 If VAL traces are not available you can synthesise them directly from the
 generated plans:

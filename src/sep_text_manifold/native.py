@@ -1,7 +1,7 @@
 """Helpers for optional native (C++) accelerated routines.
 
 This module wraps the :mod:`sep_quantum` pybind11 bindings so callers in the
-STM codebase can consume the full QFH/QBSA metrics whenever the native kernel
+STM codebase can consume the full manifold metrics whenever the native kernel
 is available.  Each helper raises ``RuntimeError`` if the extension has not
 been built, allowing callers to fall back to the pure-Python implementations.
 """

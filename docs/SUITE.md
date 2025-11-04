@@ -16,7 +16,7 @@
    - Supports early warning on volatility clusters, cross-asset twins, signal triage.
 
 **Shared Engine**
-- Third-state manifold (QFH/QBSA metrics) with percentile guardrail.
+- Third-state manifold (structural metrics) with percentile guardrail.
 - Explainable outputs (bit tokens, signature q-grams, ANN diagnostics).
 - Portable CLI/API with reproducible pipelines (`make all`).
 

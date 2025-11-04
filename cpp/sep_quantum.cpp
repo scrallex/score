@@ -104,7 +104,7 @@ PYBIND11_MODULE(sep_quantum, m) {
         .def_readonly("sig_s", &Metrics::sig_s)
         .def_readonly("sig_e", &Metrics::sig_e);
 
-    m.def("analyze_bits", &analyze_bits_native, "Analyze a window of bits using the native QFH/QBSA kernel");
+    m.def("analyze_bits", &analyze_bits_native, "Analyze a window of bits using the native manifold kernel");
     m.def("analyze_window", &analyze_bits_detailed, "Return the full native QFH result for a bit window");
     m.def("transform_rich", &sep::quantum::transform_rich, "Transform bits into QFH events");
     m.def("aggregate_events", &sep::quantum::aggregate, "Aggregate consecutive QFH events");

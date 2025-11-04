@@ -1,5 +1,5 @@
 // Trajectory utilities and damped integral result for forward projections
-// Matches usage in QFH/QBSA and aligns with docs on exponential damping
+// Matches usage in the structural manifold metrics and aligns with docs on exponential damping
 
 #pragma once
 
@@ -50,4 +50,3 @@ struct DampedValue {
 } // namespace bitspace
 } // namespace quantum
 } // namespace sep
-

@@ -5,7 +5,7 @@ We transform MMS telemetry into structural bit streams (UP/ACCEL/RANGEEXP/ZPOS) 
 
 ## 1. Method
 1. Bit encode MMS1 FGM channels into structural tokens (`__UP`, `__ACCEL`, `__RANGEEXP`, `__ZPOS`) at 1 s cadence.
-2. Run the STM native kernel (QFH/QBSA) with window_bytes=1024, stride=512, capturing coherence, entropy, stability, rupture, and λ per window plus signature q-grams.
+2. Run the STM native manifold kernel with window_bytes=1024, stride=512, capturing coherence, entropy, stability, rupture, and λ per window plus signature q-grams.
 3. Apply percentile-based guardrail calibration (`scripts/calibrate_router.py`) that relaxes coherence/entropy/stability percentiles until the slice foreground coverage lies within 5–20 % (observed 5–7 %).
 4. Enforce structural-only outputs (`scripts/enforce_structural.py`) so strings, proposals, and twins are restricted to `__` tokens with connector ≥0.5.
 5. Index with ANN/postings, generate proposals and storm→storm twins, and summarise diagnostics and lead-time densities via the new CLI shims.

@@ -49,7 +49,7 @@ Native metrics now propagate along a single path shared by trading and planning:
   \item \textbf{Candle ingestion}: \texttt{scripts/ops/prime\_qfh\_history.py} replays Valkey candle ranges (falling back to OANDA when gaps appear), invokes the native \texttt{manifold\_generator}, and stores gzip-compressed manifolds plus per-signal hashes (\texttt{sep:signal:*}). Recent changes attach both nanosecond and millisecond timestamps so downstream exports remain numeric.
   \item \textbf{Snapshot export}: \texttt{scripts/ops/export\_manifold\_snapshots.py} queries the live Valkey service and materialises JSON/CSV payloads in \texttt{output/manifolds\_native/}. These snapshots feed the whitepaper figures and provide a consistent interface for analytics beyond the cluster network.
   \item \textbf{Planner integration}: the \texttt{native\_metrics\_provider} wires the same kernel into PlanBench ingestion (\texttt{--use-native-quantum}), ensuring every logistics window carries QFH metrics, hazard weights, and STM feature enrichments before guardrail calibration.
-  \item \textbf{Bridge analytics}: the enriched state (\texttt{invalid\_state\_logistics\_native.json}) coupled with live FX measurements allows \texttt{compute\_bridge\_metrics.py} to correlate STM irreversibility against QBSA hazard without bespoke adapters.
+  \item \textbf{Bridge analytics}: the enriched state (\texttt{invalid\_state\_logistics\_native.json}) coupled with live FX measurements allows \texttt{compute\_bridge\_metrics.py} to correlate STM irreversibility against manifold hazard without bespoke adapters.
 \end{enumerate}
 
 This flow unifies the instrumentation for both the spt trading stack and the STM planning harness, eliminating historic divergences between Python and native code paths.
@@ -113,14 +113,14 @@ We prime 30 days of EUR/USD, GBP/USD, USD/JPY, EUR/JPY, USD/CAD, NZD/USD, AUD/US
 \end{figure}
 
 \subsection{Bridge Analysis}
-Using the enriched logistics state (\texttt{invalid\_state\_logistics\_native.json}) and the native guardrail config, we recompute STM irreversibility vs QBSA hazard. Figure~\ref{fig:logistics-irr-lambda} visualises the scatter while Figure~\ref{fig:bridge-summary} summarises Pearson and Spearman correlations against the spt rupture proxy.
+Using the enriched logistics state (\texttt{invalid\_state\_logistics\_native.json}) and the native guardrail config, we recompute STM irreversibility vs manifold hazard. Figure~\ref{fig:logistics-irr-lambda} visualises the scatter while Figure~\ref{fig:bridge-summary} summarises Pearson and Spearman correlations against the spt rupture proxy.
 
-The \texttt{native\_metrics\_provider} injects the QFH metrics directly into STM feature derivation, so bridge comparisons now operate on identical coherence, stability, entropy, rupture, and $\lambda$ definitions across markets and planners. Across 11k invalid logistics windows the Pearson correlation between STM irreversibility and QBSA hazard is \(-0.23\) (\(p\approx 3.6\times10^{-133}\)), and the Spearman rank correlation is \(-0.28\) (\(p\approx 4.8\times10^{-200}\)). Applying a hazard threshold of 0.25 partitions the dataset into a contingency table with 62\% agreement between STM "irreversible" windows and market "high rupture" windows, suggesting the bridge surfaces genuine shared structure rather than incidental covariance.
+The \texttt{native\_metrics\_provider} injects the manifold metrics directly into STM feature derivation, so bridge comparisons now operate on identical coherence, stability, entropy, rupture, and $\lambda$ definitions across markets and planners. Across 11k invalid logistics windows the Pearson correlation between STM irreversibility and manifold hazard is \(-0.23\) (\(p\approx 3.6\times10^{-133}\)), and the Spearman rank correlation is \(-0.28\) (\(p\approx 4.8\times10^{-200}\)). Applying a hazard threshold of 0.25 partitions the dataset into a contingency table with 62\% agreement between STM "irreversible" windows and market "high rupture" windows, suggesting the bridge surfaces genuine shared structure rather than incidental covariance.
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.75\linewidth]{../figures/fig3_logistics_irreversibility_vs_lambda.png}
-  \caption{Logistics windows: STM irreversibility vs QBSA hazard.}
+  \caption{Logistics windows: STM irreversibility vs manifold hazard.}
   \label{fig:logistics-irr-lambda}
 \end{figure}
 
@@ -145,7 +145,7 @@ Key quantitative findings to keep in mind:
 \textbf{Limitations:} PlanBench corpora remain small and biased toward logistics traces, the best permutation $p$-values are still \(\approx0.24\), hazard thresholds (e.g., $\lambda \leq 0.18$ for FX gating) require empirical tuning per asset, and the synthetic catalogue is intentionally minimal. Future work will expand the dataset (more FX pairs, other asset classes, larger PlanBench collections), explore ablations that vary the $\lambda$ weighting and twin filters, and benchmark manifold gating against classical technical indicators to quantify any performance edge.
 
 \section{Conclusion}
-The native QFH/QBSA manifold now runs end-to-end across STM planning and spt trading, delivering a single structural vocabulary for echo detection. Synthetic corpora, PlanBench logistics traces, and live FX snapshots all exhibit coherent hazard behaviour, and the STM\,$\leftrightarrow$\,market bridge quantifies how planner irreversibility mirrors live rupture. Future work will deepen the bridge with richer contingency tables, expand the FX universe beyond the current eight pairs, and harden allocator policies that consume the gates.
+The native structural manifold now runs end-to-end across STM planning and spt trading, delivering a single structural vocabulary for echo detection. Synthetic corpora, PlanBench logistics traces, and live FX snapshots all exhibit coherent hazard behaviour, and the STM\,$\leftrightarrow$\,market bridge quantifies how planner irreversibility mirrors live rupture. Future work will deepen the bridge with richer contingency tables, expand the FX universe beyond the current eight pairs, and harden allocator policies that consume the gates.
 
 \appendix
 \section{Reproducibility}

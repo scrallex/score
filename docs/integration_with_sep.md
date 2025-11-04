@@ -3,10 +3,10 @@
 The Sep Text Manifold (STM) framework provides scaffolding for
 performing bulk text analysis using the quantum–inspired metrics
 developed in the SEP Engine.  It does not implement the core
-algorithms itself.  Instead, you are expected to pull the
-`QFH`/`QBSA` implementations and related manifold code from the existing
-SEP repositories and expose them to Python via an FFI layer or a
-compiled binary.
+algorithms itself.  Instead, you are expected to pull the native manifold
+implementations (currently surfaced through the `qfh` components) and
+related manifold code from the existing SEP repositories and expose them
+to Python via an FFI layer or a compiled binary.
 
 ## Relevant files in the SEP repositories
 
@@ -66,7 +66,7 @@ wrap:
    `planbench_to_stm.py`, `calibrate_router.py`, `enrich_features.py`, and
    `experiments/build_causal_domain.py` expose a `--use-native-quantum` flag.
    Enable it once the native extension is installed to ensure manifolds and
-   derived features are generated with QFH/QBSA metrics; omit it to fall back
+   derived features are generated with the structural manifold metrics; omit it to fall back
    to the pure-Python approximations.
 
 5. **Validate with unit tests.**  Write tests in `tests/` that feed

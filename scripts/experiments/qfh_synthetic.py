@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate canonical QFH/QBSA metric expectations on synthetic bitstreams."""
+"""Generate canonical manifold metric expectations on synthetic bitstreams."""
 
 from __future__ import annotations
 
@@ -140,7 +140,7 @@ def build_specs(length: int, samples: int) -> Iterable[SyntheticSpec]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate synthetic QFH/QBSA datasets")
+    parser = argparse.ArgumentParser(description="Generate synthetic manifold datasets")
     parser.add_argument("--length", type=int, default=256, help="Bitstream length per sample")
     parser.add_argument("--samples", type=int, default=5, help="Samples per stochastic pattern")
     parser.add_argument(

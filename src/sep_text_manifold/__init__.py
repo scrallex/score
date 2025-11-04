@@ -6,7 +6,7 @@ quantum‑inspired metrics over sliding windows of bytes, building a
 manifold of signals, extracting and scoring strings, detecting themes
 and exposing the results via a simple API and command line interface.
 
-The heavy numerical work is delegated to the SEP Engine's QFH/QBSA
+The heavy numerical work is delegated to the SEP Engine's structural manifold
 implementation.  See `docs/integration_with_sep.md` for details on
 how to integrate with the existing C++ codebase.
 """

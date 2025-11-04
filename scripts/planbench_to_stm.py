@@ -561,7 +561,7 @@ def main(argv: Optional[Sequence[str]] = None) -> None:
     parser.add_argument(
         "--use-native-quantum",
         action="store_true",
-        help="Prefer the native QFH/QBSA kernel for manifold construction when available",
+        help="Prefer the native manifold kernel for manifold construction when available",
     )
     args = parser.parse_args(argv)
 

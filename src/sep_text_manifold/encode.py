@@ -4,7 +4,7 @@ Encoding and quantum metric computation for the Sep Text Manifold.
 This module exposes functions to convert a window of bytes into a
 bitstream and compute informational metrics on that stream.  The
 metrics implemented here are simplified stand‑ins for the full
-QFH/QBSA algorithms used by the SEP Engine.  They provide a
+native manifold algorithms used by the SEP Engine.  They provide a
 reasonable approximation for experimentation and can be replaced by
 calls into the C++ implementation when performance or fidelity is
 required.

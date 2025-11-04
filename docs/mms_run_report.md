@@ -6,7 +6,7 @@
   - Native sampling left at 1 s cadence.
   - `scripts/encode_struct_bits.py` converts each numeric channel into structural bit streams (`__UP`, `__ACCEL`, `__RANGEEXP`, `__ZPOS`).
   - Zoom corpus (`nasa/mms/csv_zoom/2017-09-07_22-02`) keeps only the 22:00–02:00 UTC storm window.
-- **Kernel**: STM native (QFH/QBSA) with `window_bytes=1024`, `stride=512`, `--drop-numeric` to focus on bit tokens.
+- **Kernel**: STM native manifold with `window_bytes=1024`, `stride=512`, `--drop-numeric` to focus on bit tokens.
 - **Indices**: `stm index build` → `analysis/mms_zoom_ann.hnsw`, `analysis/mms_zoom_postings.json`.
 - **Router calibration**: `scripts/calibrate_router.py` now enforces a 5–20 % foreground coverage band by relaxing percentile cuts in a fixed order and records the effective thresholds + coverage per slice.
 - **Automation**: `stm-plots`, `stm-leadtime`, and `scripts/twin_diagnostics.py` regenerate plots, lead-time tables, and ANN summaries as one-liners for any new slice.

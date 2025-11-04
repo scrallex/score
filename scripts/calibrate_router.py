@@ -554,7 +554,7 @@ def main() -> None:
     parser.add_argument(
         "--use-native-quantum",
         action="store_true",
-        help="Prefer the native QFH/QBSA metrics when analysing states",
+        help="Prefer the native manifold metrics when analysing states",
     )
     args = parser.parse_args()
 

@@ -156,7 +156,7 @@ def main() -> None:
     parser.add_argument(
         "--use-native-quantum",
         action="store_true",
-        help="Prefer the native QFH/QBSA engine when available",
+        help="Prefer the native manifold engine when available",
     )
     args = parser.parse_args()
 

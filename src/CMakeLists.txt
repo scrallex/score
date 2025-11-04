@@ -31,7 +31,7 @@ set(C_SOURCES)
 
 # Exclude facade_original.cpp only (OANDA files are needed for frontend)
 list(FILTER CXX_SOURCES EXCLUDE REGEX ".*/facade_original\\.cpp$")
-# QBSA quantum algorithm now enabled - core functionality for SEP system
+# Structural manifold core algorithm enabled - core functionality for SEP system
 # list(FILTER CXX_SOURCES EXCLUDE REGEX ".*/core/qbsa\\.cpp$")
 
 # Separate main files from library source files

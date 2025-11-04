@@ -2,7 +2,7 @@
 
 ## Objective
 
-Demonstrate how the QFH/QBSA manifold can pair byte-level repetition with
+Demonstrate how the structural manifold can pair byte-level repetition with
 semantic intent so AI copilots and guardrails understand both *how often* a
 pattern appears and *what it means*.
 

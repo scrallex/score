@@ -49,7 +49,7 @@ irreversibility weighting, predicate balance, and momentum deltas that blend int
 foreground metrics. The retuned guardrail covers $1.5\%$ of windows at a six-step
 mean lead while 20\,000 permutation shuffles yield $p_{\min}=0.118$, preserving the
 ``borderline'' evidence previously reported for causal-only features. The second
-track instruments the production QFH/QBSA stack: manifolds and trade-readiness
+track instruments the production structural manifold stack: manifolds and trade-readiness
 gates expose native $\{c, s, H, \rho, \lambda\}$ and repetition evidence through
 fresh REST endpoints (\texttt{/api/manifold/latest}, \texttt{/api/opt/slice*}) and a
 Valkey exporter that materialises joint STM/spt snapshots. The whitepaper ties the
@@ -67,7 +67,7 @@ ewpage
 \begin{sloppypar}
 \begin{itemize}
   \item \textbf{Logistics retune:} predicate balance, momentum deltas, and action-cluster entropy now blend directly into the guardrail metrics. The best configuration covers $1.5\%$ of windows with a six-step mean lead and $p_{\min}=0.118$ (20\,000 permutations).
-  \item \textbf{Live engine exposure:} the production QFH/QBSA loop emits native manifolds, repetition counts, and hazard $\lambda$ through \texttt{/api/manifold/latest} and the \texttt{/api/opt/slice*} family, allowing reviewers to replay the live admissibility gate.
+  \item \textbf{Live engine exposure:} the production manifold loop emits native manifolds, repetition counts, and hazard $\lambda$ through \texttt{/api/manifold/latest} and the \texttt{/api/opt/slice*} family, allowing reviewers to replay the live admissibility gate.
   \item \textbf{STM\textrightarrow{}spt bridge:} a new Valkey exporter captures aligned STM features and live metrics ($\{c,s,H,\rho,\lambda\}$ plus repetition), enabling joint plots and coverage-vs-hazard analyses for the whitepaper figures.
   \item \textbf{Reproducible chain:} refreshed scripts build the enriched domain, rerun 20k-iteration sweeps, export guardrail artefacts, and snapshot live manifolds; the appendix lists exact commands and curl probes against the new API endpoints.
 \end{itemize}

@@ -5,7 +5,7 @@ The goal of this whitepaper is to merge our O-space reliability gating work with
 ## 1. Introduction: Problem Framing
 - Restate the operational hazards already observed: hallucination rate stuck at 1.0, token-support passes on zero-margin URI hits, and brittle post-processing in `reality_filter_eval.py`.
 - Motivate “reliability-gated admission” for both generated answers and market signals: we need to admit spans/candles only when structural evidence exists in the O-space memory.
-- Introduce O-space as the content-addressable manifold built from QFH/QBSA metrics (coherence, stability, entropy, rupture, hazard) and emphasise the need to replace heuristic gates with a learnable admit policy.
+- Introduce O-space as the content-addressable manifold built from structural metrics (coherence, stability, entropy, rupture, hazard) and emphasise the need to replace heuristic gates with a learnable admit policy.
 - Preview how Transformer attention gives a principled mechanism for global lookups, multi-relational reasoning, and evidence alignment.
 
 ## 2. Primer on Transformer Attention
@@ -15,7 +15,7 @@ The goal of this whitepaper is to merge our O-space reliability gating work with
 - **Position and phase (Sec. 3.5).** Detail sinusoidal encodings and propose extending them with our prime/phase ticks so rhythmic structure is available to the model without losing extrapolation capacity.
 - **Cross-attention for evidence gating (Sec. 3.2.3).** Map decoder-to-encoder attention onto our “query span attends to manifold memory” requirement and foreshadow a cross-attention block that learns citation alignment.
 
-## 3. Recap of the Manifold / QFH / QBSA Framework
+## 3. Recap of the Structural Manifold Framework
 - Summarise the metrics (coherence, stability, entropy, rupture density, hazard λ) and how they yield signatures for windows across text and price streams.
 - Describe the manifold construction pipeline: sliding window ingestion, repetition counting, hazard thresholds, and the existing ORJSON manifests.
 - Review the twin-repair loop and semantic gating currently used, noting the failure modes identified in recent commits (latched hallucination flag, unchecked URI override).
