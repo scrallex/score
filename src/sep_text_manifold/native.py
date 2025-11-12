@@ -19,6 +19,7 @@ try:  # pragma: no cover - optional dependency
         aggregate_events as _native_aggregate_events,
         analyze_bits as _native_analyze_bits,
         analyze_window as _native_analyze_window,
+        analyze_window_batch as _native_analyze_window_batch,
         transform_rich as _native_transform_rich,
     )
     HAVE_NATIVE = True
@@ -26,6 +27,7 @@ except ImportError:  # pragma: no cover - optional dependency
     _native_aggregate_events = None
     _native_analyze_bits = None
     _native_analyze_window = None
+    _native_analyze_window_batch = None
     _native_transform_rich = None
     _QFHAggregateEvent = None
     _QFHEvent = None
@@ -50,6 +52,7 @@ __all__ = [
     "aggregate_events",
     "analyze_bits",
     "analyze_window",
+    "analyze_window_batch",
     "bits_from_bytes",
     "set_use_native",
     "transform_rich",
@@ -91,6 +94,27 @@ def analyze_window(bits: Sequence[int]):
     if _native_analyze_window is None:
         raise RuntimeError("Native build missing analyze_window")
     return _native_analyze_window(list(bits))
+
+
+def analyze_window_batch(windows: Sequence[bytes]) -> list[dict[str, float]]:
+    """Return aggregate metrics for a batch of byte windows."""
+
+    _require_native("analyze_window_batch")
+    if _native_analyze_window_batch is None:
+        raise RuntimeError("Native build missing analyze_window_batch")
+    metrics_batch = _native_analyze_window_batch(list(windows))
+    results: list[dict[str, float]] = []
+    for metrics in metrics_batch:
+        results.append(
+            {
+                "coherence": float(metrics.coherence),
+                "stability": float(metrics.stability),
+                "entropy": float(metrics.entropy),
+                "rupture": float(metrics.rupture),
+                "lambda_hazard": float(metrics.lambda_hazard),
+            }
+        )
+    return results
 
 
 def transform_rich(bits: Sequence[int]):  # type: ignore[override]

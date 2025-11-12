@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include "sep_core/core/qfh.h"
@@ -23,6 +24,16 @@ struct Metrics {
 static std::uint16_t bucket(float value) {
     value = std::fmax(0.0f, std::fmin(1.0f, value));
     return static_cast<std::uint16_t>(std::lround(value * 1000.0f));
+}
+
+static void bytes_to_bits(const std::string& bytes, std::vector<std::uint8_t>& bits) {
+    bits.clear();
+    bits.reserve(bytes.size() * 8);
+    for (unsigned char byte : bytes) {
+        for (int shift = 7; shift >= 0; --shift) {
+            bits.push_back(static_cast<std::uint8_t>((byte >> shift) & 0x1U));
+        }
+    }
 }
 
 Metrics analyze_bits_native(const std::vector<std::uint8_t>& bits) {
@@ -53,6 +64,28 @@ sep::quantum::QFHResult analyze_bits_detailed(const std::vector<std::uint8_t>& b
     static QFHBasedProcessor processor(options);
     processor.reset();
     return processor.analyze(bits);
+}
+
+std::vector<Metrics> analyze_window_batch(py::sequence windows) {
+    const size_t count = static_cast<size_t>(py::len(windows));
+    std::vector<std::string> buffers;
+    buffers.reserve(count);
+    for (const py::handle& obj : windows) {
+        buffers.emplace_back(py::cast<std::string>(obj));
+    }
+
+    std::vector<Metrics> results;
+    results.reserve(buffers.size());
+    if (buffers.empty()) {
+        return results;
+    }
+
+    std::vector<std::uint8_t> bits;
+    for (const std::string& buffer : buffers) {
+        bytes_to_bits(buffer, bits);
+        results.push_back(analyze_bits_native(bits));
+    }
+    return results;
 }
 
 PYBIND11_MODULE(sep_quantum, m) {
@@ -106,6 +139,11 @@ PYBIND11_MODULE(sep_quantum, m) {
 
     m.def("analyze_bits", &analyze_bits_native, "Analyze a window of bits using the native manifold kernel");
     m.def("analyze_window", &analyze_bits_detailed, "Return the full native QFH result for a bit window");
+    m.def(
+        "analyze_window_batch",
+        &analyze_window_batch,
+        py::arg("windows"),
+        "Analyze multiple byte windows in a single native pass");
     m.def("transform_rich", &sep::quantum::transform_rich, "Transform bits into QFH events");
     m.def("aggregate_events", &sep::quantum::aggregate, "Aggregate consecutive QFH events");
 }

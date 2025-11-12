@@ -13,6 +13,7 @@ how to integrate with the existing C++ codebase.
 
 from .ingest import ingest_directory
 from .encode import encode_window
+from .gpu_windows import gpu_window_metrics  # type: ignore  # Optional CUDA backend
 from .guardrail import calibrate_threshold, summarise_guardrail
 from .manifold import build_manifold
 from .pipeline import AnalysisResult, analyse_directory
@@ -64,4 +65,5 @@ __all__ = [
     "summarise_guardrail",
     "OspaceTransformer",
     "OspaceTransformerConfig",
+    "gpu_window_metrics",
 ]

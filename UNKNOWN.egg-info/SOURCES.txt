@@ -1,0 +1,9 @@
+README.md
+pyproject.toml
+setup.py
+UNKNOWN.egg-info/PKG-INFO
+UNKNOWN.egg-info/SOURCES.txt
+UNKNOWN.egg-info/dependency_links.txt
+UNKNOWN.egg-info/top_level.txt
+cpp/sep_quantum.cpp
+cpp/sep_core/core/qfh.cpp

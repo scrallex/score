@@ -137,3 +137,30 @@ def test_encode_window_matches_native_and_fallback():
             assert fallback_metrics[key] == pytest.approx(value)
     finally:
         native.set_use_native(previous_mode)
+
+
+def test_analyze_window_batch_matches_single_results():
+    from sep_text_manifold import encode
+
+    if not native.HAVE_NATIVE:
+        pytest.skip("sep_quantum bindings not built")
+
+    windows = [
+        bytes([0] * 64),
+        bytes([255] * 64),
+        bytes(range(64)),
+    ]
+
+    previous_mode = native.use_native()
+    try:
+        native.set_use_native(True)
+        batch_metrics = native.analyze_window_batch(windows)
+        assert len(batch_metrics) == len(windows)
+
+        for window, metrics in zip(windows, batch_metrics):
+            single_metrics = encode.encode_window(window)
+            assert metrics["coherence"] == pytest.approx(single_metrics["coherence"])
+            assert metrics["stability"] == pytest.approx(single_metrics["stability"])
+            assert metrics["entropy"] == pytest.approx(single_metrics["entropy"])
+    finally:
+        native.set_use_native(previous_mode)
