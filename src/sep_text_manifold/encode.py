@@ -101,35 +101,43 @@ def encode_window(window: bytes) -> Dict[str, float]:
     This function wraps `bytes_to_bits` and `compute_metrics` to
     produce a single metrics dictionary for a window of data.
     """
-    bits = bytes_to_bits(window)
-    if native.use_native():
-        try:
-            result = native.analyze_window(bits)
-            rupture_ratio = float(result.rupture_ratio)
-            return {
-                "coherence": float(result.coherence),
-                "stability": 1.0 - rupture_ratio,
-                "entropy": float(result.entropy),
-                "rupture": rupture_ratio,
-                "lambda_hazard": rupture_ratio,
-            }
-        except Exception:  # pragma: no cover - fall back to simplified metrics
-            # Older native builds expose only analyze_bits; reuse the compatibility
-            # wrapper before reverting to the pure-Python implementation.
-            if native.HAVE_NATIVE:
-                try:
-                    metrics = native.analyze_bits(bits)
-                except Exception:
-                    pass
-                else:
-                    return {
-                        "coherence": metrics.get("coherence", 0.0),
-                        "stability": metrics.get("stability", 0.0),
-                        "entropy": metrics.get("entropy", 0.0),
-                        "rupture": metrics.get("rupture", 0.0),
-                        "lambda_hazard": metrics.get("lambda_hazard", metrics.get("rupture", 0.0)),
-                    }
-    return compute_metrics(bits)
+    try:
+        scored = native.score_bytes(window, input_type="text", prefer_grpc=True)
+        return {
+            "coherence": float(scored.get("coherence", 0.0)),
+            "stability": float(scored.get("stability", 0.0)),
+            "entropy": float(scored.get("entropy", 0.0)),
+            "rupture": float(scored.get("hazard", scored.get("lambda_hazard", 0.0))),
+            "lambda_hazard": float(scored.get("hazard", scored.get("lambda_hazard", 0.0))),
+        }
+    except Exception:
+        bits = bytes_to_bits(window)
+        if native.use_native():
+            try:
+                result = native.analyze_window(bits)
+                rupture_ratio = float(result.rupture_ratio)
+                return {
+                    "coherence": float(result.coherence),
+                    "stability": 1.0 - rupture_ratio,
+                    "entropy": float(result.entropy),
+                    "rupture": rupture_ratio,
+                    "lambda_hazard": rupture_ratio,
+                }
+            except Exception:  # pragma: no cover - fall back to simplified metrics
+                if native.HAVE_NATIVE:
+                    try:
+                        metrics = native.analyze_bits(bits)
+                    except Exception:
+                        pass
+                    else:
+                        return {
+                            "coherence": metrics.get("coherence", 0.0),
+                            "stability": metrics.get("stability", 0.0),
+                            "entropy": metrics.get("entropy", 0.0),
+                            "rupture": metrics.get("rupture", 0.0),
+                            "lambda_hazard": metrics.get("lambda_hazard", metrics.get("rupture", 0.0)),
+                        }
+        return compute_metrics(bits)
 
 
 def signature_from_metrics(coherence: float, stability: float, entropy: float, precision: int = 2) -> str:

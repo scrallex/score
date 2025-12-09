@@ -9,9 +9,9 @@ from typing import Deque, Dict, List, Optional
 import pandas as pd
 
 try:  # Import lazily so unit tests can inject stubs if needed
-    import sep_quantum
+    from sep_text_manifold import native
 except ModuleNotFoundError as exc:  # pragma: no cover - surfaced as runtime error
-    sep_quantum = None  # type: ignore[assignment]
+    native = None  # type: ignore[assignment]
     _IMPORT_ERROR = exc
 else:  # pragma: no branch
     _IMPORT_ERROR = None
@@ -33,9 +33,9 @@ class STMManifoldBuilder:
     _lookback_ms: int = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
-        if sep_quantum is None:
+        if native is None:
             raise RuntimeError(
-                "sep_quantum module not available. Build the native extension or run `pip install -e .`"
+                "sep_text_manifold.native unavailable. Build the native extension or run `pip install -e .`"
             ) from _IMPORT_ERROR
         if self.signature_precision < 0:
             raise ValueError("signature_precision must be non-negative")
@@ -80,11 +80,13 @@ class STMManifoldBuilder:
             sub_bits = bits[begin:i]
             if not sub_bits:
                 continue
-            result = sep_quantum.analyze_window(sub_bits)
-            coherence = float(result.coherence)
-            rupture = float(result.rupture_ratio)
-            entropy = float(result.entropy)
-            stability = 1.0 - rupture
+            payload, bit_length = self._pack_bits(sub_bits)
+            scored = native.score_bytes(payload, input_type="price", bit_length=bit_length)
+
+            coherence = float(scored.get("coherence", 0.0))
+            stability = float(scored.get("stability", 0.0))
+            entropy = float(scored.get("entropy", 0.0))
+            rupture = float(scored.get("hazard", scored.get("lambda_hazard", 0.0)))
 
             ts_ms = int(candles.iloc[begin + 1]["timestamp_ms"])
             price = float(candles.iloc[begin + 1]["close"])
@@ -195,6 +197,21 @@ class STMManifoldBuilder:
             return round(clipped * self._scale) / self._scale
 
         return f"c{bucket(coherence):.{self.signature_precision}f}_s{bucket(stability):.{self.signature_precision}f}_e{bucket(entropy):.{self.signature_precision}f}"
+
+    @staticmethod
+    def _pack_bits(bits: List[int]) -> tuple[bytes, int]:
+        """Pack a list of 0/1 bits into big-endian bytes and return payload + logical length."""
+
+        buf = bytearray()
+        bit_length = len(bits)
+        for i in range(0, bit_length, 8):
+            chunk = bits[i : i + 8]
+            byte = 0
+            for bit in chunk:
+                byte = (byte << 1) | (1 if bit else 0)
+            byte <<= max(0, 8 - len(chunk))
+            buf.append(byte & 0xFF)
+        return bytes(buf), bit_length
 
 
 def build_signals(
