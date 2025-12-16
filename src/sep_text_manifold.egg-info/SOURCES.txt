@@ -23,6 +23,8 @@ src/sep_text_manifold/dilution.py
 src/sep_text_manifold/encode.py
 src/sep_text_manifold/feedback.py
 src/sep_text_manifold/filters.py
+src/sep_text_manifold/gpu_windows.py
+src/sep_text_manifold/grpc_server.py
 src/sep_text_manifold/guardrail.py
 src/sep_text_manifold/index_builder.py
 src/sep_text_manifold/ingest.py
@@ -36,6 +38,7 @@ src/sep_text_manifold/semantic.py
 src/sep_text_manifold/similar.py
 src/sep_text_manifold/stream.py
 src/sep_text_manifold/strings.py
+src/sep_text_manifold/structural_verification_pb2.py
 src/sep_text_manifold/themes.py
 src/sep_text_manifold.egg-info/PKG-INFO
 src/sep_text_manifold.egg-info/SOURCES.txt
@@ -72,6 +75,7 @@ tests/test_adapters.py
 tests/test_comparison.py
 tests/test_dilution.py
 tests/test_feedback.py
+tests/test_gpu_windows.py
 tests/test_guardrail_scripts.py
 tests/test_kernel_litmus.py
 tests/test_logistics_features.py
